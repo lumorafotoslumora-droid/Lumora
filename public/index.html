@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumora — Fotografie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121119; --panel: #1c1a25; --panel-2: #23212e;
+    --amber: #8f97ff; --amber-soft: rgba(143,151,255,0.14); --amber-dim: #565ba3; --accent2: #c48fff;
+    --ink: #f1f0f7; --muted: #9995ab; --line: #2f2c3c;
+    --danger: #e0685a; --danger-soft: rgba(224,104,90,0.14);
+    --green: #7fc29a; --green-soft: rgba(127,194,154,0.14);
+    --radius: 12px; --radius-sm: 7px;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0; background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      radial-gradient(1100px 600px at 12% -10%, rgba(143,151,255,0.14), transparent 60%),
+      radial-gradient(900px 550px at 92% 8%, rgba(199,146,234,0.09), transparent 60%),
+      radial-gradient(800px 500px at 50% 100%, rgba(127,194,154,0.06), transparent 60%);
+    background-size: 46px 46px, 46px 46px, auto, auto, auto;
+    background-attachment: fixed;
+    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; padding-bottom: 96px;
+  }
+  header{ position: sticky; top:0; z-index: 30; display:flex; align-items:center; justify-content:space-between; padding:16px 40px; background: rgba(18,17,25,0.9); backdrop-filter: blur(10px); border-bottom:1px solid var(--line); flex-wrap:wrap; gap:14px; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .mark{ width:34px; height:34px; border-radius:9px; background: linear-gradient(155deg, var(--amber), var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:16px; color:#141220; }
+  .brand .txt h1{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin:0; }
+  .brand .txt span{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; }
+  nav.tabs{ display:flex; gap:6px; }
+  nav.tabs button{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.3px; text-transform:uppercase; background:transparent; border:1px solid transparent; color:var(--muted); padding:9px 16px; border-radius: 999px; cursor:pointer; transition: all .15s ease; }
+  nav.tabs button:hover{ color:var(--ink); }
+  nav.tabs button.active{ background: var(--panel-2); border-color:var(--line); color:var(--amber); }
+  nav.tabs button.hidden{ display:none; }
+  .cart-count{ display:inline-block; margin-left:6px; background:var(--amber); color:#141220; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; }
+  .header-actions{ display:flex; align-items:center; gap:12px; }
+  .role-pill{ display:none; align-items:center; gap:8px; font-family:'Space Mono',monospace; font-size:12px; padding:7px 14px; border-radius:999px; background: var(--panel-2); border:1px solid var(--line); color:var(--muted); }
+  .role-pill.show{ display:inline-flex; }
+  .role-pill .badge{ font-size:10px; padding:2px 7px; border-radius:999px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700; }
+  .role-pill.admin-tag .badge{ background:var(--amber-soft); color:var(--amber); }
+  .role-pill.employee-tag .badge{ background:var(--green-soft); color:var(--green); }
+  .role-pill.customer-tag .badge{ background: rgba(150,150,255,0.14); color:#a9b4f5; }
+  .btn{ font-family:'Space Mono',monospace; font-size:12.5px; letter-spacing:0.3px; padding:10px 18px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--amber-dim); background:transparent; color:var(--amber); transition: all .15s ease; }
+  .btn:hover{ background:var(--amber); color:#141220; border-color:var(--amber); }
+  .btn.muted{ border-color:var(--line); color:var(--muted); }
+  .btn.muted:hover{ background:var(--panel-2); color:var(--ink); }
+  .btn.solid{ background: linear-gradient(135deg, var(--amber), var(--accent2)); color:#141220; font-weight:700; border-color:transparent; box-shadow: 0 6px 18px rgba(143,151,255,0.25); }
+  .btn.solid:hover{ filter:brightness(1.1); }
+  .btn.danger{ border-color: var(--danger); color: var(--danger); }
+  .btn.danger:hover{ background: var(--danger); color:#1c0f0c; }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  main{ max-width:1180px; margin:0 auto; padding:48px 40px 60px; }
+  .view{ display:none; } .view.active{ display:block; }
+  .hero{ max-width:640px; margin-bottom:48px; }
+  .hero-badge{ display:inline-flex; align-items:center; gap:6px; background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-dim); padding:6px 14px; border-radius:999px; font-family:'Space Mono',monospace; font-size:11.5px; margin-bottom:18px; }
+  .hero h2{ font-family:'Fraunces',serif; font-weight:600; font-size:36px; line-height:1.12; margin:0 0 14px; }
+  .hero > p{ color:var(--muted); font-size:15.5px; line-height:1.6; margin:0 0 24px; max-width:520px; }
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .hero-note{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--muted); margin:0; }
+  .eyebrow{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--amber); text-transform:uppercase; letter-spacing:2px; margin:0 0 10px; }
+  .section-title{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin:0 0 12px; }
+  .dashboard{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:32px; }
+  @media (max-width: 760px){ .dashboard{ grid-template-columns: 1fr; } }
+  .panel-card{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 24px; display:none; }
+  .panel-card.show{ display:block; }
+  .panel-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 16px; font-weight:600; }
+  #dropzone{ display:none; border:1.5px dashed var(--amber-dim); border-radius: var(--radius); padding:30px; margin-bottom:32px; text-align:center; color:var(--muted); font-family:'Space Mono',monospace; font-size:13px; cursor:pointer; background: var(--panel); }
+  #dropzone.show{ display:block; }
+  #dropzone:hover{ border-color:var(--amber); color:var(--amber); background: var(--amber-soft); }
+  #fileInput{ display:none; }
+  .promo-row{ display:flex; align-items:center; gap:10px; margin-bottom:13px; font-size:13.5px; }
+  .promo-row input[type=checkbox]{ accent-color:var(--amber); width:17px; height:17px; }
+  .promo-row input[type=number]{ width:58px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:5px 8px; border-radius: var(--radius-sm); font-family:'Space Mono',monospace; }
+  .promo-row label{ flex:1; } .promo-row label small{ display:block; color:var(--muted); font-size:11.5px; }
+  .team-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; max-height: 180px; overflow-y:auto; }
+  .team-row{ display:flex; align-items:center; justify-content:space-between; background: var(--panel-2); border:1px solid var(--line); border-radius: var(--radius-sm); padding:9px 12px; font-size:13px; }
+  .team-empty{ color:var(--muted); font-family:'Space Mono',monospace; font-size:12px; }
+  .team-form{ display:flex; gap:8px; flex-wrap:wrap; }
+  .team-form input{ flex:1; min-width:110px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 12px; border-radius: var(--radius-sm); font-size:13.5px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(215px,1fr)); gap:24px; }
+  .frame{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; position:relative; transition: transform .18s ease, box-shadow .18s ease; }
+  .frame:hover{ transform: translateY(-4px); box-shadow: 0 16px 34px rgba(143,151,255,0.16), 0 6px 14px rgba(0,0,0,0.35); }
+  .frame .imgwrap{ position:relative; cursor:pointer; overflow:hidden; }
+  .frame img, .frame video{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#000; }
+  .protect{ position:absolute; inset:0; z-index:2; }
+  .watermark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
+  .watermark span{ position:absolute; transform: translate(-50%,-50%) rotate(-24deg); font-family:'Space Mono',monospace; letter-spacing:2px; color: rgba(255,255,255,0.4); text-shadow: 0 1px 3px rgba(0,0,0,0.55); white-space:nowrap; text-transform:uppercase; font-size:11px; }
+  .lightbox-body .watermark span{ font-size:18px; letter-spacing:3px; }
+  .del{ position:absolute; top:10px; left:10px; width:26px; height:26px; border-radius:50%; background:rgba(20,18,15,0.75); color:var(--danger); display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; z-index:6; }
+  .tag{ position:absolute; top:10px; right:10px; font-family:'Space Mono',monospace; font-size:10.5px; padding:4px 9px; border-radius:999px; z-index:4; }
+  .tag.free{ background: rgba(139,177,116,0.85); color:#0f1a0c; font-weight:700; }
+  .tag.paid{ background: rgba(20,18,15,0.7); border:1px solid rgba(255,255,255,0.1); color:var(--amber); }
+  .frame-foot{ padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .cart-btn{ font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; padding:8px 13px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--amber-dim); background:transparent; color:var(--amber); white-space:nowrap; }
+  .cart-btn.in-cart{ background: linear-gradient(135deg, var(--amber), var(--accent2)); color:#141220; font-weight:700; border-color:transparent; }
+  .cart-btn.wide{ width:100%; text-align:center; }
+  .dl-btn{ background:transparent; border:1px solid var(--green); color:var(--green); padding:6px 12px; border-radius: var(--radius-sm); cursor:pointer; font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; }
+  .dl-btn:hover{ background:var(--green); color:#0e1f16; }
+  .dl-btn.wide{ width:100%; }
+  .admin-controls{ padding:0 14px 14px; display:flex; gap:8px; align-items:center; font-family:'Space Mono',monospace; font-size:12px; border-top:1px solid var(--line); padding-top:10px; margin-top:2px; }
+  .admin-controls input[type=number]{ width:64px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:5px 6px; border-radius: var(--radius-sm); }
+  .uploader-tag{ padding:0 14px 8px; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); }
+  .code-row{ margin:0 14px 12px; padding:10px 12px; background:var(--bg); border:1px solid var(--line); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .code-row .code-val{ font-family:'Space Mono',monospace; font-size:15px; letter-spacing:2px; color:var(--amber); font-weight:700; }
+  .code-row .code-label{ font-family:'Space Mono',monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:2px; }
+  .sent-btn{ font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; padding:6px 11px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--green); color:var(--green); background:transparent; }
+  .sent-btn:hover{ background:var(--green); color:#0e1f16; }
+  .empty{ color:var(--muted); font-family:'Space Mono',monospace; font-size:13px; padding:60px 0; text-align:center; border:1.5px dashed var(--line); border-radius: var(--radius); }
+  .cart-bar{ position:fixed; bottom:18px; left:50%; transform: translateX(-50%); background: rgba(31,28,23,0.94); backdrop-filter: blur(10px); border:1px solid var(--line); border-radius: 999px; padding:12px 12px 12px 24px; display:none; align-items:center; justify-content:space-between; gap:22px; font-family:'Space Mono',monospace; font-size:12.5px; max-width: calc(100% - 40px); z-index:25; }
+  .cart-bar.show{ display:flex; }
+  .cart-bar .breakdown{ display:flex; gap:16px; flex-wrap:wrap; color:var(--muted); }
+  .cart-bar .breakdown b{ color:var(--ink); }
+  .cart-bar .total{ color:var(--amber); font-weight:700; }
+  .cart-page{ max-width:640px; }
+  .cart-item{ display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:14px; margin-bottom:12px; }
+  .cart-item img, .cart-item video{ width:64px; height:64px; object-fit:cover; border-radius: var(--radius-sm); }
+  .cart-summary{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 24px; margin-top:20px; }
+  .cart-summary .line{ display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:13px; margin-bottom:9px; color:var(--muted); }
+  .cart-summary .line b{ color:var(--ink); }
+  .cart-summary .line.total{ border-top:1px solid var(--line); padding-top:12px; margin-top:12px; color:var(--amber); font-weight:700; font-size:16px; }
+  .notice{ background: var(--amber-soft); border:1px solid var(--amber-dim); color:var(--amber); border-radius: var(--radius-sm); padding:12px 16px; font-size:13px; margin-top:14px; }
+  .notice a{ color:var(--amber); font-weight:700; cursor:pointer; text-decoration:underline; }
+  .account-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; max-width:760px; }
+  @media (max-width: 700px){ .account-grid{ grid-template-columns:1fr; } }
+  .auth-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:26px; }
+  .auth-card h3{ font-family:'Fraunces',serif; margin:0 0 4px; font-size:19px; }
+  .auth-card p.sub{ color:var(--muted); font-size:12.5px; margin:0 0 20px; }
+  .field label{ display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; }
+  .field input{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; margin-bottom:15px; border-radius: var(--radius-sm); }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  .err-text{ color:var(--danger); font-family:'Space Mono',monospace; font-size:12px; margin:-8px 0 14px; display:none; }
+  .err-text.show{ display:block; }
+  .pw-checklist{ display:flex; flex-direction:column; gap:5px; margin:-8px 0 15px; }
+  .pw-checklist .pw-item{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .pw-checklist .pw-item.valid{ color:var(--green); }
+  .pw-checklist .pw-item .dot{ width:6px; height:6px; border-radius:50%; background:var(--line); }
+  .pw-checklist .pw-item.valid .dot{ background:var(--green); }
+  .profile-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:26px; max-width:420px; }
+  .profile-card .avatar{ width:52px; height:52px; border-radius:50%; background:linear-gradient(155deg,var(--amber),var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:20px; color:#141220; font-weight:600; margin-bottom:14px; }
+  .profile-card h3{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 4px; }
+  .profile-card .role-line{ font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:18px; }
+  .profile-card .detail{ font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .profile-card .detail b{ color:var(--ink); }
+  .stat-row{ display:flex; gap:16px; flex-wrap:wrap; margin:22px 0; }
+  .stat-tile{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius-sm); padding:16px 20px; min-width:140px; }
+  .stat-tile .num{ font-family:'Fraunces',serif; font-size:22px; font-weight:600; }
+  .stat-tile .label{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); text-transform:uppercase; }
+  .redeem-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 24px; margin:30px 0 44px; max-width:480px; }
+  .redeem-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px; }
+  .redeem-card p{ color:var(--muted); font-size:12.5px; margin:0 0 16px; }
+  .redeem-row{ display:flex; gap:10px; }
+  .redeem-row input{ flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-family:'Space Mono',monospace; font-size:15px; letter-spacing:2px; border-radius: var(--radius-sm); }
+  .redeem-msg{ font-family:'Space Mono',monospace; font-size:12px; margin-top:10px; display:none; }
+  .redeem-msg.ok{ color:var(--green); display:block; } .redeem-msg.err{ color:var(--danger); display:block; }
+  footer{ border-top:1px solid var(--line); margin-top:80px; padding:44px 40px 26px; max-width:1180px; margin-left:auto; margin-right:auto; }
+  footer .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:30px; margin-bottom:30px; }
+  @media (max-width:700px){ footer .foot-grid{ grid-template-columns:1fr; } }
+  footer h5{ font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; color:var(--muted); margin:0 0 12px; }
+  footer ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+  footer a{ color:var(--ink); text-decoration:none; font-size:13.5px; cursor:pointer; }
+  footer a:hover{ color:var(--amber); }
+  .foot-bottom{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:20px; border-top:1px solid var(--line); font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
+  .overlay{ position:fixed; inset:0; background:rgba(8,7,5,0.94); backdrop-filter: blur(6px); display:none; align-items:center; justify-content:center; z-index:80; padding: 30px; }
+  .overlay.show{ display:flex; }
+  .lightbox-close{ position:absolute; top:22px; right:28px; width:38px; height:38px; border-radius:50%; background: rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--ink); font-size:16px; cursor:pointer; }
+  .lightbox-nav{ position:absolute; top:50%; transform: translateY(-50%); width:44px; height:44px; border-radius:50%; background: rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--ink); font-size:18px; cursor:pointer; }
+  .lightbox-nav.prev{ left:24px; } .lightbox-nav.next{ right:24px; }
+  .lightbox-body{ display:flex; flex-direction:column; align-items:center; max-width:min(920px, 90vw); max-height:90vh; }
+  .lightbox-body img, .lightbox-body video{ max-width:100%; max-height:70vh; border-radius: var(--radius); box-shadow: 0 30px 70px rgba(0,0,0,0.6); object-fit:contain; }
+  .lightbox-info{ margin-top:18px; display:flex; align-items:center; justify-content:space-between; gap:20px; background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:14px 20px; width:100%; }
+  .lightbox-info .lb-price{ font-family:'Space Mono',monospace; font-size:14px; }
+  .lightbox-info .lb-price.free{ color:var(--green); }
+  .lightbox-counter{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="mark">L</div><div class="txt"><h1>Lumora</h1><span>Fotografie</span></div></div>
+  <nav class="tabs">
+    <button class="active" data-view="gallery" onclick="switchView('gallery')">Galerie</button>
+    <button data-view="cart" onclick="switchView('cart')">Warenkorb<span class="cart-count" id="navCartCount" style="display:none;"></span></button>
+    <button data-view="account" onclick="switchView('account')">Mein Konto</button>
+    <button data-view="admin" id="navAdminTab" class="hidden" onclick="switchView('admin')">Verwaltung</button>
+  </nav>
+  <div class="header-actions">
+    <div class="role-pill admin-tag" id="rolePillAdmin"></div>
+    <div class="role-pill employee-tag" id="rolePillEmployee"></div>
+    <div class="role-pill customer-tag" id="rolePillCustomer"></div>
+    <button class="btn muted" id="logoutBtn" style="display:none;" onclick="logout()">Abmelden</button>
+  </div>
+</header>
+
+<main>
+  <section class="view active" id="view-gallery">
+    <div class="hero">
+      <span class="hero-badge">✦ Läuft auf einem echten Server</span>
+      <h2>Fotografie, die etwas hermacht.</h2>
+      <p>Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.</p>
+      <div class="cta-row">
+        <button class="btn solid" onclick="document.getElementById('shopGrid').scrollIntoView({behavior:'smooth'})">Galerie durchsuchen</button>
+        <button class="btn muted" onclick="switchView('account')">Konto erstellen</button>
+      </div>
+      <p class="hero-note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
+    </div>
+    <div class="grid" id="shopGrid"></div>
+    <div class="empty" id="shopEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+
+    <div class="redeem-card">
+      <h3>Bild-Code einlösen</h3>
+      <p>Hast du von uns einen 7-stelligen Code bekommen? Gib ihn hier ein, um dein Bild direkt herunterzuladen.</p>
+      <div class="redeem-row">
+        <input type="text" id="redeemInput" maxlength="7" placeholder="1234567">
+        <button class="btn solid" onclick="redeemCode()">Einlösen</button>
+      </div>
+      <div class="redeem-msg" id="redeemMsg"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-cart">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kasse</p><h2 style="font-size:28px;">Warenkorb</h2></div>
+    <div class="cart-page">
+      <div id="cartItemsList"></div>
+      <div class="empty" id="cartEmpty" style="display:none;">Dein Warenkorb ist leer.</div>
+      <div class="cart-summary" id="cartSummary" style="display:none;">
+        <div class="line"><span>Zwischensumme</span><b id="sumSubtotal"></b></div>
+        <div class="line" id="sumBundleLine" style="display:none;"><span>Aktionsrabatt</span><b id="sumBundle"></b></div>
+        <div class="line" id="sumPercentLine" style="display:none;"><span id="sumPercentLabel"></span><b id="sumPercent"></b></div>
+        <div class="line total"><span>Gesamt</span><b id="sumTotal"></b></div>
+        <div id="cartActionArea" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-account">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Konto</p><h2 id="accountHeading" style="font-size:28px;">Mein Konto</h2></div>
+
+    <div id="loggedOutArea" class="account-grid">
+      <div class="auth-card">
+        <h3>Willkommen zurück</h3>
+        <p class="sub">Melde dich mit deinem bestehenden Zugang an</p>
+        <div class="field"><label>Name oder E-Mail</label><input type="text" id="loginId"></div>
+        <div class="field"><label>Passwort</label><input type="password" id="loginPass"></div>
+        <div class="err-text" id="loginErr"></div>
+        <button class="btn solid" style="width:100%;" onclick="attemptLogin()">Anmelden</button>
+      </div>
+      <div class="auth-card">
+        <h3>Konto erstellen</h3>
+        <p class="sub">Kostenlos — nur für Kunden</p>
+        <div class="field"><label>Name</label><input type="text" id="regName"></div>
+        <div class="field"><label>Geburtstag</label><input type="date" id="regBirthday"></div>
+        <div class="field"><label>E-Mail</label><input type="email" id="regEmail"></div>
+        <div class="field"><label>Passwort</label><input type="password" id="regPass" oninput="updatePwChecklist()"></div>
+        <div class="pw-checklist">
+          <div class="pw-item" id="pwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
+          <div class="pw-item" id="pwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
+          <div class="pw-item" id="pwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+        </div>
+        <div class="err-text" id="regErr"></div>
+        <button class="btn solid" style="width:100%;" onclick="registerCustomer()">Konto erstellen</button>
+      </div>
+    </div>
+
+    <div id="loggedInArea" style="display:none;">
+      <div class="profile-card">
+        <div class="avatar" id="profileAvatar"></div>
+        <h3 id="profileName"></h3>
+        <div class="role-line" id="profileRole"></div>
+        <div id="profileDetails"></div>
+      </div>
+      <div class="stat-row" id="statRow"></div>
+      <div class="auth-card" style="max-width:420px; margin-bottom:36px;">
+        <h3>Passwort ändern</h3>
+        <div class="field"><label>Aktuelles Passwort</label><input type="password" id="changeOldPass"></div>
+        <div class="field"><label>Neues Passwort</label><input type="password" id="changeNewPass" oninput="updateChangePwChecklist()"></div>
+        <div class="pw-checklist">
+          <div class="pw-item" id="cpwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
+          <div class="pw-item" id="cpwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
+          <div class="pw-item" id="cpwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+        </div>
+        <div class="err-text" id="changePwMsg"></div>
+        <button class="btn solid" style="width:100%;" onclick="changePassword()">Passwort speichern</button>
+      </div>
+      <div id="purchasesSection">
+        <p class="eyebrow">Meine gekauften Bilder</p>
+        <div class="grid" id="purchasesGrid"></div>
+        <div class="empty" id="purchasesEmpty" style="display:none;">Noch keine Bilder gekauft.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-admin">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Verwaltung</p><h2 style="font-size:28px;">Bilder verwalten</h2></div>
+    <div class="dashboard">
+      <div class="panel-card" id="promoPanel">
+        <h3>Aktionen</h3>
+        <div class="promo-row"><input type="checkbox" id="promoFirstFree" onchange="savePromos()"><label>Erstes Bild gratis<small>Einmalig pro Kundenkonto</small></label></div>
+        <div class="promo-row"><input type="checkbox" id="promoTwoForOne" onchange="savePromos()"><label>2 für 1<small>Günstigeres von je 2 Bildern gratis</small></label></div>
+        <div class="promo-row"><input type="checkbox" id="promoPercent" onchange="savePromos()"><label>Prozent-Rabatt</label><input type="number" id="promoPercentValue" value="20" onchange="savePromos()"> %</div>
+      </div>
+      <div class="panel-card" id="employeePanel">
+        <h3>Mitarbeiter</h3>
+        <div class="team-list" id="teamList"></div>
+        <div class="team-form">
+          <input type="text" id="newEmpName" placeholder="Name">
+          <input type="text" id="newEmpPass" placeholder="Passwort">
+          <button class="btn solid" onclick="addEmployee()">Hinzufügen</button>
+        </div>
+      </div>
+    </div>
+    <div id="dropzone" onclick="document.getElementById('fileInput').click()">＋ Bilder oder Videos hochladen — klicken oder hierher ziehen</div>
+    <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+    <div class="grid" id="adminGrid"></div>
+    <div class="empty" id="adminEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;">Fotografie zum Kauf oder kostenlosen Download.</p></div>
+    <div><h5>Produkt</h5><ul><li><a onclick="switchView('gallery')">Galerie</a></li><li><a onclick="switchView('cart')">Warenkorb</a></li><li><a onclick="switchView('account')">Mein Konto</a></li></ul></div>
+    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a>Kontakt</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 Lumora</span><span>Läuft auf eigenem Server</span></div>
+</footer>
+
+<div class="cart-bar" id="cartBar"><div class="breakdown" id="cartBreakdown"></div><button class="btn solid" onclick="switchView('cart')">Zur Kasse</button></div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav prev" onclick="lightboxStep(-1)">‹</button>
+  <button class="lightbox-nav next" onclick="lightboxStep(1)">›</button>
+  <div class="lightbox-body">
+    <div style="position:relative;"><div id="lightboxMedia"></div><div class="protect" id="lightboxProtect" oncontextmenu="return false"></div><div class="watermark" id="lightboxWatermark"></div></div>
+    <div class="lightbox-info"><span class="lb-price" id="lightboxPrice"></span><div id="lightboxAction"></div></div>
+    <div class="lightbox-counter" id="lightboxCounter"></div>
+  </div>
+</div>
+
+<script>
+  let currentUserData = null; // {id,name,email,role,...}
+  let images = [];
+  let cart = new Set();
+  let lightboxId = null;
+
+  async function api(path, opts){
+    opts = opts || {};
+    opts.credentials = 'include';
+    if(opts.body){ opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(opts.body); }
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch(e){}
+    if(!res.ok) throw new Error(data.error || ('Fehler ' + res.status));
+    return data;
+  }
+
+  function role(){ return currentUserData ? currentUserData.role : 'guest'; }
+  function fmt(n){ n = Number(n)||0; return n.toFixed(2).replace('.', ',') + ' €'; }
+  function pwChecks(p){ return { len: p.length>=8, upper: /[A-Z]/.test(p), number: /[0-9]/.test(p) }; }
+
+  const WATERMARK_POSITIONS = [[15,15],[65,12],[35,32],[85,30],[10,50],[55,50],[80,68],[25,72],[60,88],[5,90]];
+  function watermarkSpans(){ return WATERMARK_POSITIONS.map(([x,y]) => `<span style="left:${x}%; top:${y}%;">Lumora</span>`).join(''); }
+
+  function mediaTagHtml(img, opts){
+    opts = opts || {};
+    if(img.type === 'video'){
+      const controlsAttr = opts.controls ? 'controls controlsList="nodownload"' : 'autoplay muted loop playsinline';
+      return `<video src="${img.url}" ${controlsAttr} oncontextmenu="return false" style="width:100%; ${opts.fill===false?'':'aspect-ratio:1/1; object-fit:cover;'} display:block; background:#000;"></video>`;
+    }
+    return `<img src="${img.url}" alt="Bild" draggable="false" oncontextmenu="return false">`;
+  }
+
+  // ---------- Navigation ----------
+  function switchView(name){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    window.scrollTo({top:0});
+    if(name === 'cart') renderCartView();
+    if(name === 'account') renderAccountView();
+  }
+
+  // ---------- Laden ----------
+  async function loadMe(){
+    const r = await api('/api/me');
+    currentUserData = r.user;
+    applyRoleState();
+  }
+  async function loadImages(){
+    const r = await api('/api/images');
+    images = r.images;
+    renderShopGrid();
+    renderAdminGrid();
+    renderCartBar();
+  }
+
+  function renderShopGrid(){
+    const grid = document.getElementById('shopGrid');
+    document.getElementById('shopEmpty').style.display = images.length === 0 ? 'block' : 'none';
+    grid.innerHTML = images.map(img => {
+      const inCart = cart.has(img.id);
+      const actionHtml = img.canDownload
+        ? `<button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button>`
+        : `<button class="cart-btn wide ${inCart?'in-cart':''}" onclick="event.stopPropagation(); toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+      return `
+        <div class="frame">
+          <div class="imgwrap" onclick="openLightbox('${img.id}')">
+            ${mediaTagHtml(img)}
+            <div class="protect" oncontextmenu="return false"></div>
+            ${img.canDownload ? '' : `<div class="watermark">${watermarkSpans()}</div>`}
+            <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
+          </div>
+          <div class="frame-foot">${actionHtml}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderAdminGrid(){
+    const grid = document.getElementById('adminGrid');
+    if(role() !== 'admin' && role() !== 'employee'){ grid.innerHTML=''; return; }
+    const managed = images.filter(i => i.canManage);
+    document.getElementById('adminEmpty').style.display = managed.length === 0 ? 'block' : 'none';
+    grid.innerHTML = managed.map(img => {
+      const adminControls = role() === 'admin' ? `
+        <div class="admin-controls">
+          <input type="checkbox" ${img.free?'checked':''} onchange="setFree('${img.id}', this.checked)"> Gratis
+          <input type="number" min="0" step="0.5" value="${img.price}" ${img.free?'disabled':''} onchange="setPrice('${img.id}', this.value)"> €
+        </div>` : '';
+      const graceNote = (img.graceCodes && img.graceCodes.length>0)
+        ? `<div class="uploader-tag">Alter Code ${img.graceCodes[img.graceCodes.length-1].code} noch gültig bis ${new Date(img.graceCodes[img.graceCodes.length-1].expires).toLocaleString('de-DE')}</div>` : '';
+      return `
+        <div class="frame">
+          <div class="imgwrap" onclick="openLightbox('${img.id}')">
+            ${mediaTagHtml(img)}
+            <div class="del" onclick="event.stopPropagation(); deleteImage('${img.id}')">✕</div>
+            <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
+          </div>
+          <div class="uploader-tag">hochgeladen von ${img.uploadedByName}</div>
+          <div class="code-row">
+            <div><span class="code-label">Code für Käufer</span><span class="code-val">${img.code}</span></div>
+            <button class="sent-btn" onclick="event.stopPropagation(); markSent('${img.id}')">Gesendet ✓</button>
+          </div>
+          ${graceNote}
+          ${adminControls}
+        </div>`;
+    }).join('');
+  }
+
+  function toggleCart(id){
+    if(cart.has(id)) cart.delete(id); else cart.add(id);
+    renderShopGrid(); renderCartBar();
+    if(document.getElementById('lightbox').classList.contains('show') && lightboxId === id) renderLightboxInfo();
+  }
+
+  async function setFree(id, val){
+    await api('/api/images/' + id, { method:'PATCH', body:{ free: val } });
+    await loadImages();
+  }
+  async function setPrice(id, val){
+    await api('/api/images/' + id, { method:'PATCH', body:{ price: Math.max(0, parseFloat(val)||0) } });
+    await loadImages();
+  }
+  async function deleteImage(id){
+    await api('/api/images/' + id, { method:'DELETE' });
+    cart.delete(id);
+    await loadImages();
+  }
+  async function markSent(id){
+    await api('/api/images/' + id + '/mark-sent', { method:'POST' });
+    await loadImages();
+  }
+  function downloadImage(id){
+    const img = images.find(x => x.id === id);
+    if(!img || !img.canDownload) return;
+    const a = document.createElement('a');
+    a.href = img.url; a.download = ''; a.click();
+  }
+
+  async function redeemCode(){
+    const input = document.getElementById('redeemInput');
+    const msg = document.getElementById('redeemMsg');
+    try {
+      const r = await api('/api/redeem', { method:'POST', body:{ code: input.value.trim() } });
+      const a = document.createElement('a'); a.href = r.url; a.download=''; a.click();
+      msg.textContent = 'Code gültig! Dein Bild wird heruntergeladen.'; msg.className = 'redeem-msg ok';
+      input.value = '';
+      await loadImages();
+    } catch(e){
+      msg.textContent = e.message; msg.className = 'redeem-msg err';
+    }
+  }
+
+  // ---------- Login / Registrierung ----------
+  function updatePwChecklist(){
+    const c = pwChecks(document.getElementById('regPass').value);
+    document.getElementById('pwLenCheck').classList.toggle('valid', c.len);
+    document.getElementById('pwUpperCheck').classList.toggle('valid', c.upper);
+    document.getElementById('pwNumberCheck').classList.toggle('valid', c.number);
+  }
+  function updateChangePwChecklist(){
+    const c = pwChecks(document.getElementById('changeNewPass').value);
+    document.getElementById('cpwLenCheck').classList.toggle('valid', c.len);
+    document.getElementById('cpwUpperCheck').classList.toggle('valid', c.upper);
+    document.getElementById('cpwNumberCheck').classList.toggle('valid', c.number);
+  }
+
+  async function attemptLogin(){
+    const errEl = document.getElementById('loginErr'); errEl.classList.remove('show');
+    try {
+      const r = await api('/api/login', { method:'POST', body:{ id: document.getElementById('loginId').value.trim(), password: document.getElementById('loginPass').value } });
+      currentUserData = r.user;
+      document.getElementById('loginId').value=''; document.getElementById('loginPass').value='';
+      applyRoleState(); await loadImages(); renderAccountView();
+    } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
+  async function registerCustomer(){
+    const errEl = document.getElementById('regErr'); errEl.classList.remove('show');
+    try {
+      const r = await api('/api/register', { method:'POST', body:{
+        name: document.getElementById('regName').value.trim(),
+        birthday: document.getElementById('regBirthday').value,
+        email: document.getElementById('regEmail').value.trim(),
+        password: document.getElementById('regPass').value
+      }});
+      currentUserData = r.user;
+      ['regName','regBirthday','regEmail','regPass'].forEach(id => document.getElementById(id).value='');
+      applyRoleState(); await loadImages(); renderAccountView();
+    } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
+  async function logout(){
+    await api('/api/logout', { method:'POST' });
+    currentUserData = null; cart.clear();
+    applyRoleState(); await loadImages(); switchView('gallery');
+  }
+
+  async function changePassword(){
+    const msgEl = document.getElementById('changePwMsg'); msgEl.classList.remove('show');
+    try {
+      await api('/api/change-password', { method:'POST', body:{
+        oldPassword: document.getElementById('changeOldPass').value,
+        newPassword: document.getElementById('changeNewPass').value
+      }});
+      document.getElementById('changeOldPass').value=''; document.getElementById('changeNewPass').value='';
+      updateChangePwChecklist();
+      msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Passwort erfolgreich geändert.'; msgEl.classList.add('show');
+    } catch(e){ msgEl.style.color=''; msgEl.textContent = e.message; msgEl.classList.add('show'); }
+  }
+
+  function applyRoleState(){
+    const r = role();
+    const isAdmin = r === 'admin', isEmployee = r === 'employee', isCustomer = r === 'customer';
+    const isStaff = isAdmin || isEmployee;
+    document.getElementById('dropzone').classList.toggle('show', isStaff);
+    document.getElementById('promoPanel').classList.toggle('show', isAdmin);
+    document.getElementById('employeePanel').classList.toggle('show', isAdmin);
+    document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
+    document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
+    ['Admin','Employee','Customer'].forEach(k => document.getElementById('rolePill'+k).classList.remove('show'));
+    if(isAdmin){ document.getElementById('rolePillAdmin').classList.add('show'); document.getElementById('rolePillAdmin').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Admin</span>`; }
+    if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
+    if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
+    if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
+    if(isAdmin) loadTeamList();
+  }
+
+  async function loadTeamList(){
+    try {
+      const r = await api('/api/employees');
+      const list = document.getElementById('teamList');
+      if(r.employees.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Mitarbeiter angelegt.</div>'; return; }
+      list.innerHTML = r.employees.map(e => `<div class="team-row"><span>${e.name}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeEmployee('${e.id}')">Entfernen</button></div>`).join('');
+    } catch(e){}
+  }
+  async function addEmployee(){
+    const nameEl = document.getElementById('newEmpName'), passEl = document.getElementById('newEmpPass');
+    try {
+      await api('/api/employees', { method:'POST', body:{ name: nameEl.value.trim(), password: passEl.value } });
+      nameEl.value=''; passEl.value=''; loadTeamList();
+    } catch(e){ alert(e.message); }
+  }
+  async function removeEmployee(id){
+    await api('/api/employees/' + id, { method:'DELETE' });
+    loadTeamList();
+  }
+  async function savePromos(){
+    await api('/api/promos', { method:'POST', body:{
+      firstFree: document.getElementById('promoFirstFree').checked,
+      twoForOne: document.getElementById('promoTwoForOne').checked,
+      percent: document.getElementById('promoPercent').checked,
+      percentValue: parseFloat(document.getElementById('promoPercentValue').value)||0
+    }});
+    renderCartBar();
+  }
+  async function loadPromosIntoForm(){
+    const r = await api('/api/promos');
+    document.getElementById('promoFirstFree').checked = r.promos.firstFree;
+    document.getElementById('promoTwoForOne').checked = r.promos.twoForOne;
+    document.getElementById('promoPercent').checked = r.promos.percent;
+    document.getElementById('promoPercentValue').value = r.promos.percentValue;
+  }
+
+  // ---------- Warenkorb ----------
+  let cachedTotals = null;
+  async function computeCartPreview(){
+    if(role() === 'guest' || cart.size === 0){ cachedTotals = { itemIds:[], rawSubtotal:0, discount:0, percentOff:0, total:0 }; return cachedTotals; }
+    const r = await api('/api/cart/preview', { method:'POST', body:{ itemIds: [...cart] } });
+    cachedTotals = r.totals;
+    return cachedTotals;
+  }
+
+  async function renderCartBar(){
+    const t = await computeCartPreview();
+    const bar = document.getElementById('cartBar'), nc = document.getElementById('navCartCount');
+    if(cart.size === 0){ bar.classList.remove('show'); nc.style.display='none'; return; }
+    bar.classList.add('show'); nc.style.display='inline-block'; nc.textContent = cart.size;
+    let parts = [`<span><b>${cart.size}</b> im Warenkorb</span>`, `<span>Zwischensumme <b>${fmt(t.rawSubtotal)}</b></span>`];
+    if(t.discount>0) parts.push(`<span>Aktionen −<b>${fmt(t.discount)}</b></span>`);
+    if(t.percentOff>0) parts.push(`<span>Rabatt −<b>${fmt(t.percentOff)}</b></span>`);
+    parts.push(`<span class="total">Gesamt ${fmt(t.total)}</span>`);
+    document.getElementById('cartBreakdown').innerHTML = parts.join('');
+  }
+
+  async function renderCartView(){
+    const items = images.filter(img => cart.has(img.id) && !img.free && !img.purchased);
+    const listEl = document.getElementById('cartItemsList'), emptyEl = document.getElementById('cartEmpty'), summaryEl = document.getElementById('cartSummary');
+    if(items.length === 0){ listEl.innerHTML=''; emptyEl.style.display='block'; summaryEl.style.display='none'; return; }
+    emptyEl.style.display='none'; summaryEl.style.display='block';
+    listEl.innerHTML = items.map(img => `
+      <div class="cart-item">${mediaTagHtml(img,{fill:true})}
+        <div style="flex:1;"><div>${img.type==='video'?'Video':'Bild'} ${img.id.slice(0,6)}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
+        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">Entfernen</button>
+      </div>`).join('');
+
+    const t = await computeCartPreview();
+    document.getElementById('sumSubtotal').textContent = fmt(t.rawSubtotal);
+    document.getElementById('sumBundleLine').style.display = t.discount>0?'flex':'none';
+    document.getElementById('sumBundle').textContent = '−'+fmt(t.discount);
+    document.getElementById('sumPercentLine').style.display = t.percentOff>0?'flex':'none';
+    document.getElementById('sumPercentLabel').textContent = 'Prozent-Rabatt';
+    document.getElementById('sumPercent').textContent = '−'+fmt(t.percentOff);
+    document.getElementById('sumTotal').textContent = fmt(t.total);
+
+    const actionArea = document.getElementById('cartActionArea');
+    if(role() === 'guest'){
+      actionArea.innerHTML = `<div class="notice">Bitte <a onclick="switchView('account')">melde dich an oder erstelle ein kostenloses Kundenkonto</a>, um den Kauf abzuschließen.</div>`;
+    } else {
+      actionArea.innerHTML = `<button class="btn solid" style="width:100%;" onclick="confirmPurchase()">Jetzt bezahlen</button><div class="notice">Die Bezahlfunktion wird gerade fertiggestellt. Bilder bekommst du aktuell über einen Code, den wir dir nach Zahlung per Überweisung/anderem Weg schicken — siehe "Bild-Code einlösen" in der Galerie.</div>`;
+    }
+  }
+
+  async function confirmPurchase(){
+    try {
+      await api('/api/checkout', { method:'POST', body:{ itemIds:[...cart] } });
+      cart.clear();
+      await loadImages();
+      alert('Kauf erfolgreich! Deine Bilder findest du jetzt unter "Mein Konto".');
+      switchView('account');
+    } catch(e){ alert(e.message); }
+  }
+
+  // ---------- Konto ----------
+  async function renderAccountView(){
+    const loggedOut = document.getElementById('loggedOutArea'), loggedIn = document.getElementById('loggedInArea');
+    if(role() === 'guest'){ loggedOut.style.display='grid'; loggedIn.style.display='none'; document.getElementById('accountHeading').textContent='Mein Konto'; return; }
+    loggedOut.style.display='none'; loggedIn.style.display='block';
+    document.getElementById('accountHeading').textContent = 'Hallo, ' + currentUserData.name + ' 👋';
+    document.getElementById('profileAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = currentUserData.name;
+    document.getElementById('profileRole').textContent = role()==='admin'?'Admin':role()==='employee'?'Mitarbeiter':'Kunde';
+
+    const detailsEl = document.getElementById('profileDetails'), statRow = document.getElementById('statRow');
+    if(role() === 'customer'){
+      detailsEl.innerHTML = `<div class="detail">E-Mail: <b>${currentUserData.email}</b></div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
+      const r = await api('/api/purchases');
+      const memberSince = new Date(currentUserData.createdAt).toLocaleDateString('de-DE');
+      statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">Gekaufte Bilder</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">Mitglied seit</div></div>`;
+      document.getElementById('purchasesSection').style.display = 'block';
+      const grid = document.getElementById('purchasesGrid'), empty = document.getElementById('purchasesEmpty');
+      if(r.images.length === 0){ grid.innerHTML=''; empty.style.display='block'; }
+      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot"><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button></div></div>`).join(''); }
+    } else {
+      detailsEl.innerHTML = `<div class="detail">Zugang über "Verwaltung"</div>`;
+      statRow.innerHTML = '';
+      document.getElementById('purchasesSection').style.display = 'none';
+    }
+  }
+
+  // ---------- Lightbox ----------
+  function openLightbox(id){ lightboxId = id; document.getElementById('lightbox').classList.add('show'); renderLightboxInfo(); document.addEventListener('keydown', lbKey); }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.removeEventListener('keydown', lbKey); }
+  function lbKey(e){ if(e.key==='Escape') closeLightbox(); if(e.key==='ArrowRight') lightboxStep(1); if(e.key==='ArrowLeft') lightboxStep(-1); }
+  function lightboxStep(dir){ const idx = images.findIndex(x=>x.id===lightboxId); if(idx===-1) return; lightboxId = images[(idx+dir+images.length)%images.length].id; renderLightboxInfo(); }
+  function renderLightboxInfo(){
+    const img = images.find(x => x.id === lightboxId);
+    if(!img){ closeLightbox(); return; }
+    const idx = images.findIndex(x => x.id === lightboxId);
+    document.getElementById('lightboxMedia').innerHTML = mediaTagHtml(img, { controls:true, fill:false });
+    document.getElementById('lightboxProtect').style.display = img.type==='video' ? 'none' : 'block';
+    document.getElementById('lightboxWatermark').innerHTML = img.canDownload ? '' : watermarkSpans();
+    const priceEl = document.getElementById('lightboxPrice');
+    priceEl.textContent = img.free ? 'Gratis' : img.purchased ? 'Gekauft' : fmt(img.price);
+    priceEl.className = 'lb-price' + ((img.free||img.purchased)?' free':'');
+    const inCart = cart.has(img.id);
+    document.getElementById('lightboxAction').innerHTML = img.canDownload
+      ? `<button class="dl-btn" onclick="downloadImage('${img.id}')">Herunterladen</button>`
+      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+    document.getElementById('lightboxCounter').textContent = (idx+1)+' / '+images.length;
+  }
+
+  // ---------- Upload ----------
+  function handleFiles(fileList){
+    if(!fileList || fileList.length===0) return;
+    [...fileList].forEach(file => {
+      if(!file.type.startsWith('image/') && !file.type.startsWith('video/')){ alert('Bitte nur Bild- oder Videodateien auswählen.'); return; }
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          await api('/api/images', { method:'POST', body:{ dataUrl: ev.target.result } });
+          await loadImages();
+        } catch(e){ alert('Upload fehlgeschlagen: ' + e.message); }
+      };
+      reader.onerror = () => alert('Datei "'+file.name+'" konnte nicht gelesen werden.');
+      reader.readAsDataURL(file);
+    });
+  }
+  document.getElementById('fileInput').addEventListener('change', e => { handleFiles(e.target.files); e.target.value=''; });
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='var(--amber)'; });
+  dz.addEventListener('dragleave', () => { dz.style.borderColor=''; });
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+  // ---------- Start ----------
+  (async () => {
+    await loadMe();
+    await loadImages();
+    await loadPromosIntoForm();
+  })();
+</script>
+</body>
+</html>
