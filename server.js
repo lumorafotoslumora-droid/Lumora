@@ -1,5 +1,6 @@
 // Lumora — eigenständiger Node.js-Server (nur Node-Bordmittel, keine externen Pakete nötig)
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -29,7 +30,9 @@ function loadDB(){
       purchases: [],
       promos: { firstFree:false, twoForOne:false, percent:false, percentValue:20 },
       firstFreeUsed: {},
-      raffleEntries: [] // {id, email, enteredAt}
+      raffleEntries: [],
+      raffleSettings: { enabled: true },
+      supportMessages: [] // {id, name, email, message, createdAt}
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -42,6 +45,8 @@ function saveDB(db){
 
 let db = loadDB();
 if(!Array.isArray(db.raffleEntries)) db.raffleEntries = [];
+if(!db.raffleSettings) db.raffleSettings = { enabled: true };
+if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -55,6 +60,66 @@ function ensureAdmin(){
   }
 }
 ensureAdmin();
+
+function sendVerificationEmail(toEmail, verifyUrl){
+  return new Promise((resolve) => {
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.SENDER_EMAIL || 'lumora.fotos.lumora@gmail.com';
+    if(!apiKey){
+      console.warn('BREVO_API_KEY ist nicht gesetzt — Bestätigungs-E-Mail wurde NICHT verschickt. (Umgebungsvariable bei Render unter "Environment" eintragen.)');
+      return resolve(false);
+    }
+    const payload = JSON.stringify({
+      sender: { email: senderEmail, name: 'Lumora' },
+      to: [{ email: toEmail }],
+      subject: 'Bestätige deine E-Mail-Adresse bei Lumora',
+      htmlContent: `
+        <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+          <h2>Willkommen bei Lumora! 📸</h2>
+          <p>Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiviert ist.</p>
+          <p><a href="${verifyUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">E-Mail bestätigen</a></p>
+          <p style="color:#888; font-size:13px;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>${verifyUrl}</p>
+        </div>`
+    });
+    const options = {
+      hostname: 'api.brevo.com',
+      path: '/v3/smtp/email',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'api-key': apiKey, 'Content-Length': Buffer.byteLength(payload) }
+    };
+    const emailReq = https.request(options, (emailRes) => {
+      let data = '';
+      emailRes.on('data', c => data += c);
+      emailRes.on('end', () => {
+        if(emailRes.statusCode >= 200 && emailRes.statusCode < 300) resolve(true);
+        else { console.error('E-Mail-Versand fehlgeschlagen:', emailRes.statusCode, data); resolve(false); }
+      });
+    });
+    emailReq.on('error', (e) => { console.error('E-Mail-Versand-Fehler:', e.message); resolve(false); });
+    emailReq.write(payload);
+    emailReq.end();
+  });
+}
+
+function isValidEmail(email){
+  // Deutlich strengere Prüfung als nur "enthält @ und .": korrekte Struktur,
+  // keine Leerzeichen, echte Domain-Endung mit mind. 2 Buchstaben.
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/.test(email);
+}
+
+function isValidBirthday(str){
+  const m = String(str).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if(mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  const date = new Date(y, mo - 1, d);
+  // Prüft, ob das Datum wirklich existiert (fängt z.B. 30. Februar ab)
+  if(date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return false;
+  const today = new Date(); today.setHours(23,59,59,999);
+  if(date > today) return false; // kein Geburtstag in der Zukunft
+  if(y < 1900) return false;
+  return true;
+}
 
 // ---------- Hilfsfunktionen ----------
 function genId(){ return crypto.randomBytes(9).toString('hex'); }
@@ -135,7 +200,7 @@ function purgeExpiredGrace(){
 }
 
 function publicUser(u){
-  return { id: u.id, name: u.name, email: u.email, role: u.role, birthday: u.birthday, createdAt: u.createdAt };
+  return { id: u.id, name: u.name, email: u.email, role: u.role, birthday: u.birthday, createdAt: u.createdAt, emailVerified: !!u.emailVerified };
 }
 
 function publicImage(img, user){
@@ -228,6 +293,20 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(res, filePath);
     }
 
+    // ---- E-Mail-Bestätigung ----
+    if(pathname === '/api/verify-email' && method === 'GET'){
+      const token = parsed.searchParams.get('token');
+      const u = db.users.find(x => x.verifyToken && x.verifyToken === token);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      if(!u){
+        return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>Ungültiger oder bereits verwendeter Link.</h2></body></html>');
+      }
+      u.emailVerified = true;
+      delete u.verifyToken;
+      saveDB(db);
+      return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>✅ E-Mail bestätigt!</h2><p>Du kannst dieses Fenster jetzt schließen und dich auf Lumora einloggen.</p></body></html>');
+    }
+
     // API
     if(pathname.startsWith('/api/')){
       return await handleApi(req, res, pathname, method, parsed);
@@ -256,16 +335,26 @@ async function handleApi(req, res, pathname, method, parsed){
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
     if(!name || !birthday || !email || !password) return sendJson(res, 400, { error: 'Bitte alle Felder ausfüllen.' });
-    if(!email.includes('@') || !email.includes('.')) return sendJson(res, 400, { error: 'Ungültige E-Mail-Adresse.' });
+    if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus. Bitte überprüfen.' });
+    if(!isValidBirthday(birthday)) return sendJson(res, 400, { error: 'Dieses Geburtsdatum ist ungültig (z.B. Datum existiert nicht oder liegt in der Zukunft).' });
     if(!(password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)))
       return sendJson(res, 400, { error: 'Passwort erfüllt nicht alle Anforderungen.' });
     if(db.users.some(u => (u.email && u.email.toLowerCase() === email) || u.name.toLowerCase() === email))
       return sendJson(res, 400, { error: 'Für diese E-Mail existiert bereits ein Konto.' });
 
     const { salt, hash } = hashPassword(password);
-    const newUser = { id: genId(), name, email, role: 'customer', salt, hash, birthday, createdAt: new Date().toISOString() };
+    const verifyToken = crypto.randomBytes(24).toString('hex');
+    const newUser = {
+      id: genId(), name, email, role: 'customer', salt, hash, birthday,
+      emailVerified: false, verifyToken,
+      createdAt: new Date().toISOString()
+    };
     db.users.push(newUser);
     saveDB(db);
+
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const verifyUrl = `${proto}://${req.headers.host}/api/verify-email?token=${verifyToken}`;
+    sendVerificationEmail(email, verifyUrl);
 
     const token = genId();
     sessions.set(token, newUser.id);
@@ -299,6 +388,20 @@ async function handleApi(req, res, pathname, method, parsed){
 
   if(pathname === '/api/me' && method === 'GET'){
     return sendJson(res, 200, { user: user ? publicUser(user) : null });
+  }
+
+  if(pathname === '/api/resend-verification' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    if(user.role !== 'customer') return sendJson(res, 400, { error: 'Nur für Kundenkonten relevant.' });
+    if(user.emailVerified) return sendJson(res, 400, { error: 'Deine E-Mail ist bereits bestätigt.' });
+    const verifyToken = crypto.randomBytes(24).toString('hex');
+    user.verifyToken = verifyToken;
+    saveDB(db);
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const verifyUrl = `${proto}://${req.headers.host}/api/verify-email?token=${verifyToken}`;
+    const sent = await sendVerificationEmail(user.email, verifyUrl);
+    if(!sent) return sendJson(res, 500, { error: 'E-Mail-Versand ist aktuell nicht eingerichtet oder fehlgeschlagen.' });
+    return sendJson(res, 200, { ok: true });
   }
 
   if(pathname === '/api/change-password' && method === 'POST'){
@@ -407,10 +510,21 @@ async function handleApi(req, res, pathname, method, parsed){
   }
 
   // ---- Gewinnspiel ----
+  if(pathname === '/api/raffle/settings' && method === 'GET'){
+    return sendJson(res, 200, { settings: db.raffleSettings });
+  }
+  if(pathname === '/api/raffle/settings' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    db.raffleSettings.enabled = !!body.enabled;
+    saveDB(db);
+    return sendJson(res, 200, { settings: db.raffleSettings });
+  }
   if(pathname === '/api/raffle/enter' && method === 'POST'){
+    if(!db.raffleSettings.enabled) return sendJson(res, 403, { error: 'Das Gewinnspiel ist aktuell nicht aktiv.' });
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
-    if(!email.includes('@') || !email.includes('.')) return sendJson(res, 400, { error: 'Bitte eine gültige E-Mail-Adresse angeben.' });
+    if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus. Bitte überprüfen.' });
     const already = db.raffleEntries.some(e => e.email === email);
     if(!already){
       db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString() });
@@ -443,6 +557,30 @@ async function handleApi(req, res, pathname, method, parsed){
     const html = body.html || '';
     if(!html.includes('<html') || !html.includes('</html>')) return sendJson(res, 400, { error: 'Das sieht nicht wie eine vollständige HTML-Datei aus. Bitte den kompletten Code einfügen.' });
     fs.writeFileSync(path.join(PUBLIC_DIR, 'index.html'), html, 'utf8');
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ---- Support-Nachrichten (wie ein Kontaktformular / Postfach) ----
+  if(pathname === '/api/support/message' && method === 'POST'){
+    const body = await readJsonBody(req);
+    const name = (body.name || '').trim();
+    const email = (body.email || '').trim();
+    const message = (body.message || '').trim();
+    if(!message) return sendJson(res, 400, { error: 'Bitte eine Nachricht eingeben.' });
+    if(email && !isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus.' });
+    db.supportMessages.push({ id: genId(), name: name || (user ? user.name : 'Anonym'), email, message, createdAt: new Date().toISOString() });
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+  if(pathname === '/api/support/messages' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { messages: [...db.supportMessages].reverse() });
+  }
+  const supportMatch = pathname.match(/^\/api\/support\/messages\/([a-f0-9]+)$/);
+  if(supportMatch && method === 'DELETE'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    db.supportMessages = db.supportMessages.filter(m => m.id !== supportMatch[1]);
+    saveDB(db);
     return sendJson(res, 200, { ok: true });
   }
 

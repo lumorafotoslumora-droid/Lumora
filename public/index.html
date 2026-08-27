@@ -188,6 +188,7 @@
     <button class="active" data-view="gallery" onclick="switchView('gallery')">Galerie</button>
     <button data-view="cart" onclick="switchView('cart')">Warenkorb<span class="cart-count" id="navCartCount" style="display:none;"></span></button>
     <button data-view="account" onclick="switchView('account')">Mein Konto</button>
+    <button data-view="support" onclick="switchView('support')">Support</button>
     <button data-view="admin" id="navAdminTab" class="hidden" onclick="switchView('admin')">Verwaltung</button>
   </nav>
   <div class="header-actions">
@@ -223,7 +224,7 @@
       <div class="redeem-msg" id="redeemMsg"></div>
     </div>
 
-    <div class="redeem-card">
+    <div class="redeem-card" id="raffleGiveawayCard">
       <h3>🎁 Gewinnspiel</h3>
       <p>Trag deine E-Mail-Adresse ein und nimm an der Verlosung eines Gratisbildes teil.</p>
       <div class="redeem-row">
@@ -265,7 +266,14 @@
         <h3>Konto erstellen</h3>
         <p class="sub">Kostenlos — nur für Kunden</p>
         <div class="field"><label>Name</label><input type="text" id="regName"></div>
-        <div class="field"><label>Geburtstag</label><input type="date" id="regBirthday"></div>
+        <div class="field">
+          <label>Geburtstag</label>
+          <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <select id="regBirthDay" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+            <select id="regBirthMonth" style="flex:1.4; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+            <select id="regBirthYear" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+          </div>
+        </div>
         <div class="field"><label>E-Mail</label><input type="email" id="regEmail"></div>
         <div class="field"><label>Passwort</label><input type="password" id="regPass" oninput="updatePwChecklist()"></div>
         <div class="pw-checklist">
@@ -306,6 +314,20 @@
     </div>
   </section>
 
+  <section class="view" id="view-support">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kontakt</p><h2 style="font-size:28px;">Support</h2><p>Schreib uns eine Nachricht direkt hier auf der Seite, oder per E-Mail.</p></div>
+    <div class="auth-card" style="max-width:480px;">
+      <h3>Nachricht senden</h3>
+      <p class="sub">Wir antworten dir per E-Mail, falls du eine angibst.</p>
+      <div class="field"><label>Name (optional)</label><input type="text" id="supportName"></div>
+      <div class="field"><label>E-Mail (optional, für Antwort)</label><input type="email" id="supportEmail"></div>
+      <div class="field"><label>Nachricht</label><textarea id="supportMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif;"></textarea></div>
+      <div class="err-text" id="supportErr"></div>
+      <button class="btn solid" style="width:100%;" onclick="sendSupportMessage()">Nachricht senden</button>
+      <p class="terms-note" style="margin-top:16px; text-align:left;">Oder schreib uns direkt: <a href="mailto:lumora.fotos.lumora@gmail.com" style="color:var(--amber);">lumora.fotos.lumora@gmail.com</a></p>
+    </div>
+  </section>
+
   <section class="view" id="view-admin">
     <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Verwaltung</p><h2 style="font-size:28px;">Bilder verwalten</h2></div>
     <div class="dashboard">
@@ -326,9 +348,17 @@
       </div>
       <div class="panel-card" id="rafflePanel">
         <h3>🎁 Gewinnspiel-Teilnehmer</h3>
+        <div class="promo-row" style="margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line);">
+          <input type="checkbox" id="raffleEnabledToggle" onchange="saveRaffleSettings()">
+          <label>Gewinnspiel auf der Seite anzeigen<small>Wenn ausgeschaltet, ist die Teilnahme-Box für Besucher nicht sichtbar</small></label>
+        </div>
         <div class="team-list" id="raffleList"></div>
         <button class="btn solid" style="width:100%; margin-top:6px;" onclick="drawRaffleWinner()">Zufälligen Gewinner auslosen</button>
         <div class="redeem-msg" id="raffleWinnerMsg" style="margin-top:12px;"></div>
+      </div>
+      <div class="panel-card" id="supportPanel">
+        <h3>📬 Support-Nachrichten</h3>
+        <div class="team-list" id="supportMessagesList" style="max-height:280px;"></div>
       </div>
     </div>
     <div id="dropzone" onclick="document.getElementById('fileInput').click()">＋ Bilder oder Videos hochladen — klicken oder hierher ziehen</div>
@@ -350,7 +380,7 @@
   <div class="foot-grid">
     <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;">Fotografie zum Kauf oder kostenlosen Download.</p></div>
     <div><h5>Produkt</h5><ul><li><a onclick="switchView('gallery')">Galerie</a></li><li><a onclick="switchView('cart')">Warenkorb</a></li><li><a onclick="switchView('account')">Mein Konto</a></li></ul></div>
-    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a href="mailto:matic.lojak@icloud.com">Support</a></li></ul></div>
+    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a onclick="switchView('support')">Support</a></li></ul></div>
   </div>
   <div class="foot-bottom"><span>© 2026 Lumora</span><span>Läuft auf eigenem Server</span></div>
 </footer>
@@ -522,9 +552,74 @@
   }
 
   // ---------- Login / Registrierung ----------
+  async function resendVerification(){
+    const msgEl = document.getElementById('resendMsg');
+    try {
+      await api('/api/resend-verification', { method:'POST' });
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = 'Gesendet! Schau in dein Postfach.';
+    } catch(e){ msgEl.style.color = 'var(--danger)'; msgEl.textContent = e.message; }
+  }
+
+  function isValidEmailClient(email){
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/.test(email);
+  }
+
+  async function loadRaffleSettings(){
+    const r = await api('/api/raffle/settings');
+    document.getElementById('raffleEnabledToggle').checked = r.settings.enabled;
+    updateRaffleCardVisibility(r.settings.enabled);
+  }
+  function updateRaffleCardVisibility(enabled){
+    const card = document.getElementById('raffleGiveawayCard');
+    if(card) card.style.display = enabled ? 'block' : 'none';
+  }
+  async function saveRaffleSettings(){
+    const enabled = document.getElementById('raffleEnabledToggle').checked;
+    const r = await api('/api/raffle/settings', { method:'POST', body:{ enabled } });
+    updateRaffleCardVisibility(r.settings.enabled);
+  }
+
+  async function loadSupportMessages(){
+    try {
+      const r = await api('/api/support/messages');
+      const list = document.getElementById('supportMessagesList');
+      if(r.messages.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Nachrichten.</div>'; return; }
+      list.innerHTML = r.messages.map(m => `
+        <div class="team-row" style="align-items:flex-start; flex-direction:column; gap:6px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <b style="font-size:12.5px;">${m.name || 'Anonym'}${m.email ? ' · ' + m.email : ''}</b>
+            <button class="btn danger" style="padding:3px 8px; font-size:10px;" onclick="removeSupportMessage('${m.id}')">Entfernen</button>
+          </div>
+          <div style="font-size:13px; color:var(--muted);">${m.message}</div>
+          <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">${new Date(m.createdAt).toLocaleString('de-DE')}</div>
+        </div>`).join('');
+    } catch(e){}
+  }
+  async function removeSupportMessage(id){
+    await api('/api/support/messages/' + id, { method:'DELETE' });
+    loadSupportMessages();
+  }
+  async function sendSupportMessage(){
+    const errEl = document.getElementById('supportErr'); errEl.classList.remove('show');
+    const email = document.getElementById('supportEmail').value.trim();
+    if(email && !isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    try {
+      await api('/api/support/message', { method:'POST', body:{
+        name: document.getElementById('supportName').value.trim(),
+        email, message: document.getElementById('supportMessage').value.trim()
+      }});
+      document.getElementById('supportName').value = '';
+      document.getElementById('supportEmail').value = '';
+      document.getElementById('supportMessage').value = '';
+      errEl.style.color = 'var(--green)'; errEl.textContent = 'Danke! Deine Nachricht wurde gesendet.'; errEl.classList.add('show');
+    } catch(e){ errEl.style.color=''; errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
   async function enterRaffle(){
     const input = document.getElementById('raffleInput');
     const msg = document.getElementById('raffleMsg');
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
     try {
       const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim() } });
       msg.textContent = r.alreadyEntered ? 'Du nimmst bereits teil — viel Glück!' : 'Danke! Du nimmst jetzt an der Verlosung teil.';
@@ -591,17 +686,52 @@
     } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
   }
 
+  function fillBirthdayDropdowns(){
+    const dayEl = document.getElementById('regBirthDay');
+    const monthEl = document.getElementById('regBirthMonth');
+    const yearEl = document.getElementById('regBirthYear');
+    dayEl.innerHTML = '<option value="">Tag</option>' + Array.from({length:31}, (_,i)=>i+1).map(d => `<option value="${d}">${d}</option>`).join('');
+    const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    monthEl.innerHTML = '<option value="">Monat</option>' + months.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+    const currentYear = new Date().getFullYear();
+    let yearOptions = '<option value="">Jahr</option>';
+    for(let y = currentYear; y >= currentYear - 100; y--){ yearOptions += `<option value="${y}">${y}</option>`; }
+    yearEl.innerHTML = yearOptions;
+  }
+  fillBirthdayDropdowns();
+
+  function isValidBirthdayClient(y, mo, d){
+    y = +y; mo = +mo; d = +d;
+    const date = new Date(y, mo - 1, d);
+    if(date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return false;
+    const today = new Date(); today.setHours(23,59,59,999);
+    if(date > today) return false;
+    if(y < 1900) return false;
+    return true;
+  }
+
   async function registerCustomer(){
     const errEl = document.getElementById('regErr'); errEl.classList.remove('show');
+    const day = document.getElementById('regBirthDay').value;
+    const month = document.getElementById('regBirthMonth').value;
+    const year = document.getElementById('regBirthYear').value;
+    if(!day || !month || !year){ errEl.textContent = 'Bitte einen vollständigen Geburtstag auswählen.'; errEl.classList.add('show'); return; }
+    if(!isValidBirthdayClient(year, month, day)){ errEl.textContent = 'Dieses Geburtsdatum gibt es nicht oder liegt in der Zukunft.'; errEl.classList.add('show'); return; }
+    const email = document.getElementById('regEmail').value.trim();
+    if(!isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    const birthday = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     try {
       const r = await api('/api/register', { method:'POST', body:{
         name: document.getElementById('regName').value.trim(),
-        birthday: document.getElementById('regBirthday').value,
-        email: document.getElementById('regEmail').value.trim(),
+        birthday: birthday,
+        email: email,
         password: document.getElementById('regPass').value
       }});
       currentUserData = r.user;
-      ['regName','regBirthday','regEmail','regPass'].forEach(id => document.getElementById(id).value='');
+      ['regName','regEmail','regPass'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('regBirthDay').value = '';
+      document.getElementById('regBirthMonth').value = '';
+      document.getElementById('regBirthYear').value = '';
       applyRoleState(); await loadImages(); renderAccountView();
     } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
   }
@@ -633,6 +763,7 @@
     document.getElementById('promoPanel').classList.toggle('show', isAdmin);
     document.getElementById('employeePanel').classList.toggle('show', isAdmin);
     document.getElementById('rafflePanel').classList.toggle('show', isAdmin);
+    document.getElementById('supportPanel').classList.toggle('show', isAdmin);
     document.getElementById('updatePanel').classList.toggle('show', isAdmin);
     document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
     document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
@@ -641,7 +772,7 @@
     if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
     if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
     if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
-    if(isAdmin){ loadTeamList(); loadRaffleList(); }
+    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); }
   }
 
   async function loadTeamList(){
@@ -751,7 +882,13 @@
 
     const detailsEl = document.getElementById('profileDetails'), statRow = document.getElementById('statRow');
     if(role() === 'customer'){
-      detailsEl.innerHTML = `<div class="detail">E-Mail: <b>${currentUserData.email}</b></div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
+      const verifyBannerHtml = currentUserData.emailVerified ? '' : `
+        <div class="notice" style="margin-bottom:16px;">
+          ⚠️ Deine E-Mail ist noch nicht bestätigt. Schau in dein Postfach, oder
+          <a onclick="resendVerification()">Bestätigungsmail erneut senden</a>.
+          <div id="resendMsg" style="margin-top:6px; font-size:12px;"></div>
+        </div>`;
+      detailsEl.innerHTML = verifyBannerHtml + `<div class="detail">E-Mail: <b>${currentUserData.email}</b> ${currentUserData.emailVerified ? '✅' : ''}</div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
       const r = await api('/api/purchases');
       const memberSince = new Date(currentUserData.createdAt).toLocaleDateString('de-DE');
       statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">Gekaufte Bilder</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">Mitglied seit</div></div>`;
@@ -815,6 +952,8 @@
     await loadMe();
     await loadImages();
     await loadPromosIntoForm();
+    const raffleStatus = await api('/api/raffle/settings');
+    updateRaffleCardVisibility(raffleStatus.settings.enabled);
   })();
 </script>
 </body>
