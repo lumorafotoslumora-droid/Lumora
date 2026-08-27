@@ -222,6 +222,16 @@
       </div>
       <div class="redeem-msg" id="redeemMsg"></div>
     </div>
+
+    <div class="redeem-card">
+      <h3>🎁 Gewinnspiel</h3>
+      <p>Trag deine E-Mail-Adresse ein und nimm an der Verlosung eines Gratisbildes teil.</p>
+      <div class="redeem-row">
+        <input type="email" id="raffleInput" placeholder="deine@email.com" style="letter-spacing:normal; text-transform:none; font-family:'Inter',sans-serif;">
+        <button class="btn solid" onclick="enterRaffle()">Teilnehmen</button>
+      </div>
+      <div class="redeem-msg" id="raffleMsg"></div>
+    </div>
   </section>
 
   <section class="view" id="view-cart">
@@ -314,11 +324,25 @@
           <button class="btn solid" onclick="addEmployee()">Hinzufügen</button>
         </div>
       </div>
+      <div class="panel-card" id="rafflePanel">
+        <h3>🎁 Gewinnspiel-Teilnehmer</h3>
+        <div class="team-list" id="raffleList"></div>
+        <button class="btn solid" style="width:100%; margin-top:6px;" onclick="drawRaffleWinner()">Zufälligen Gewinner auslosen</button>
+        <div class="redeem-msg" id="raffleWinnerMsg" style="margin-top:12px;"></div>
+      </div>
     </div>
     <div id="dropzone" onclick="document.getElementById('fileInput').click()">＋ Bilder oder Videos hochladen — klicken oder hierher ziehen</div>
     <input type="file" id="fileInput" accept="image/*,video/*" multiple>
     <div class="grid" id="adminGrid"></div>
     <div class="empty" id="adminEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+
+    <div class="panel-card" id="updatePanel" style="margin-top:32px; max-width:100%;">
+      <h3>🔄 Website aktualisieren</h3>
+      <p style="color:var(--muted); font-size:12.5px; margin:-8px 0 14px;">Füge hier den kompletten Code ein, den du von Claude bekommst, und veröffentliche ihn — ohne dass Bilder, Mitarbeiter oder Kundenkonten verloren gehen.</p>
+      <textarea id="updateHtmlInput" placeholder="Kompletten HTML-Code hier einfügen..." style="width:100%; height:160px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:12px; border-radius:var(--radius-sm); font-family:'Space Mono',monospace; font-size:11.5px; margin-bottom:12px;"></textarea>
+      <button class="btn solid" onclick="updateFrontend()">Veröffentlichen</button>
+      <div class="redeem-msg" id="updateMsg" style="margin-top:12px;"></div>
+    </div>
   </section>
 </main>
 
@@ -326,7 +350,7 @@
   <div class="foot-grid">
     <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;">Fotografie zum Kauf oder kostenlosen Download.</p></div>
     <div><h5>Produkt</h5><ul><li><a onclick="switchView('gallery')">Galerie</a></li><li><a onclick="switchView('cart')">Warenkorb</a></li><li><a onclick="switchView('account')">Mein Konto</a></li></ul></div>
-    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a>Kontakt</a></li></ul></div>
+    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a href="mailto:matic.lojak@icloud.com">Support</a></li></ul></div>
   </div>
   <div class="foot-bottom"><span>© 2026 Lumora</span><span>Läuft auf eigenem Server</span></div>
 </footer>
@@ -498,6 +522,52 @@
   }
 
   // ---------- Login / Registrierung ----------
+  async function enterRaffle(){
+    const input = document.getElementById('raffleInput');
+    const msg = document.getElementById('raffleMsg');
+    try {
+      const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim() } });
+      msg.textContent = r.alreadyEntered ? 'Du nimmst bereits teil — viel Glück!' : 'Danke! Du nimmst jetzt an der Verlosung teil.';
+      msg.className = 'redeem-msg ok';
+      input.value = '';
+    } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
+  }
+
+  async function loadRaffleList(){
+    try {
+      const r = await api('/api/raffle/entries');
+      const list = document.getElementById('raffleList');
+      if(r.entries.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Teilnehmer.</div>'; return; }
+      list.innerHTML = r.entries.map(e => `<div class="team-row"><span>${e.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeRaffleEntry('${e.id}')">Entfernen</button></div>`).join('');
+    } catch(e){}
+  }
+
+  async function removeRaffleEntry(id){
+    await api('/api/raffle/entries/' + id, { method:'DELETE' });
+    loadRaffleList();
+  }
+
+  async function drawRaffleWinner(){
+    const msgEl = document.getElementById('raffleWinnerMsg');
+    try {
+      const r = await api('/api/raffle/draw', { method:'POST' });
+      msgEl.textContent = '🎉 Gewinner: ' + r.winner.email;
+      msgEl.className = 'redeem-msg ok';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function updateFrontend(){
+    const html = document.getElementById('updateHtmlInput').value;
+    const msgEl = document.getElementById('updateMsg');
+    if(!html.trim()){ msgEl.textContent = 'Bitte zuerst den Code einfügen.'; msgEl.className = 'redeem-msg err'; return; }
+    try {
+      await api('/api/admin/update-frontend', { method:'POST', body:{ html } });
+      msgEl.textContent = 'Veröffentlicht! Lade die Seite in wenigen Sekunden neu (F5), um die Änderungen zu sehen.';
+      msgEl.className = 'redeem-msg ok';
+      document.getElementById('updateHtmlInput').value = '';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
   function updatePwChecklist(){
     const c = pwChecks(document.getElementById('regPass').value);
     document.getElementById('pwLenCheck').classList.toggle('valid', c.len);
@@ -562,6 +632,8 @@
     document.getElementById('dropzone').classList.toggle('show', isStaff);
     document.getElementById('promoPanel').classList.toggle('show', isAdmin);
     document.getElementById('employeePanel').classList.toggle('show', isAdmin);
+    document.getElementById('rafflePanel').classList.toggle('show', isAdmin);
+    document.getElementById('updatePanel').classList.toggle('show', isAdmin);
     document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
     document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
     ['Admin','Employee','Customer'].forEach(k => document.getElementById('rolePill'+k).classList.remove('show'));
@@ -569,7 +641,7 @@
     if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
     if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
     if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
-    if(isAdmin) loadTeamList();
+    if(isAdmin){ loadTeamList(); loadRaffleList(); }
   }
 
   async function loadTeamList(){

@@ -26,9 +26,10 @@ function loadDB(){
     const initial = {
       users: [],
       images: [],
-      purchases: [], // {userId, imageId, purchasedAt}
+      purchases: [],
       promos: { firstFree:false, twoForOne:false, percent:false, percentValue:20 },
-      firstFreeUsed: {} // userId -> true
+      firstFreeUsed: {},
+      raffleEntries: [] // {id, email, enteredAt}
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -40,6 +41,7 @@ function saveDB(db){
 }
 
 let db = loadDB();
+if(!Array.isArray(db.raffleEntries)) db.raffleEntries = [];
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -402,6 +404,46 @@ async function handleApi(req, res, pathname, method, parsed){
       saveDB(db);
     }
     return sendJson(res, 200, { url: '/uploads/' + img.filename, image: publicImage(img, user) });
+  }
+
+  // ---- Gewinnspiel ----
+  if(pathname === '/api/raffle/enter' && method === 'POST'){
+    const body = await readJsonBody(req);
+    const email = (body.email || '').trim().toLowerCase();
+    if(!email.includes('@') || !email.includes('.')) return sendJson(res, 400, { error: 'Bitte eine gültige E-Mail-Adresse angeben.' });
+    const already = db.raffleEntries.some(e => e.email === email);
+    if(!already){
+      db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString() });
+      saveDB(db);
+    }
+    return sendJson(res, 200, { ok: true, alreadyEntered: already });
+  }
+  if(pathname === '/api/raffle/entries' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { entries: db.raffleEntries });
+  }
+  if(pathname === '/api/raffle/draw' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(db.raffleEntries.length === 0) return sendJson(res, 400, { error: 'Es gibt noch keine Teilnehmer.' });
+    const winner = db.raffleEntries[Math.floor(Math.random() * db.raffleEntries.length)];
+    return sendJson(res, 200, { winner });
+  }
+  const raffleMatch = pathname.match(/^\/api\/raffle\/entries\/([a-f0-9]+)$/);
+  if(raffleMatch && method === 'DELETE'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    db.raffleEntries = db.raffleEntries.filter(e => e.id !== raffleMatch[1]);
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ---- Website live aktualisieren (ohne Serverneustart, damit keine Daten verloren gehen) ----
+  if(pathname === '/api/admin/update-frontend' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const html = body.html || '';
+    if(!html.includes('<html') || !html.includes('</html>')) return sendJson(res, 400, { error: 'Das sieht nicht wie eine vollständige HTML-Datei aus. Bitte den kompletten Code einfügen.' });
+    fs.writeFileSync(path.join(PUBLIC_DIR, 'index.html'), html, 'utf8');
+    return sendJson(res, 200, { ok: true });
   }
 
   // ---- Mitarbeiter ----
