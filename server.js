@@ -32,7 +32,9 @@ function loadDB(){
       firstFreeUsed: {},
       raffleEntries: [],
       raffleSettings: { enabled: true },
-      supportMessages: [] // {id, name, email, message, createdAt}
+      supportMessages: [],
+      newsletterSubscribers: [],
+      dailyEmail: { lastSentDate: null, pendingNote: '' }
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -47,6 +49,8 @@ let db = loadDB();
 if(!Array.isArray(db.raffleEntries)) db.raffleEntries = [];
 if(!db.raffleSettings) db.raffleSettings = { enabled: true };
 if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
+if(!Array.isArray(db.newsletterSubscribers)) db.newsletterSubscribers = [];
+if(!db.dailyEmail) db.dailyEmail = { lastSentDate: null, pendingNote: '' };
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -61,25 +65,19 @@ function ensureAdmin(){
 }
 ensureAdmin();
 
-function sendVerificationEmail(toEmail, verifyUrl){
+function sendEmail(toEmail, subject, htmlContent){
   return new Promise((resolve) => {
     const apiKey = process.env.BREVO_API_KEY;
     const senderEmail = process.env.SENDER_EMAIL || 'lumora.fotos.lumora@gmail.com';
     if(!apiKey){
-      console.warn('BREVO_API_KEY ist nicht gesetzt — Bestätigungs-E-Mail wurde NICHT verschickt. (Umgebungsvariable bei Render unter "Environment" eintragen.)');
+      console.warn('BREVO_API_KEY ist nicht gesetzt — E-Mail wurde NICHT verschickt.');
       return resolve(false);
     }
     const payload = JSON.stringify({
       sender: { email: senderEmail, name: 'Lumora' },
       to: [{ email: toEmail }],
-      subject: 'Bestätige deine E-Mail-Adresse bei Lumora',
-      htmlContent: `
-        <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
-          <h2>Willkommen bei Lumora! 📸</h2>
-          <p>Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiviert ist.</p>
-          <p><a href="${verifyUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">E-Mail bestätigen</a></p>
-          <p style="color:#888; font-size:13px;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>${verifyUrl}</p>
-        </div>`
+      subject,
+      htmlContent
     });
     const options = {
       hostname: 'api.brevo.com',
@@ -99,6 +97,85 @@ function sendVerificationEmail(toEmail, verifyUrl){
     emailReq.write(payload);
     emailReq.end();
   });
+}
+
+function sendVerificationEmail(toEmail, verifyUrl){
+  const html = `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>Willkommen bei Lumora! 📸</h2>
+      <p>Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiviert ist.</p>
+      <p><a href="${verifyUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">E-Mail bestätigen</a></p>
+      <p style="color:#888; font-size:13px;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>${verifyUrl}</p>
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+  return sendEmail(toEmail, 'Bestätige deine E-Mail-Adresse bei Lumora', html);
+}
+
+function sendRaffleWinnerEmail(toEmail, code, siteUrl){
+  const html = `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>🎉 Herzlichen Glückwunsch!</h2>
+      <p>Du hast bei unserem Lumora-Gewinnspiel ein Gratis-Bild gewonnen!</p>
+      <p>Dein Code:</p>
+      <p style="font-size:26px; font-weight:bold; letter-spacing:4px; background:#f0f0f0; padding:14px 18px; border-radius:8px; display:inline-block;">${code}</p>
+      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; margin-top:10px;">Jetzt einlösen</a></p>
+      <p style="color:#d9694f; font-weight:bold; margin-top:16px;">⏰ Dieser Code ist nur 24 Stunden gültig!</p>
+      <p>Gib ihn einfach im Feld "Bild-Code einlösen" auf unserer Startseite ein.</p>
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+  return sendEmail(toEmail, '🎉 Du hast gewonnen! Dein Gratis-Bild-Code (24h gültig)', html);
+}
+
+function sendNewsletterEmail(toEmail, subject, messageText){
+  const htmlMessage = messageText.split('\n').filter(l => l.trim()).map(l => `<p style="margin:0 0 12px;">${l}</p>`).join('');
+  const html = `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>Lumora 📸</h2>
+      ${htmlMessage}
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+  return sendEmail(toEmail, subject, html);
+}
+
+function buildDailyEmailHtml(newImagesCount, note, siteUrl){
+  const intro = newImagesCount > 0
+    ? `<p>🆕 Es gibt <b>${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'}</b> in der Galerie!</p>`
+    : `<p>Schau doch mal wieder bei Lumora vorbei — es lohnt sich immer ein Blick in die Galerie. 📸</p>`;
+  const noteHtml = note ? `<p style="background:#f0f0f0; padding:12px 16px; border-radius:8px;">📢 ${note}</p>` : '';
+  return `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>Lumora 📸</h2>
+      ${intro}
+      ${noteHtml}
+      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Zur Galerie</a></p>
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+}
+
+async function runDailySend(siteUrl, force){
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if(!force && db.dailyEmail.lastSentDate === todayStr) return { skipped: true, reason: 'already-sent-today' };
+  if(db.newsletterSubscribers.length === 0){
+    if(!force){ db.dailyEmail.lastSentDate = todayStr; saveDB(db); }
+    return { skipped: true, reason: 'no-subscribers' };
+  }
+  const since = Date.now() - 24 * 60 * 60 * 1000;
+  const newImagesCount = db.images.filter(img => new Date(img.createdAt).getTime() >= since).length;
+  const note = db.dailyEmail.pendingNote || '';
+  const html = buildDailyEmailHtml(newImagesCount, note, siteUrl);
+  const subject = note
+    ? '📢 Neuigkeiten von Lumora'
+    : (newImagesCount > 0 ? `🆕 ${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'} bei Lumora!` : '📸 Dein täglicher Lumora-Blick');
+
+  let sentCount = 0;
+  for(const sub of db.newsletterSubscribers){
+    const ok = await sendEmail(sub.email, subject, html);
+    if(ok) sentCount++;
+  }
+  db.dailyEmail.lastSentDate = todayStr;
+  db.dailyEmail.pendingNote = '';
+  saveDB(db);
+  return { sentCount, total: db.newsletterSubscribers.length, newImagesCount };
 }
 
 function isValidEmail(email){
@@ -538,9 +615,26 @@ async function handleApi(req, res, pathname, method, parsed){
   }
   if(pathname === '/api/raffle/draw' && method === 'POST'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const img = db.images.find(i => i.id === body.imageId);
+    if(!img) return sendJson(res, 400, { error: 'Bitte zuerst ein Bild für den Gewinn auswählen.' });
     if(db.raffleEntries.length === 0) return sendJson(res, 400, { error: 'Es gibt noch keine Teilnehmer.' });
-    const winner = db.raffleEntries[Math.floor(Math.random() * db.raffleEntries.length)];
-    return sendJson(res, 200, { winner });
+
+    const winnerIdx = Math.floor(Math.random() * db.raffleEntries.length);
+    const winner = db.raffleEntries[winnerIdx];
+
+    // Automatisch wie "Gesendet" klicken: aktueller Code bleibt 24h gültig, neuer Code wird erzeugt
+    const wonCode = img.code;
+    img.graceCodes.push({ code: wonCode, expires: Date.now() + GRACE_PERIOD_MS });
+    img.code = genCode();
+    db.raffleEntries.splice(winnerIdx, 1); // Gewinner aus dem Lostopf entfernen
+    saveDB(db);
+
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const siteUrl = `${proto}://${req.headers.host}/`;
+    const emailSent = await sendRaffleWinnerEmail(winner.email, wonCode, siteUrl);
+
+    return sendJson(res, 200, { winner: winner.email, code: wonCode, emailSent });
   }
   const raffleMatch = pathname.match(/^\/api\/raffle\/entries\/([a-f0-9]+)$/);
   if(raffleMatch && method === 'DELETE'){
@@ -582,6 +676,63 @@ async function handleApi(req, res, pathname, method, parsed){
     db.supportMessages = db.supportMessages.filter(m => m.id !== supportMatch[1]);
     saveDB(db);
     return sendJson(res, 200, { ok: true });
+  }
+
+  // ---- Newsletter ----
+  if(pathname === '/api/newsletter/subscribe' && method === 'POST'){
+    const body = await readJsonBody(req);
+    const email = (body.email || '').trim().toLowerCase();
+    if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus.' });
+    const already = db.newsletterSubscribers.some(s => s.email === email);
+    if(!already){
+      db.newsletterSubscribers.push({ id: genId(), email, subscribedAt: new Date().toISOString() });
+      saveDB(db);
+    }
+    return sendJson(res, 200, { ok: true, alreadySubscribed: already });
+  }
+  if(pathname === '/api/newsletter/subscribers' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { subscribers: db.newsletterSubscribers });
+  }
+  const nlMatch = pathname.match(/^\/api\/newsletter\/subscribers\/([a-f0-9]+)$/);
+  if(nlMatch && method === 'DELETE'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    db.newsletterSubscribers = db.newsletterSubscribers.filter(s => s.id !== nlMatch[1]);
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+  if(pathname === '/api/newsletter/send' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const subject = (body.subject || '').trim();
+    const message = (body.message || '').trim();
+    if(!subject || !message) return sendJson(res, 400, { error: 'Bitte Betreff und Nachricht ausfüllen.' });
+    if(db.newsletterSubscribers.length === 0) return sendJson(res, 400, { error: 'Es gibt noch keine Abonnenten.' });
+    let sentCount = 0;
+    for(const sub of db.newsletterSubscribers){
+      const ok = await sendNewsletterEmail(sub.email, subject, message);
+      if(ok) sentCount++;
+    }
+    return sendJson(res, 200, { ok: true, sentCount, total: db.newsletterSubscribers.length });
+  }
+
+  if(pathname === '/api/newsletter/daily-status' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { lastSentDate: db.dailyEmail.lastSentDate, pendingNote: db.dailyEmail.pendingNote });
+  }
+  if(pathname === '/api/newsletter/daily-note' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    db.dailyEmail.pendingNote = (body.note || '').trim();
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+  if(pathname === '/api/newsletter/send-daily-now' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}/`;
+    const result = await runDailySend(siteUrl, true);
+    return sendJson(res, 200, result);
   }
 
   // ---- Mitarbeiter ----
@@ -656,3 +807,14 @@ async function handleApi(req, res, pathname, method, parsed){
 server.listen(PORT, () => {
   console.log(`Lumora-Server läuft auf http://localhost:${PORT}`);
 });
+
+// ---------- Tägliche automatische E-Mail ----------
+// Prüft stündlich, ob heute schon eine automatische Mail verschickt wurde.
+// Funktioniert nur zuverlässig, solange der Server durchgehend läuft
+// (z.B. dank eines Wach-halte-Dienstes wie UptimeRobot).
+function scheduledDailyCheck(){
+  const siteUrl = process.env.SITE_URL || 'https://lumora-ddo1.onrender.com';
+  runDailySend(siteUrl, false).catch(e => console.error('Fehler bei automatischer Tages-Mail:', e.message));
+}
+setTimeout(scheduledDailyCheck, 60 * 1000); // kurz nach dem Start einmal prüfen
+setInterval(scheduledDailyCheck, 60 * 60 * 1000); // danach stündlich prüfen

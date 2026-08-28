@@ -178,6 +178,23 @@
   .lightbox-info .lb-price{ font-family:'Space Mono',monospace; font-size:14px; }
   .lightbox-info .lb-price.free{ color:var(--green); }
   .lightbox-counter{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:12px; }
+
+  .chat-bubble{ position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; box-shadow:0 8px 24px rgba(143,151,255,0.35); z-index:90; border:none; }
+  .chat-bubble:hover{ filter:brightness(1.08); }
+  .chat-window{ position:fixed; bottom:92px; right:24px; width:340px; max-width:calc(100vw - 40px); height:440px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); display:none; flex-direction:column; overflow:hidden; z-index:90; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+  .chat-window.show{ display:flex; }
+  .chat-header{ padding:14px 16px; background:var(--panel-2); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .chat-header b{ font-family:'Fraunces',serif; font-size:14px; }
+  .chat-header span{ cursor:pointer; color:var(--muted); font-size:14px; }
+  .chat-messages{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .chat-msg{ max-width:82%; padding:9px 12px; border-radius:12px; font-size:13px; line-height:1.45; }
+  .chat-msg.bot{ background:var(--panel-2); align-self:flex-start; border-bottom-left-radius:3px; }
+  .chat-msg.user{ background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; align-self:flex-end; border-bottom-right-radius:3px; }
+  .chat-msg a{ color:var(--amber); }
+  .chat-msg.bot a{ text-decoration:underline; cursor:pointer; }
+  .chat-input-row{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--line); }
+  .chat-input-row input{ flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 12px; border-radius:var(--radius-sm); font-size:13px; font-family:'Inter',sans-serif; }
+  .chat-input-row input:focus{ outline:none; border-color:var(--amber); }
 </style>
 </head>
 <body>
@@ -232,6 +249,16 @@
         <button class="btn solid" onclick="enterRaffle()">Teilnehmen</button>
       </div>
       <div class="redeem-msg" id="raffleMsg"></div>
+    </div>
+
+    <div class="redeem-card">
+      <h3>📰 Newsletter</h3>
+      <p>Trag dich ein und verpasse keine neuen Bilder und Aktionen mehr.</p>
+      <div class="redeem-row">
+        <input type="email" id="newsletterInput" placeholder="deine@email.com" style="letter-spacing:normal; text-transform:none; font-family:'Inter',sans-serif;">
+        <button class="btn solid" onclick="subscribeNewsletter()">Abonnieren</button>
+      </div>
+      <div class="redeem-msg" id="newsletterSubMsg"></div>
     </div>
   </section>
 
@@ -353,12 +380,34 @@
           <label>Gewinnspiel auf der Seite anzeigen<small>Wenn ausgeschaltet, ist die Teilnahme-Box für Besucher nicht sichtbar</small></label>
         </div>
         <div class="team-list" id="raffleList"></div>
-        <button class="btn solid" style="width:100%; margin-top:6px;" onclick="drawRaffleWinner()">Zufälligen Gewinner auslosen</button>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin:14px 0 6px; text-transform:uppercase;">Welches Bild gewinnt der Gewinner?</label>
+        <select id="raffleImageSelect" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius-sm); margin-bottom:10px;"></select>
+        <button class="btn solid" style="width:100%;" onclick="drawRaffleWinner()">Gewinner auslosen &amp; Code automatisch senden</button>
         <div class="redeem-msg" id="raffleWinnerMsg" style="margin-top:12px;"></div>
       </div>
       <div class="panel-card" id="supportPanel">
         <h3>📬 Support-Nachrichten</h3>
         <div class="team-list" id="supportMessagesList" style="max-height:280px;"></div>
+      </div>
+      <div class="panel-card" id="newsletterPanel">
+        <h3>📰 Newsletter</h3>
+        <p style="color:var(--muted); font-size:12px; margin:-8px 0 12px;"><span id="newsletterCount">0</span> Abonnent(en)</p>
+        <div class="team-list" id="newsletterList" style="max-height:120px; margin-bottom:14px;"></div>
+        <div class="field"><label>Betreff</label><input type="text" id="newsletterSubject"></div>
+        <div class="field"><label>Nachricht</label><textarea id="newsletterMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; margin-bottom:15px;"></textarea></div>
+        <button class="btn solid" style="width:100%;" onclick="sendNewsletter()">An alle Abonnenten senden</button>
+        <div class="redeem-msg" id="newsletterMsg" style="margin-top:12px;"></div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Tägliche Automatik</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt automatisch einmal am Tag "Es gibt neue Bilder!" (falls in 24h was Neues hochgeladen wurde) oder sonst eine allgemeine Erinnerung. Letzte automatische Mail: <b id="dailyLastSent" style="color:var(--ink);">–</b></p>
+          <div class="field"><label>Zusätzlicher Hinweis für die nächste Mail (optional, z.B. neues Feature)</label><input type="text" id="dailyNoteInput" placeholder="z.B. Neues Feature: Videos kaufen!"></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn muted" style="flex:1;" onclick="saveDailyNote()">Hinweis speichern</button>
+            <button class="btn solid" style="flex:1;" onclick="testDailySend()">Jetzt testen &amp; senden</button>
+          </div>
+          <div class="redeem-msg" id="dailyMsg" style="margin-top:10px;"></div>
+        </div>
       </div>
     </div>
     <div id="dropzone" onclick="document.getElementById('fileInput').click()">＋ Bilder oder Videos hochladen — klicken oder hierher ziehen</div>
@@ -453,6 +502,7 @@
     renderShopGrid();
     renderAdminGrid();
     renderCartBar();
+    populateRaffleImageSelect();
   }
 
   function renderShopGrid(){
@@ -474,6 +524,19 @@
           <div class="frame-foot">${actionHtml}</div>
         </div>`;
     }).join('');
+  }
+
+  function populateRaffleImageSelect(){
+    const select = document.getElementById('raffleImageSelect');
+    if(!select) return;
+    const paidImages = images.filter(img => !img.free);
+    if(paidImages.length === 0){
+      select.innerHTML = '<option value="">Keine bezahlten Bilder vorhanden</option>';
+    } else {
+      const prevValue = select.value;
+      select.innerHTML = paidImages.map(img => `<option value="${img.id}">${img.type === 'video' ? '🎬 Video' : '🖼 Bild'} ${img.id.slice(0,6)} — ${fmt(img.price)}</option>`).join('');
+      if(paidImages.some(img => img.id === prevValue)) select.value = prevValue;
+    }
   }
 
   function renderAdminGrid(){
@@ -632,8 +695,11 @@
     try {
       const r = await api('/api/raffle/entries');
       const list = document.getElementById('raffleList');
-      if(r.entries.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Teilnehmer.</div>'; return; }
-      list.innerHTML = r.entries.map(e => `<div class="team-row"><span>${e.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeRaffleEntry('${e.id}')">Entfernen</button></div>`).join('');
+      if(r.entries.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Teilnehmer.</div>'; }
+      else {
+        list.innerHTML = r.entries.map(e => `<div class="team-row"><span>${e.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeRaffleEntry('${e.id}')">Entfernen</button></div>`).join('');
+      }
+      populateRaffleImageSelect();
     } catch(e){}
   }
 
@@ -644,11 +710,81 @@
 
   async function drawRaffleWinner(){
     const msgEl = document.getElementById('raffleWinnerMsg');
+    const imageId = document.getElementById('raffleImageSelect').value;
+    if(!imageId){ msgEl.textContent = 'Bitte zuerst ein Bild auswählen.'; msgEl.className = 'redeem-msg err'; return; }
     try {
-      const r = await api('/api/raffle/draw', { method:'POST' });
-      msgEl.textContent = '🎉 Gewinner: ' + r.winner.email;
+      const r = await api('/api/raffle/draw', { method:'POST', body:{ imageId } });
+      msgEl.innerHTML = `🎉 Gewinner: <b>${r.winner}</b><br>Code: <b>${r.code}</b> (24h gültig)<br>${r.emailSent ? '✅ E-Mail wurde automatisch verschickt.' : '⚠️ E-Mail-Versand nicht eingerichtet — bitte Code manuell senden.'}`;
+      msgEl.className = 'redeem-msg ok';
+      await loadImages();
+      loadRaffleList();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function loadDailyStatus(){
+    try {
+      const r = await api('/api/newsletter/daily-status');
+      document.getElementById('dailyLastSent').textContent = r.lastSentDate || 'noch nie';
+      document.getElementById('dailyNoteInput').value = r.pendingNote || '';
+    } catch(e){}
+  }
+  async function saveDailyNote(){
+    const msgEl = document.getElementById('dailyMsg');
+    try {
+      await api('/api/newsletter/daily-note', { method:'POST', body:{ note: document.getElementById('dailyNoteInput').value.trim() } });
+      msgEl.textContent = 'Gespeichert — wird in die nächste automatische Mail aufgenommen.';
       msgEl.className = 'redeem-msg ok';
     } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+  async function testDailySend(){
+    const msgEl = document.getElementById('dailyMsg');
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/newsletter/send-daily-now', { method:'POST' });
+      msgEl.textContent = r.skipped ? 'Keine Abonnenten vorhanden.' : `✅ An ${r.sentCount} von ${r.total} gesendet (${r.newImagesCount} neue Bilder erkannt).`;
+      msgEl.className = 'redeem-msg ok';
+      loadDailyStatus();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function loadNewsletterList(){
+    try {
+      const r = await api('/api/newsletter/subscribers');
+      document.getElementById('newsletterCount').textContent = r.subscribers.length;
+      const list = document.getElementById('newsletterList');
+      if(r.subscribers.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Abonnenten.</div>'; return; }
+      list.innerHTML = r.subscribers.map(s => `<div class="team-row"><span>${s.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeNewsletterSub('${s.id}')">Entfernen</button></div>`).join('');
+    } catch(e){}
+  }
+  async function removeNewsletterSub(id){
+    await api('/api/newsletter/subscribers/' + id, { method:'DELETE' });
+    loadNewsletterList();
+  }
+  async function sendNewsletter(){
+    const msgEl = document.getElementById('newsletterMsg');
+    const subject = document.getElementById('newsletterSubject').value.trim();
+    const message = document.getElementById('newsletterMessage').value.trim();
+    if(!subject || !message){ msgEl.textContent = 'Bitte Betreff und Nachricht ausfüllen.'; msgEl.className = 'redeem-msg err'; return; }
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/newsletter/send', { method:'POST', body:{ subject, message } });
+      msgEl.textContent = `✅ An ${r.sentCount} von ${r.total} Abonnenten gesendet.`;
+      msgEl.className = 'redeem-msg ok';
+      document.getElementById('newsletterSubject').value = '';
+      document.getElementById('newsletterMessage').value = '';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function subscribeNewsletter(){
+    const input = document.getElementById('newsletterInput');
+    const msg = document.getElementById('newsletterSubMsg');
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
+    try {
+      const r = await api('/api/newsletter/subscribe', { method:'POST', body:{ email: input.value.trim() } });
+      msg.textContent = r.alreadySubscribed ? 'Du bist schon angemeldet!' : 'Danke für dein Abo!';
+      msg.className = 'redeem-msg ok';
+      input.value = '';
+    } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
   }
 
   async function updateFrontend(){
@@ -764,6 +900,7 @@
     document.getElementById('employeePanel').classList.toggle('show', isAdmin);
     document.getElementById('rafflePanel').classList.toggle('show', isAdmin);
     document.getElementById('supportPanel').classList.toggle('show', isAdmin);
+    document.getElementById('newsletterPanel').classList.toggle('show', isAdmin);
     document.getElementById('updatePanel').classList.toggle('show', isAdmin);
     document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
     document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
@@ -772,7 +909,7 @@
     if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
     if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
     if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
-    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); }
+    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); }
   }
 
   async function loadTeamList(){
@@ -948,6 +1085,66 @@
   dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
 
   // ---------- Start ----------
+  // ---------- Chat-Bot (rein regelbasiert, ohne externen KI-Dienst) ----------
+  const FAQ_KB = [
+    { keywords: ['konto','erstell','registrier','account'], answer: 'Kostenlos: Geh zu "Mein Konto" → "Konto erstellen" und trag Name, Geburtstag, E-Mail und Passwort ein.' },
+    { keywords: ['anmelden','einloggen','login'], answer: 'Unter "Mein Konto" kannst du dich mit deiner E-Mail (oder deinem Namen) und Passwort anmelden.' },
+    { keywords: ['kauf','bezahl','kasse'], answer: 'Klick bei einem Bild auf "In den Warenkorb", geh dann zu "Warenkorb". Aktuell bekommst du dein Bild über einen Code, den wir dir nach der Zahlung zuschicken.' },
+    { keywords: ['code','einlös','eingeb','7-stellig'], answer: 'In der Galerie findest du die Box "Bild-Code einlösen" — dort den 7-stelligen Code eingeben, den du von uns bekommen hast, und das Bild lädt direkt herunter.' },
+    { keywords: ['gültig','24 stunden','abgelaufen','ablauf'], answer: 'Ein Code bleibt gültig, bis er benutzt wird. Wird er erneuert, bleibt der alte Code noch 24 Stunden zusätzlich gültig.' },
+    { keywords: ['passwort'], answer: 'Unter "Mein Konto" gibt es den Bereich "Passwort ändern" — dort aktuelles und neues Passwort eintragen.' },
+    { keywords: ['gratis','kostenlos','umsonst'], answer: 'Bilder, die mit "GRATIS" markiert sind, kannst du direkt ohne Kauf herunterladen.' },
+    { keywords: ['rabatt','aktion','prozent'], answer: 'Manchmal laufen Aktionen wie "2 für 1" oder Prozent-Rabatte — die siehst du automatisch im Warenkorb, wenn sie aktiv sind.' },
+    { keywords: ['newsletter','abonnier'], answer: 'In der Galerie kannst du dich mit deiner E-Mail für den Newsletter eintragen und bekommst Neuigkeiten über neue Bilder und Aktionen.' },
+    { keywords: ['gewinnspiel','gewinn','verlosung'], answer: 'Falls aktiv, findest du in der Galerie eine Box zum Mitmachen — bei Gewinn bekommst du automatisch eine E-Mail mit einem 24h gültigen Gratis-Code.' },
+    { keywords: ['support','kontakt','hilfe','problem'], answer: 'Über den "Support"-Tab oben kannst du uns direkt eine Nachricht schreiben, oder per E-Mail an lumora.fotos.lumora@gmail.com.' },
+    { keywords: ['mitarbeiter','job','arbeiten'], answer: 'Mitarbeiter-Zugänge werden ausschließlich vom Admin angelegt, das geht nicht selbst über die Seite.' },
+    { keywords: ['gekauft','wo finde','meine bilder'], answer: 'Unter "Mein Konto" im Bereich "Meine gekauften Bilder" findest du alles, was du je gekauft oder per Code erhalten hast.' },
+    { keywords: ['bestätig'], answer: 'Nach der Registrierung bekommst du eine Bestätigungsmail. Kommt sie nicht an, kannst du sie unter "Mein Konto" erneut anfordern.' },
+    { keywords: ['video'], answer: 'Ja, neben Bildern gibt es bei uns auch Videos — die funktionieren genauso (kaufen, gratis, oder per Code).' },
+    { keywords: ['datenschutz','sicher','privat'], answer: 'Deine Zugangsdaten werden sicher verschlüsselt gespeichert und nicht an Dritte weitergegeben.' },
+  ];
+
+  function matchFaq(question){
+    const q = question.toLowerCase();
+    let best = null, bestScore = 0;
+    FAQ_KB.forEach(entry => {
+      let score = 0;
+      entry.keywords.forEach(kw => { if(q.includes(kw)) score++; });
+      if(score > bestScore){ bestScore = score; best = entry; }
+    });
+    return best ? best.answer : null;
+  }
+
+  function toggleChat(){
+    document.getElementById('chatWindow').classList.toggle('show');
+  }
+
+  function addChatMsg(text, who){
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + who;
+    div.innerHTML = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function sendChatMessage(){
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if(!question) return;
+    addChatMsg(question, 'user');
+    input.value = '';
+    setTimeout(() => {
+      const answer = matchFaq(question);
+      if(answer){
+        addChatMsg(answer, 'bot');
+      } else {
+        addChatMsg('Das weiß ich leider nicht genau. Schreib uns gerne über <a onclick="toggleChat(); switchView(\'support\');">Support</a> — wir melden uns!', 'bot');
+      }
+    }, 400);
+  }
+
   (async () => {
     await loadMe();
     await loadImages();
@@ -956,5 +1153,17 @@
     updateRaffleCardVisibility(raffleStatus.settings.enabled);
   })();
 </script>
+<button class="chat-bubble" onclick="toggleChat()" title="Fragen zur Website?">💬</button>
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header"><b>Lumora-Hilfe 🤖</b><span onclick="toggleChat()">✕</span></div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot">Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Deine Frage..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+    <button class="btn solid" style="padding:9px 14px;" onclick="sendChatMessage()">➤</button>
+  </div>
+</div>
+
 </body>
 </html>
