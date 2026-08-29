@@ -1017,18 +1017,48 @@
     if(role() === 'guest'){
       actionArea.innerHTML = `<div class="notice">Bitte <a onclick="switchView('account')">melde dich an oder erstelle ein kostenloses Kundenkonto</a>, um den Kauf abzuschließen.</div>`;
     } else {
-      actionArea.innerHTML = `<button class="btn solid" style="width:100%;" onclick="confirmPurchase()">Jetzt bezahlen</button><div class="notice">Die Bezahlfunktion wird gerade fertiggestellt. Bilder bekommst du aktuell über einen Code, den wir dir nach Zahlung per Überweisung/anderem Weg schicken — siehe "Bild-Code einlösen" in der Galerie.</div>`;
+      actionArea.innerHTML = `<button class="btn solid" style="width:100%;" onclick="confirmPurchase()" id="payButton">Jetzt sicher bezahlen 🔒</button><div class="notice">Die Zahlung läuft über Stripe — deine Zahlungsdaten laufen niemals über unseren Server.</div>`;
     }
   }
 
   async function confirmPurchase(){
+    const btn = document.getElementById('payButton');
+    if(btn){ btn.disabled = true; btn.textContent = 'Einen Moment...'; }
     try {
-      await api('/api/checkout', { method:'POST', body:{ itemIds:[...cart] } });
-      cart.clear();
-      await loadImages();
-      alert('Kauf erfolgreich! Deine Bilder findest du jetzt unter "Mein Konto".');
-      switchView('account');
-    } catch(e){ alert(e.message); }
+      const r = await api('/api/checkout/create-session', { method:'POST', body:{ itemIds:[...cart] } });
+      if(r.freeCheckout){
+        cart.clear();
+        await loadImages();
+        alert('Kauf erfolgreich! Deine Bilder findest du jetzt unter "Mein Konto".');
+        switchView('account');
+        return;
+      }
+      window.location.href = r.url; // Weiterleitung zur sicheren Stripe-Bezahlseite
+    } catch(e){
+      alert(e.message);
+      if(btn){ btn.disabled = false; btn.textContent = 'Jetzt sicher bezahlen 🔒'; }
+    }
+  }
+
+  async function checkCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get('checkout');
+    if(!checkout) return;
+    if(checkout === 'success'){
+      const sessionId = params.get('session_id');
+      try {
+        const r = await api('/api/checkout/confirm', { method:'POST', body:{ sessionId } });
+        alert(`Zahlung erfolgreich! ${r.itemCount} Bild(er) sind jetzt in deinem Konto verfügbar.`);
+        await loadImages();
+        switchView('account');
+      } catch(e){
+        alert('Zahlung konnte nicht bestätigt werden: ' + e.message + '\n\nFalls Geld abgebucht wurde, melde dich bitte beim Support.');
+      }
+    } else if(checkout === 'cancel'){
+      switchView('cart');
+    }
+    // URL wieder säubern, damit ein Neuladen der Seite nicht erneut auslöst
+    window.history.replaceState({}, '', window.location.pathname);
   }
 
   // ---------- Konto ----------
@@ -1175,6 +1205,7 @@
     await loadPromosIntoForm();
     const raffleStatus = await api('/api/raffle/settings');
     updateRaffleCardVisibility(raffleStatus.settings.enabled);
+    await checkCheckoutReturn();
   })();
 </script>
 <button class="chat-bubble" onclick="toggleChat()" title="Fragen zur Website?">💬</button>

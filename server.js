@@ -35,7 +35,8 @@ function loadDB(){
       supportMessages: [],
       newsletterSubscribers: [],
       dailyEmail: { lastSentDate: null, pendingNote: '' },
-      raffleEmail: { lastPromoSentAt: null }
+      raffleEmail: { lastPromoSentAt: null },
+      pendingCheckouts: {} // sessionId -> {userId, itemIds, usesFirstFree, createdAt}
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -53,6 +54,7 @@ if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
 if(!Array.isArray(db.newsletterSubscribers)) db.newsletterSubscribers = [];
 if(!db.dailyEmail) db.dailyEmail = { lastSentDate: null, pendingNote: '' };
 if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null };
+if(!db.pendingCheckouts) db.pendingCheckouts = {};
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -351,6 +353,74 @@ function publicImage(img, user){
 }
 
 // ---------- Warenkorb / Rabatt-Berechnung (serverseitig, damit niemand manipulieren kann) ----------
+// ---------- Stripe-Zahlungsanbindung (nur eingebaute Node-Funktionen, kein SDK nötig) ----------
+function flattenStripeParams(obj, prefix, out){
+  out = out || [];
+  for(const key in obj){
+    const val = obj[key];
+    const fullKey = prefix ? `${prefix}[${key}]` : key;
+    if(Array.isArray(val)){
+      val.forEach((item, i) => {
+        const arrKey = `${fullKey}[${i}]`;
+        if(item && typeof item === 'object') flattenStripeParams(item, arrKey, out);
+        else out.push(`${encodeURIComponent(arrKey)}=${encodeURIComponent(item)}`);
+      });
+    } else if(val && typeof val === 'object'){
+      flattenStripeParams(val, fullKey, out);
+    } else if(val !== undefined && val !== null){
+      out.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(val)}`);
+    }
+  }
+  return out;
+}
+
+function stripeRequest(path, params){
+  return new Promise((resolve, reject) => {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if(!secretKey) return reject(new Error('Zahlungsfunktion ist noch nicht eingerichtet (STRIPE_SECRET_KEY fehlt).'));
+    const body = flattenStripeParams(params).join('&');
+    const options = {
+      hostname: 'api.stripe.com', path, method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + secretKey, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }
+    };
+    const reqStripe = https.request(options, (resStripe) => {
+      let data = '';
+      resStripe.on('data', c => data += c);
+      resStripe.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if(resStripe.statusCode >= 200 && resStripe.statusCode < 300) resolve(json);
+          else reject(new Error((json.error && json.error.message) || 'Stripe-Fehler'));
+        } catch(e){ reject(e); }
+      });
+    });
+    reqStripe.on('error', reject);
+    reqStripe.write(body);
+    reqStripe.end();
+  });
+}
+
+function stripeGet(path){
+  return new Promise((resolve, reject) => {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if(!secretKey) return reject(new Error('Zahlungsfunktion ist noch nicht eingerichtet (STRIPE_SECRET_KEY fehlt).'));
+    const options = { hostname: 'api.stripe.com', path, method: 'GET', headers: { 'Authorization': 'Bearer ' + secretKey } };
+    const reqStripe = https.request(options, (resStripe) => {
+      let data = '';
+      resStripe.on('data', c => data += c);
+      resStripe.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if(resStripe.statusCode >= 200 && resStripe.statusCode < 300) resolve(json);
+          else reject(new Error((json.error && json.error.message) || 'Stripe-Fehler'));
+        } catch(e){ reject(e); }
+      });
+    });
+    reqStripe.on('error', reject);
+    reqStripe.end();
+  });
+}
+
 function computeTotals(imageIds, user){
   const items = imageIds
     .map(id => db.images.find(i => i.id === id))
@@ -867,12 +937,65 @@ async function handleApi(req, res, pathname, method, parsed){
     const totals = computeTotals(body.itemIds || [], user);
     return sendJson(res, 200, { totals });
   }
-  if(pathname === '/api/checkout' && method === 'POST'){
+  if(pathname === '/api/checkout/create-session' && method === 'POST'){
     if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
-    // Echte Zahlungsabwicklung ist noch nicht angebunden — Kauf bewusst gesperrt,
-    // damit niemand Bilder ohne Bezahlung bekommt. Bilder werden aktuell nur
-    // manuell per Code freigegeben (siehe "Verwaltung" → Code senden).
-    return sendJson(res, 503, { error: 'Ein Update wird bald durchgeführt. Die Bezahlfunktion ist aktuell noch nicht verfügbar.' });
+    const body = await readJsonBody(req);
+    const totals = computeTotals(body.itemIds || [], user);
+    if(totals.itemIds.length === 0) return sendJson(res, 400, { error: 'Warenkorb ist leer oder alle Bilder sind bereits gekauft.' });
+    if(totals.total <= 0){
+      // Gesamtbetrag ist 0 (z.B. komplett durch Aktionen abgedeckt) — direkt ohne Stripe abschließen
+      if(!db.purchases) db.purchases = [];
+      totals.itemIds.forEach(id => {
+        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)) db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString() });
+      });
+      if(totals.usesFirstFree) db.firstFreeUsed[user.id] = true;
+      saveDB(db);
+      return sendJson(res, 200, { freeCheckout: true });
+    }
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}`;
+    try {
+      const session = await stripeRequest('/v1/checkout/sessions', {
+        mode: 'payment',
+        success_url: `${siteUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteUrl}/?checkout=cancel`,
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: 'eur',
+            unit_amount: Math.round(totals.total * 100),
+            product_data: { name: `Lumora — ${totals.itemIds.length} Bild${totals.itemIds.length === 1 ? '' : 'er'}` }
+          }
+        }]
+      });
+      db.pendingCheckouts[session.id] = { userId: user.id, itemIds: totals.itemIds, usesFirstFree: totals.usesFirstFree, createdAt: new Date().toISOString() };
+      saveDB(db);
+      return sendJson(res, 200, { url: session.url });
+    } catch(e){
+      return sendJson(res, 500, { error: e.message });
+    }
+  }
+
+  if(pathname === '/api/checkout/confirm' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const body = await readJsonBody(req);
+    const sessionId = body.sessionId;
+    const pending = db.pendingCheckouts[sessionId];
+    if(!pending || pending.userId !== user.id) return sendJson(res, 400, { error: 'Unbekannte oder bereits verarbeitete Bestellung.' });
+    try {
+      const session = await stripeGet(`/v1/checkout/sessions/${sessionId}`);
+      if(session.payment_status !== 'paid') return sendJson(res, 400, { error: 'Die Zahlung ist noch nicht abgeschlossen.' });
+      if(!db.purchases) db.purchases = [];
+      pending.itemIds.forEach(id => {
+        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)) db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString() });
+      });
+      if(pending.usesFirstFree) db.firstFreeUsed[user.id] = true;
+      delete db.pendingCheckouts[sessionId];
+      saveDB(db);
+      return sendJson(res, 200, { ok: true, itemCount: pending.itemIds.length });
+    } catch(e){
+      return sendJson(res, 500, { error: e.message });
+    }
   }
 
   if(pathname === '/api/purchases' && method === 'GET'){
