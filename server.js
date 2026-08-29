@@ -34,7 +34,8 @@ function loadDB(){
       raffleSettings: { enabled: true },
       supportMessages: [],
       newsletterSubscribers: [],
-      dailyEmail: { lastSentDate: null, pendingNote: '' }
+      dailyEmail: { lastSentDate: null, pendingNote: '' },
+      raffleEmail: { lastPromoSentAt: null }
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -51,6 +52,7 @@ if(!db.raffleSettings) db.raffleSettings = { enabled: true };
 if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
 if(!Array.isArray(db.newsletterSubscribers)) db.newsletterSubscribers = [];
 if(!db.dailyEmail) db.dailyEmail = { lastSentDate: null, pendingNote: '' };
+if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null };
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -176,6 +178,50 @@ async function runDailySend(siteUrl, force){
   db.dailyEmail.pendingNote = '';
   saveDB(db);
   return { sentCount, total: db.newsletterSubscribers.length, newImagesCount };
+}
+
+function sendRaffleLoserEmail(toEmail, rejoinUrl){
+  const html = `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>Schade! 😔</h2>
+      <p>Dieses Mal hast du beim Lumora-Gewinnspiel leider nicht gewonnen.</p>
+      <p>Vielleicht klappt's beim nächsten Mal!</p>
+      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Nochmal mitmachen</a></p>
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+  return sendEmail(toEmail, 'Diesmal leider nicht gewonnen — aber nächstes Mal! 🍀', html);
+}
+
+function buildRafflePromoHtml(rejoinUrl){
+  return `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>🎁 Gewinnspiel bei Lumora!</h2>
+      <p>Trag dich jetzt ein und gewinne mit etwas Glück ein Gratis-Bild!</p>
+      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Jetzt mitmachen</a></p>
+      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+    </div>`;
+}
+
+async function runRafflePromoSend(siteUrl, force){
+  if(!db.raffleSettings.enabled) return { skipped: true, reason: 'raffle-disabled' };
+  const now = Date.now();
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+  if(!force && db.raffleEmail.lastPromoSentAt && (now - db.raffleEmail.lastPromoSentAt) < THREE_HOURS){
+    return { skipped: true, reason: 'too-soon' };
+  }
+  if(db.newsletterSubscribers.length === 0){
+    if(!force){ db.raffleEmail.lastPromoSentAt = now; saveDB(db); }
+    return { skipped: true, reason: 'no-subscribers' };
+  }
+  let sentCount = 0;
+  for(const sub of db.newsletterSubscribers){
+    const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(sub.email)}`;
+    const ok = await sendEmail(sub.email, '🎁 Mach mit beim Lumora-Gewinnspiel!', buildRafflePromoHtml(rejoinUrl));
+    if(ok) sentCount++;
+  }
+  db.raffleEmail.lastPromoSentAt = now;
+  saveDB(db);
+  return { sentCount, total: db.newsletterSubscribers.length };
 }
 
 function isValidEmail(email){
@@ -382,6 +428,21 @@ const server = http.createServer(async (req, res) => {
       delete u.verifyToken;
       saveDB(db);
       return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>✅ E-Mail bestätigt!</h2><p>Du kannst dieses Fenster jetzt schließen und dich auf Lumora einloggen.</p></body></html>');
+    }
+
+    // ---- Gewinnspiel: Wiedereinstieg per Klick-Link aus der E-Mail ----
+    if(pathname === '/api/raffle/rejoin' && method === 'GET'){
+      const email = (parsed.searchParams.get('email') || '').trim().toLowerCase();
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      if(!isValidEmail(email)){
+        return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>Ungültige E-Mail-Adresse.</h2></body></html>');
+      }
+      if(!db.raffleSettings.enabled){
+        return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>Das Gewinnspiel ist aktuell nicht aktiv.</h2></body></html>');
+      }
+      const already = db.raffleEntries.some(e => e.email === email);
+      if(!already){ db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString() }); saveDB(db); }
+      return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>🎉 Du bist wieder dabei!</h2><p>Viel Glück beim nächsten Gewinnspiel.</p></body></html>');
     }
 
     // API
@@ -622,19 +683,27 @@ async function handleApi(req, res, pathname, method, parsed){
 
     const winnerIdx = Math.floor(Math.random() * db.raffleEntries.length);
     const winner = db.raffleEntries[winnerIdx];
+    const losers = db.raffleEntries.filter((_, i) => i !== winnerIdx);
 
     // Automatisch wie "Gesendet" klicken: aktueller Code bleibt 24h gültig, neuer Code wird erzeugt
     const wonCode = img.code;
     img.graceCodes.push({ code: wonCode, expires: Date.now() + GRACE_PERIOD_MS });
     img.code = genCode();
-    db.raffleEntries.splice(winnerIdx, 1); // Gewinner aus dem Lostopf entfernen
+    db.raffleEntries = []; // Lostopf für die nächste Runde zurücksetzen
     saveDB(db);
 
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const siteUrl = `${proto}://${req.headers.host}/`;
     const emailSent = await sendRaffleWinnerEmail(winner.email, wonCode, siteUrl);
 
-    return sendJson(res, 200, { winner: winner.email, code: wonCode, emailSent });
+    let loserEmailsSent = 0;
+    for(const loser of losers){
+      const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(loser.email)}`;
+      const ok = await sendRaffleLoserEmail(loser.email, rejoinUrl);
+      if(ok) loserEmailsSent++;
+    }
+
+    return sendJson(res, 200, { winner: winner.email, code: wonCode, emailSent, loserCount: losers.length, loserEmailsSent });
   }
   const raffleMatch = pathname.match(/^\/api\/raffle\/entries\/([a-f0-9]+)$/);
   if(raffleMatch && method === 'DELETE'){
@@ -735,6 +804,18 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, result);
   }
 
+  if(pathname === '/api/raffle/promo-status' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { lastPromoSentAt: db.raffleEmail.lastPromoSentAt });
+  }
+  if(pathname === '/api/raffle/send-promo-now' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const proto = req.headers['x-forwarded-proto'] || 'http';
+    const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}/`;
+    const result = await runRafflePromoSend(siteUrl, true);
+    return sendJson(res, 200, result);
+  }
+
   // ---- Mitarbeiter ----
   if(pathname === '/api/employees' && method === 'GET'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
@@ -818,3 +899,10 @@ function scheduledDailyCheck(){
 }
 setTimeout(scheduledDailyCheck, 60 * 1000); // kurz nach dem Start einmal prüfen
 setInterval(scheduledDailyCheck, 60 * 60 * 1000); // danach stündlich prüfen
+
+function scheduledRafflePromoCheck(){
+  const siteUrl = process.env.SITE_URL || 'https://lumora-ddo1.onrender.com';
+  runRafflePromoSend(siteUrl, false).catch(e => console.error('Fehler bei Gewinnspiel-Werbung:', e.message));
+}
+setTimeout(scheduledRafflePromoCheck, 90 * 1000); // kurz nach dem Start einmal prüfen
+setInterval(scheduledRafflePromoCheck, 60 * 60 * 1000); // stündlich prüfen, sendet aber wirklich nur alle 3h

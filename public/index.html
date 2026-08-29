@@ -384,6 +384,13 @@
         <select id="raffleImageSelect" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius-sm); margin-bottom:10px;"></select>
         <button class="btn solid" style="width:100%;" onclick="drawRaffleWinner()">Gewinner auslosen &amp; Code automatisch senden</button>
         <div class="redeem-msg" id="raffleWinnerMsg" style="margin-top:12px;"></div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Automatische Werbung</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt alle 3 Stunden eine Erinnerung an alle Newsletter-Abonnenten, um mehr Teilnehmer fürs Gewinnspiel zu gewinnen. Letzte Werbe-Mail: <b id="rafflePromoLast" style="color:var(--ink);">–</b></p>
+          <button class="btn solid" style="width:100%;" onclick="testRafflePromo()">Jetzt testen &amp; senden</button>
+          <div class="redeem-msg" id="rafflePromoMsg" style="margin-top:10px;"></div>
+        </div>
       </div>
       <div class="panel-card" id="supportPanel">
         <h3>📬 Support-Nachrichten</h3>
@@ -691,6 +698,23 @@
     } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
   }
 
+  async function loadRafflePromoStatus(){
+    try {
+      const r = await api('/api/raffle/promo-status');
+      document.getElementById('rafflePromoLast').textContent = r.lastPromoSentAt ? new Date(r.lastPromoSentAt).toLocaleString('de-DE') : 'noch nie';
+    } catch(e){}
+  }
+  async function testRafflePromo(){
+    const msgEl = document.getElementById('rafflePromoMsg');
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/raffle/send-promo-now', { method:'POST' });
+      msgEl.textContent = r.skipped ? `Übersprungen (${r.reason === 'raffle-disabled' ? 'Gewinnspiel ist ausgeschaltet' : 'keine Abonnenten'}).` : `✅ An ${r.sentCount} von ${r.total} Abonnenten gesendet.`;
+      msgEl.className = 'redeem-msg ok';
+      loadRafflePromoStatus();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
   async function loadRaffleList(){
     try {
       const r = await api('/api/raffle/entries');
@@ -714,7 +738,7 @@
     if(!imageId){ msgEl.textContent = 'Bitte zuerst ein Bild auswählen.'; msgEl.className = 'redeem-msg err'; return; }
     try {
       const r = await api('/api/raffle/draw', { method:'POST', body:{ imageId } });
-      msgEl.innerHTML = `🎉 Gewinner: <b>${r.winner}</b><br>Code: <b>${r.code}</b> (24h gültig)<br>${r.emailSent ? '✅ E-Mail wurde automatisch verschickt.' : '⚠️ E-Mail-Versand nicht eingerichtet — bitte Code manuell senden.'}`;
+      msgEl.innerHTML = `🎉 Gewinner: <b>${r.winner}</b><br>Code: <b>${r.code}</b> (24h gültig)<br>${r.emailSent ? '✅ Gewinner-E-Mail verschickt.' : '⚠️ E-Mail-Versand nicht eingerichtet.'}<br>${r.loserCount} Verlierer benachrichtigt (${r.loserEmailsSent} E-Mails verschickt).`;
       msgEl.className = 'redeem-msg ok';
       await loadImages();
       loadRaffleList();
@@ -909,7 +933,7 @@
     if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
     if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
     if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
-    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); }
+    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); loadRafflePromoStatus(); }
   }
 
   async function loadTeamList(){
