@@ -35,7 +35,7 @@ function loadDB(){
       supportMessages: [],
       newsletterSubscribers: [],
       dailyEmail: { lastSentDate: null, pendingNote: '' },
-      raffleEmail: { lastPromoSentAt: null },
+      raffleEmail: { lastPromoSentAt: null, intervalHours: 3 },
       pendingCheckouts: {} // sessionId -> {userId, itemIds, usesFirstFree, createdAt}
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
@@ -53,8 +53,10 @@ if(!db.raffleSettings) db.raffleSettings = { enabled: true };
 if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
 if(!Array.isArray(db.newsletterSubscribers)) db.newsletterSubscribers = [];
 if(!db.dailyEmail) db.dailyEmail = { lastSentDate: null, pendingNote: '' };
-if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null };
+if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null, intervalHours: 3 };
+if(typeof db.raffleEmail.intervalHours !== 'number') db.raffleEmail.intervalHours = 3;
 if(!db.pendingCheckouts) db.pendingCheckouts = {};
+db.users.forEach(u => { if(typeof u.banned !== 'boolean') u.banned = false; });
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -207,8 +209,8 @@ function buildRafflePromoHtml(rejoinUrl){
 async function runRafflePromoSend(siteUrl, force){
   if(!db.raffleSettings.enabled) return { skipped: true, reason: 'raffle-disabled' };
   const now = Date.now();
-  const THREE_HOURS = 3 * 60 * 60 * 1000;
-  if(!force && db.raffleEmail.lastPromoSentAt && (now - db.raffleEmail.lastPromoSentAt) < THREE_HOURS){
+  const intervalMs = (db.raffleEmail.intervalHours || 3) * 60 * 60 * 1000;
+  if(!force && db.raffleEmail.lastPromoSentAt && (now - db.raffleEmail.lastPromoSentAt) < intervalMs){
     return { skipped: true, reason: 'too-soon' };
   }
   if(db.newsletterSubscribers.length === 0){
@@ -280,7 +282,12 @@ function getSessionUser(req){
   if(!token) return null;
   const userId = sessions.get(token);
   if(!userId) return null;
-  return db.users.find(u => u.id === userId) || null;
+  const foundUser = db.users.find(u => u.id === userId) || null;
+  if(foundUser && foundUser.banned){
+    sessions.delete(token); // gesperrtes Konto: Sitzung sofort ungültig machen
+    return null;
+  }
+  return foundUser;
 }
 function setSessionCookie(res, token){
   res.setHeader('Set-Cookie', `lumora_session=${token}; HttpOnly; Path=/; Max-Age=${60*60*24*30}; SameSite=Lax`);
@@ -580,6 +587,8 @@ async function handleApi(req, res, pathname, method, parsed){
     );
     if(!found || !verifyPassword(password, found.salt, found.hash))
       return sendJson(res, 401, { error: 'Zugangsdaten nicht korrekt.' });
+    if(found.banned)
+      return sendJson(res, 403, { error: 'Dieses Konto wurde gesperrt.' });
 
     const token = genId();
     sessions.set(token, found.id);
@@ -876,7 +885,16 @@ async function handleApi(req, res, pathname, method, parsed){
 
   if(pathname === '/api/raffle/promo-status' && method === 'GET'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
-    return sendJson(res, 200, { lastPromoSentAt: db.raffleEmail.lastPromoSentAt });
+    return sendJson(res, 200, { lastPromoSentAt: db.raffleEmail.lastPromoSentAt, intervalHours: db.raffleEmail.intervalHours });
+  }
+  if(pathname === '/api/raffle/promo-interval' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const hours = Number(body.hours);
+    if(!hours || hours <= 0) return sendJson(res, 400, { error: 'Ungültiger Zeitabstand.' });
+    db.raffleEmail.intervalHours = hours;
+    saveDB(db);
+    return sendJson(res, 200, { ok: true, intervalHours: hours });
   }
   if(pathname === '/api/raffle/send-promo-now' && method === 'POST'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
@@ -884,6 +902,35 @@ async function handleApi(req, res, pathname, method, parsed){
     const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}/`;
     const result = await runRafflePromoSend(siteUrl, true);
     return sendJson(res, 200, result);
+  }
+
+  // ---- Konten sperren/entsperren ----
+  if(pathname === '/api/admin/ban-user' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const identifier = (body.identifier || '').trim().toLowerCase();
+    if(!identifier) return sendJson(res, 400, { error: 'Bitte Name oder E-Mail eingeben.' });
+    const target = db.users.find(u => u.name.toLowerCase() === identifier || (u.email && u.email.toLowerCase() === identifier));
+    if(!target) return sendJson(res, 404, { error: 'Kein Konto mit diesem Namen oder dieser E-Mail gefunden.' });
+    if(target.role === 'admin') return sendJson(res, 400, { error: 'Der Admin-Account kann nicht gesperrt werden.' });
+    target.banned = true;
+    saveDB(db);
+    for(const [token, uid] of sessions){ if(uid === target.id) sessions.delete(token); } // sofort abmelden
+    return sendJson(res, 200, { ok: true, user: publicUser(target) });
+  }
+  if(pathname === '/api/admin/unban-user' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const identifier = (body.identifier || '').trim().toLowerCase();
+    const target = db.users.find(u => u.name.toLowerCase() === identifier || (u.email && u.email.toLowerCase() === identifier));
+    if(!target) return sendJson(res, 404, { error: 'Kein Konto mit diesem Namen oder dieser E-Mail gefunden.' });
+    target.banned = false;
+    saveDB(db);
+    return sendJson(res, 200, { ok: true, user: publicUser(target) });
+  }
+  if(pathname === '/api/admin/banned-users' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { users: db.users.filter(u => u.banned).map(publicUser) });
   }
 
   // ---- Mitarbeiter ----
