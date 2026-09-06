@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumora — Fotografie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121119; --panel: #1c1a25; --panel-2: #23212e;
+    --amber: #8f97ff; --amber-soft: rgba(143,151,255,0.14); --amber-dim: #565ba3; --accent2: #c48fff;
+    --ink: #f1f0f7; --muted: #9995ab; --line: #2f2c3c;
+    --danger: #e0685a; --danger-soft: rgba(224,104,90,0.14);
+    --green: #7fc29a; --green-soft: rgba(127,194,154,0.14);
+    --radius: 12px; --radius-sm: 7px;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0; background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      radial-gradient(1100px 600px at 12% -10%, rgba(143,151,255,0.14), transparent 60%),
+      radial-gradient(900px 550px at 92% 8%, rgba(199,146,234,0.09), transparent 60%),
+      radial-gradient(800px 500px at 50% 100%, rgba(127,194,154,0.06), transparent 60%);
+    background-size: 46px 46px, 46px 46px, auto, auto, auto;
+    background-attachment: fixed;
+    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; padding-bottom: 96px;
+  }
+  header{ position: sticky; top:0; z-index: 30; display:flex; align-items:center; justify-content:space-between; padding:16px 40px; background: rgba(18,17,25,0.9); backdrop-filter: blur(10px); border-bottom:1px solid var(--line); flex-wrap:wrap; gap:14px; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .mark{ width:34px; height:34px; border-radius:9px; background: linear-gradient(155deg, var(--amber), var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:16px; color:#141220; }
+  .brand .txt h1{ font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin:0; }
+  .brand .txt span{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; }
+  nav.tabs{ display:flex; gap:6px; }
+  nav.tabs button{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.3px; text-transform:uppercase; background:transparent; border:1px solid transparent; color:var(--muted); padding:9px 16px; border-radius: 999px; cursor:pointer; transition: all .15s ease; }
+  nav.tabs button:hover{ color:var(--ink); }
+  nav.tabs button.active{ background: var(--panel-2); border-color:var(--line); color:var(--amber); }
+  nav.tabs button.hidden{ display:none; }
+  .cart-count{ display:inline-block; margin-left:6px; background:var(--amber); color:#141220; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; }
+  .header-actions{ display:flex; align-items:center; gap:12px; }
+  .role-pill{ display:none; align-items:center; gap:8px; font-family:'Space Mono',monospace; font-size:12px; padding:7px 14px; border-radius:999px; background: var(--panel-2); border:1px solid var(--line); color:var(--muted); }
+  .role-pill.show{ display:inline-flex; }
+  .role-pill .badge{ font-size:10px; padding:2px 7px; border-radius:999px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700; }
+  .role-pill.admin-tag .badge{ background:var(--amber-soft); color:var(--amber); }
+  .role-pill.employee-tag .badge{ background:var(--green-soft); color:var(--green); }
+  .role-pill.customer-tag .badge{ background: rgba(150,150,255,0.14); color:#a9b4f5; }
+  .btn{ font-family:'Space Mono',monospace; font-size:12.5px; letter-spacing:0.3px; padding:10px 18px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--amber-dim); background:transparent; color:var(--amber); transition: all .15s ease; }
+  .btn:hover{ background:var(--amber); color:#141220; border-color:var(--amber); }
+  .btn.muted{ border-color:var(--line); color:var(--muted); }
+  .btn.muted:hover{ background:var(--panel-2); color:var(--ink); }
+  .btn.solid{ background: linear-gradient(135deg, var(--amber), var(--accent2)); color:#141220; font-weight:700; border-color:transparent; box-shadow: 0 6px 18px rgba(143,151,255,0.25); }
+  .btn.solid:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+  .btn{ transition: all .15s ease, transform .15s ease; }
+  .btn.danger{ border-color: var(--danger); color: var(--danger); }
+  .btn.danger:hover{ background: var(--danger); color:#1c0f0c; }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  main{ max-width:1180px; margin:0 auto; padding:48px 40px 60px; }
+  .view{ display:none; } .view.active{ display:block; animation: fadeInUp .3s ease; }
+  .hero{ max-width:640px; margin-bottom:48px; position:relative; }
+  .hero-glow{ position:absolute; width:280px; height:280px; border-radius:50%; filter:blur(70px); opacity:0.25; z-index:-1; pointer-events:none; }
+  .hero-glow.g1{ background:var(--amber); top:-60px; left:-40px; }
+  .hero-glow.g2{ background:var(--accent2); top:40px; right:-100px; }
+  .hero h2 .accent-word{ background:linear-gradient(120deg,var(--amber),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero-badge{ display:inline-flex; align-items:center; gap:6px; background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-dim); padding:6px 14px; border-radius:999px; font-family:'Space Mono',monospace; font-size:11.5px; margin-bottom:18px; }
+  .hero h2{ font-family:'Fraunces',serif; font-weight:600; font-size:36px; line-height:1.12; margin:0 0 14px; }
+  .hero > p{ color:var(--muted); font-size:15.5px; line-height:1.6; margin:0 0 24px; max-width:520px; }
+  .cta-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .hero-note{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--muted); margin:0; }
+  .eyebrow{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--amber); text-transform:uppercase; letter-spacing:2px; margin:0 0 10px; }
+  .section-title{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin:0 0 12px; }
+  .admin-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:28px; border-bottom:1px solid var(--line); padding-bottom:14px; }
+  .admin-tabs button{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.3px; background:transparent; border:1px solid var(--line); color:var(--muted); padding:9px 16px; border-radius:999px; cursor:pointer; transition:all .15s ease; }
+  .admin-tabs button:hover{ color:var(--ink); border-color:var(--amber-dim); }
+  .admin-tabs button.active{ background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; font-weight:700; border-color:transparent; }
+  .admin-tabs button.hidden{ display:none; }
+  .admin-subview{ display:none; animation: fadeInUp .25s ease; }
+  .admin-subview.active{ display:block; }
+  @keyframes fadeInUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+  .panel-card{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 24px; display:none; position:relative; overflow:hidden; }
+  .panel-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--accent2)); }
+  .panel-card.show{ display:block; }
+  .panel-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 16px; font-weight:600; }
+  #dropzone{ display:none; border:1.5px dashed var(--amber-dim); border-radius: var(--radius); padding:30px; margin-bottom:32px; text-align:center; color:var(--muted); font-family:'Space Mono',monospace; font-size:13px; cursor:pointer; background: var(--panel); }
+  #dropzone.show{ display:block; }
+  #dropzone:hover{ border-color:var(--amber); color:var(--amber); background: var(--amber-soft); }
+  #fileInput{ display:none; }
+  .promo-row{ display:flex; align-items:center; gap:10px; margin-bottom:13px; font-size:13.5px; }
+  .promo-row input[type=checkbox]{ accent-color:var(--amber); width:17px; height:17px; }
+  .promo-row input[type=number]{ width:58px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:5px 8px; border-radius: var(--radius-sm); font-family:'Space Mono',monospace; }
+  .promo-row label{ flex:1; } .promo-row label small{ display:block; color:var(--muted); font-size:11.5px; }
+  .team-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; max-height: 180px; overflow-y:auto; }
+  .team-row{ display:flex; align-items:center; justify-content:space-between; background: var(--panel-2); border:1px solid var(--line); border-radius: var(--radius-sm); padding:9px 12px; font-size:13px; }
+  .team-empty{ color:var(--muted); font-family:'Space Mono',monospace; font-size:12px; }
+  .team-form{ display:flex; gap:8px; flex-wrap:wrap; }
+  .team-form input{ flex:1; min-width:110px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 12px; border-radius: var(--radius-sm); font-size:13.5px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(215px,1fr)); gap:24px; }
+  .frame{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; position:relative; transition: transform .18s ease, box-shadow .18s ease; }
+  .frame:hover{ transform: translateY(-4px); box-shadow: 0 16px 34px rgba(143,151,255,0.16), 0 6px 14px rgba(0,0,0,0.35); }
+  .frame .imgwrap{ position:relative; cursor:pointer; overflow:hidden; }
+  .frame img, .frame video{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#000; }
+  .protect{ position:absolute; inset:0; z-index:2; }
+  .watermark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
+  .watermark span{ position:absolute; transform: translate(-50%,-50%) rotate(-24deg); font-family:'Space Mono',monospace; letter-spacing:2px; color: rgba(255,255,255,0.4); text-shadow: 0 1px 3px rgba(0,0,0,0.55); white-space:nowrap; text-transform:uppercase; font-size:11px; }
+  .lightbox-body .watermark span{ font-size:18px; letter-spacing:3px; }
+  .del{ position:absolute; top:10px; left:10px; width:26px; height:26px; border-radius:50%; background:rgba(20,18,15,0.75); color:var(--danger); display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; z-index:6; }
+  .tag{ position:absolute; top:10px; right:10px; font-family:'Space Mono',monospace; font-size:10.5px; padding:4px 9px; border-radius:999px; z-index:4; }
+  .tag.free{ background: rgba(139,177,116,0.85); color:#0f1a0c; font-weight:700; }
+  .tag.paid{ background: rgba(20,18,15,0.7); border:1px solid rgba(255,255,255,0.1); color:var(--amber); }
+  .frame-foot{ padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .cart-btn{ font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; padding:8px 13px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--amber-dim); background:transparent; color:var(--amber); white-space:nowrap; }
+  .cart-btn.in-cart{ background: linear-gradient(135deg, var(--amber), var(--accent2)); color:#141220; font-weight:700; border-color:transparent; }
+  .cart-btn.wide{ width:100%; text-align:center; }
+  .dl-btn{ background:transparent; border:1px solid var(--green); color:var(--green); padding:6px 12px; border-radius: var(--radius-sm); cursor:pointer; font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; }
+  .dl-btn:hover{ background:var(--green); color:#0e1f16; }
+  .dl-btn.wide{ width:100%; }
+  .admin-controls{ padding:0 14px 14px; display:flex; gap:8px; align-items:center; font-family:'Space Mono',monospace; font-size:12px; border-top:1px solid var(--line); padding-top:10px; margin-top:2px; }
+  .admin-controls input[type=number]{ width:64px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:5px 6px; border-radius: var(--radius-sm); }
+  .uploader-tag{ padding:0 14px 8px; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); }
+  .code-row{ margin:0 14px 12px; padding:10px 12px; background:var(--bg); border:1px solid var(--line); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .code-row .code-val{ font-family:'Space Mono',monospace; font-size:15px; letter-spacing:2px; color:var(--amber); font-weight:700; }
+  .code-row .code-label{ font-family:'Space Mono',monospace; font-size:9.5px; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:2px; }
+  .sent-btn{ font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; padding:6px 11px; border-radius: var(--radius-sm); cursor:pointer; border:1px solid var(--green); color:var(--green); background:transparent; }
+  .sent-btn:hover{ background:var(--green); color:#0e1f16; }
+  .empty{ color:var(--muted); font-family:'Space Mono',monospace; font-size:13px; padding:60px 0; text-align:center; border:1.5px dashed var(--line); border-radius: var(--radius); }
+  .cart-bar{ position:fixed; bottom:18px; left:50%; transform: translateX(-50%); background: rgba(31,28,23,0.94); backdrop-filter: blur(10px); border:1px solid var(--line); border-radius: 999px; padding:12px 12px 12px 24px; display:none; align-items:center; justify-content:space-between; gap:22px; font-family:'Space Mono',monospace; font-size:12.5px; max-width: calc(100% - 40px); z-index:25; }
+  .cart-bar.show{ display:flex; }
+  .cart-bar .breakdown{ display:flex; gap:16px; flex-wrap:wrap; color:var(--muted); }
+  .cart-bar .breakdown b{ color:var(--ink); }
+  .cart-bar .total{ color:var(--amber); font-weight:700; }
+  .cart-page{ max-width:640px; }
+  .cart-item{ display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:14px; margin-bottom:12px; }
+  .cart-item img, .cart-item video{ width:64px; height:64px; object-fit:cover; border-radius: var(--radius-sm); }
+  .cart-summary{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 24px; margin-top:20px; }
+  .cart-summary .line{ display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:13px; margin-bottom:9px; color:var(--muted); }
+  .cart-summary .line b{ color:var(--ink); }
+  .cart-summary .line.total{ border-top:1px solid var(--line); padding-top:12px; margin-top:12px; color:var(--amber); font-weight:700; font-size:16px; }
+  .notice{ background: var(--amber-soft); border:1px solid var(--amber-dim); color:var(--amber); border-radius: var(--radius-sm); padding:12px 16px; font-size:13px; margin-top:14px; }
+  .notice a{ color:var(--amber); font-weight:700; cursor:pointer; text-decoration:underline; }
+  .account-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; max-width:760px; }
+  @media (max-width: 700px){ .account-grid{ grid-template-columns:1fr; } }
+  .auth-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:26px; position:relative; overflow:hidden; }
+  .auth-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--accent2)); }
+  .auth-card h3{ font-family:'Fraunces',serif; margin:0 0 4px; font-size:19px; }
+  .auth-card p.sub{ color:var(--muted); font-size:12.5px; margin:0 0 20px; }
+  .field label{ display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; }
+  .field input{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; margin-bottom:15px; border-radius: var(--radius-sm); }
+  .field input:focus{ outline:none; border-color:var(--amber); }
+  .err-text{ color:var(--danger); font-family:'Space Mono',monospace; font-size:12px; margin:-8px 0 14px; display:none; }
+  .err-text.show{ display:block; }
+  .pw-checklist{ display:flex; flex-direction:column; gap:5px; margin:-8px 0 15px; }
+  .pw-checklist .pw-item{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .pw-checklist .pw-item.valid{ color:var(--green); }
+  .pw-checklist .pw-item .dot{ width:6px; height:6px; border-radius:50%; background:var(--line); }
+  .pw-checklist .pw-item.valid .dot{ background:var(--green); }
+  .profile-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:26px; max-width:420px; position:relative; overflow:hidden; }
+  .profile-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--accent2)); }
+  .profile-card .avatar{ width:52px; height:52px; border-radius:50%; background:linear-gradient(155deg,var(--amber),var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:20px; color:#141220; font-weight:600; margin-bottom:14px; }
+  .profile-card h3{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 4px; }
+  .profile-card .role-line{ font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:18px; }
+  .profile-card .detail{ font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .profile-card .detail b{ color:var(--ink); }
+  .stat-row{ display:flex; gap:16px; flex-wrap:wrap; margin:22px 0; }
+  .stat-tile{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius-sm); padding:16px 20px; min-width:140px; }
+  .stat-tile .num{ font-family:'Fraunces',serif; font-size:22px; font-weight:600; }
+  .stat-tile .label{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); text-transform:uppercase; }
+  .extras-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin:40px 0 60px; }
+  @media (max-width:860px){ .extras-grid{ grid-template-columns:1fr; } }
+  .extra-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:26px 22px; position:relative; overflow:hidden; transition:transform .2s ease, box-shadow .2s ease; }
+  .extra-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--accent2)); }
+  .extra-card:hover{ transform:translateY(-4px); box-shadow:0 16px 34px rgba(143,151,255,0.14), 0 6px 14px rgba(0,0,0,0.3); }
+  .extra-icon{ width:44px; height:44px; border-radius:12px; background:var(--amber-soft); display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:14px; }
+  .extra-card h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 6px; }
+  .extra-card p{ color:var(--muted); font-size:12.5px; line-height:1.5; margin:0 0 16px; min-height:38px; }
+  .extra-row{ display:flex; flex-direction:column; gap:8px; }
+  .extra-row input{ background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-family:'Inter',sans-serif; font-size:14px; border-radius: var(--radius-sm); }
+  .extra-row input:focus{ outline:none; border-color:var(--amber); }
+  .extra-row .btn{ width:100%; }
+  .redeem-msg{ font-family:'Space Mono',monospace; font-size:12px; margin-top:10px; display:none; }
+  .redeem-msg.ok{ color:var(--green); display:block; } .redeem-msg.err{ color:var(--danger); display:block; }
+  footer{ border-top:1px solid var(--line); margin-top:80px; padding:44px 40px 26px; max-width:1180px; margin-left:auto; margin-right:auto; }
+  footer .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:30px; margin-bottom:30px; }
+  @media (max-width:700px){ footer .foot-grid{ grid-template-columns:1fr; } }
+  footer h5{ font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; color:var(--muted); margin:0 0 12px; }
+  footer ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+  footer a{ color:var(--ink); text-decoration:none; font-size:13.5px; cursor:pointer; }
+  footer a:hover{ color:var(--amber); }
+  .foot-bottom{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:20px; border-top:1px solid var(--line); font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
+  .overlay{ position:fixed; inset:0; background:rgba(8,7,5,0.94); backdrop-filter: blur(6px); display:none; align-items:center; justify-content:center; z-index:80; padding: 30px; }
+  .overlay.show{ display:flex; }
+  .lightbox-close{ position:absolute; top:22px; right:28px; width:38px; height:38px; border-radius:50%; background: rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--ink); font-size:16px; cursor:pointer; }
+  .lightbox-nav{ position:absolute; top:50%; transform: translateY(-50%); width:44px; height:44px; border-radius:50%; background: rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--ink); font-size:18px; cursor:pointer; }
+  .lightbox-nav.prev{ left:24px; } .lightbox-nav.next{ right:24px; }
+  .lightbox-body{ display:flex; flex-direction:column; align-items:center; max-width:min(920px, 90vw); max-height:90vh; }
+  .lightbox-body img, .lightbox-body video{ max-width:100%; max-height:70vh; border-radius: var(--radius); box-shadow: 0 30px 70px rgba(0,0,0,0.6); object-fit:contain; }
+  .lightbox-info{ margin-top:18px; display:flex; align-items:center; justify-content:space-between; gap:20px; background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:14px 20px; width:100%; }
+  .lightbox-info .lb-price{ font-family:'Space Mono',monospace; font-size:14px; }
+  .lightbox-info .lb-price.free{ color:var(--green); }
+  .lightbox-counter{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:12px; }
+
+  .chat-bubble{ position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; box-shadow:0 8px 24px rgba(143,151,255,0.35); z-index:90; border:none; }
+  .chat-bubble:hover{ filter:brightness(1.08); }
+  .chat-window{ position:fixed; bottom:92px; right:24px; width:340px; max-width:calc(100vw - 40px); height:440px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); display:none; flex-direction:column; overflow:hidden; z-index:90; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+  .chat-window.show{ display:flex; }
+  .chat-header{ padding:14px 16px; background:var(--panel-2); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .chat-header b{ font-family:'Fraunces',serif; font-size:14px; }
+  .chat-header span{ cursor:pointer; color:var(--muted); font-size:14px; }
+  .chat-messages{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .chat-msg{ max-width:82%; padding:9px 12px; border-radius:12px; font-size:13px; line-height:1.45; }
+  .chat-msg.bot{ background:var(--panel-2); align-self:flex-start; border-bottom-left-radius:3px; }
+  .chat-msg.user{ background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; align-self:flex-end; border-bottom-right-radius:3px; }
+  .chat-msg a{ color:var(--amber); }
+  .chat-msg.bot a{ text-decoration:underline; cursor:pointer; }
+  .chat-input-row{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--line); }
+  .chat-input-row input{ flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 12px; border-radius:var(--radius-sm); font-size:13px; font-family:'Inter',sans-serif; }
+  .chat-input-row input:focus{ outline:none; border-color:var(--amber); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="mark">L</div><div class="txt"><h1>Lumora</h1><span>Fotografie</span></div></div>
+  <nav class="tabs">
+    <button class="active" data-view="gallery" onclick="switchView('gallery')">Galerie</button>
+    <button data-view="cart" onclick="switchView('cart')">Warenkorb<span class="cart-count" id="navCartCount" style="display:none;"></span></button>
+    <button data-view="account" onclick="switchView('account')">Mein Konto</button>
+    <button data-view="support" onclick="switchView('support')">Support</button>
+    <button data-view="admin" id="navAdminTab" class="hidden" onclick="switchView('admin')">Verwaltung</button>
+  </nav>
+  <div class="header-actions">
+    <div class="role-pill admin-tag" id="rolePillAdmin"></div>
+    <div class="role-pill employee-tag" id="rolePillEmployee"></div>
+    <div class="role-pill customer-tag" id="rolePillCustomer"></div>
+    <button class="btn muted" id="logoutBtn" style="display:none;" onclick="logout()">Abmelden</button>
+  </div>
+</header>
+
+<main>
+  <section class="view active" id="view-gallery">
+    <div class="hero">
+      <div class="hero-glow g1"></div>
+      <div class="hero-glow g2"></div>
+      <span class="hero-badge">✦ Läuft auf einem echten Server</span>
+      <h2>Fotografie, die etwas <span class="accent-word">hermacht</span>.</h2>
+      <p>Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.</p>
+      <div class="cta-row">
+        <button class="btn solid" onclick="document.getElementById('shopGrid').scrollIntoView({behavior:'smooth'})">Galerie durchsuchen</button>
+        <button class="btn muted" onclick="switchView('account')">Konto erstellen</button>
+      </div>
+      <p class="hero-note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
+    </div>
+    <div class="grid" id="shopGrid"></div>
+    <div class="empty" id="shopEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+
+    <div class="extras-grid">
+      <div class="extra-card">
+        <div class="extra-icon">🔑</div>
+        <h3>Code einlösen</h3>
+        <p>Hast du von uns einen 7-stelligen Code bekommen? Gib ihn ein und lade dein Bild direkt herunter.</p>
+        <div class="extra-row">
+          <input type="text" id="redeemInput" maxlength="7" placeholder="1234567">
+          <button class="btn solid" onclick="redeemCode()">Einlösen</button>
+        </div>
+        <div class="redeem-msg" id="redeemMsg"></div>
+      </div>
+
+      <div class="extra-card" id="raffleGiveawayCard">
+        <div class="extra-icon">🎁</div>
+        <h3>Gewinnspiel</h3>
+        <p>Trag deine E-Mail ein und nimm an der Verlosung eines Gratisbildes teil.</p>
+        <div class="extra-row">
+          <input type="email" id="raffleInput" placeholder="deine@email.com">
+          <button class="btn solid" onclick="enterRaffle()">Teilnehmen</button>
+        </div>
+        <div class="redeem-msg" id="raffleMsg"></div>
+      </div>
+
+      <div class="extra-card">
+        <div class="extra-icon">📰</div>
+        <h3>Newsletter</h3>
+        <p>Trag dich ein und verpasse keine neuen Bilder und Aktionen mehr.</p>
+        <div class="extra-row">
+          <input type="email" id="newsletterInput" placeholder="deine@email.com">
+          <button class="btn solid" onclick="subscribeNewsletter()">Abonnieren</button>
+        </div>
+        <div class="redeem-msg" id="newsletterSubMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-cart">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kasse</p><h2 style="font-size:28px;">Warenkorb</h2></div>
+    <div class="cart-page">
+      <div id="cartItemsList"></div>
+      <div class="empty" id="cartEmpty" style="display:none;">Dein Warenkorb ist leer.</div>
+      <div class="cart-summary" id="cartSummary" style="display:none;">
+        <div class="line"><span>Zwischensumme</span><b id="sumSubtotal"></b></div>
+        <div class="line" id="sumBundleLine" style="display:none;"><span>Aktionsrabatt</span><b id="sumBundle"></b></div>
+        <div class="line" id="sumPercentLine" style="display:none;"><span id="sumPercentLabel"></span><b id="sumPercent"></b></div>
+        <div class="line total"><span>Gesamt</span><b id="sumTotal"></b></div>
+        <div id="cartActionArea" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-account">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Konto</p><h2 id="accountHeading" style="font-size:28px;">Mein Konto</h2></div>
+
+    <div id="loggedOutArea" class="account-grid">
+      <div class="auth-card">
+        <h3>Willkommen zurück</h3>
+        <p class="sub">Melde dich mit deinem bestehenden Zugang an</p>
+        <div class="field"><label>Name oder E-Mail</label><input type="text" id="loginId"></div>
+        <div class="field"><label>Passwort</label><input type="password" id="loginPass"></div>
+        <div class="err-text" id="loginErr"></div>
+        <button class="btn solid" style="width:100%;" onclick="attemptLogin()">Anmelden</button>
+      </div>
+      <div class="auth-card">
+        <h3>Konto erstellen</h3>
+        <p class="sub">Kostenlos — nur für Kunden</p>
+        <div class="field"><label>Name</label><input type="text" id="regName"></div>
+        <div class="field">
+          <label>Geburtstag</label>
+          <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <select id="regBirthDay" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+            <select id="regBirthMonth" style="flex:1.4; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+            <select id="regBirthYear" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
+          </div>
+        </div>
+        <div class="field"><label>E-Mail</label><input type="email" id="regEmail"></div>
+        <div class="field"><label>Passwort</label><input type="password" id="regPass" oninput="updatePwChecklist()"></div>
+        <div class="pw-checklist">
+          <div class="pw-item" id="pwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
+          <div class="pw-item" id="pwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
+          <div class="pw-item" id="pwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+        </div>
+        <div class="err-text" id="regErr"></div>
+        <button class="btn solid" style="width:100%;" onclick="registerCustomer()">Konto erstellen</button>
+      </div>
+    </div>
+
+    <div id="loggedInArea" style="display:none;">
+      <div class="profile-card">
+        <div class="avatar" id="profileAvatar"></div>
+        <h3 id="profileName"></h3>
+        <div class="role-line" id="profileRole"></div>
+        <div id="profileDetails"></div>
+      </div>
+      <div class="stat-row" id="statRow"></div>
+      <div class="auth-card" style="max-width:420px; margin-bottom:36px;">
+        <h3>Passwort ändern</h3>
+        <div class="field"><label>Aktuelles Passwort</label><input type="password" id="changeOldPass"></div>
+        <div class="field"><label>Neues Passwort</label><input type="password" id="changeNewPass" oninput="updateChangePwChecklist()"></div>
+        <div class="pw-checklist">
+          <div class="pw-item" id="cpwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
+          <div class="pw-item" id="cpwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
+          <div class="pw-item" id="cpwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+        </div>
+        <div class="err-text" id="changePwMsg"></div>
+        <button class="btn solid" style="width:100%;" onclick="changePassword()">Passwort speichern</button>
+      </div>
+      <div id="purchasesSection">
+        <p class="eyebrow">Meine gekauften Bilder</p>
+        <div class="grid" id="purchasesGrid"></div>
+        <div class="empty" id="purchasesEmpty" style="display:none;">Noch keine Bilder gekauft.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-support">
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kontakt</p><h2 style="font-size:28px;">Support</h2><p>Schreib uns eine Nachricht direkt hier auf der Seite, oder per E-Mail.</p></div>
+    <div class="auth-card" style="max-width:480px;">
+      <h3>Nachricht senden</h3>
+      <p class="sub">Wir antworten dir per E-Mail, falls du eine angibst.</p>
+      <div class="field"><label>Name (optional)</label><input type="text" id="supportName"></div>
+      <div class="field"><label>E-Mail (optional, für Antwort)</label><input type="email" id="supportEmail"></div>
+      <div class="field"><label>Nachricht</label><textarea id="supportMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif;"></textarea></div>
+      <div class="err-text" id="supportErr"></div>
+      <button class="btn solid" style="width:100%;" onclick="sendSupportMessage()">Nachricht senden</button>
+      <p class="terms-note" style="margin-top:16px; text-align:left;">Oder schreib uns direkt: <a href="mailto:lumora.fotos.lumora@gmail.com" style="color:var(--amber);">lumora.fotos.lumora@gmail.com</a></p>
+    </div>
+  </section>
+
+  <section class="view" id="view-admin">
+    <div class="hero" style="margin-bottom:24px;"><p class="eyebrow">Verwaltung</p><h2 style="font-size:28px;">Bilder verwalten</h2></div>
+
+    <div class="admin-tabs">
+      <button class="active" data-atab="content" onclick="switchAdminTab('content')">🖼️ Bilder</button>
+      <button id="atab-promo" data-atab="promo" onclick="switchAdminTab('promo')">💸 Aktionen</button>
+      <button id="atab-team" data-atab="team" onclick="switchAdminTab('team')">👥 Team</button>
+      <button id="atab-ban" data-atab="ban" onclick="switchAdminTab('ban')">🚫 Sperren</button>
+      <button id="atab-raffle" data-atab="raffle" onclick="switchAdminTab('raffle')">🎁 Gewinnspiel</button>
+      <button id="atab-support" data-atab="support" onclick="switchAdminTab('support')">📬 Support</button>
+      <button id="atab-newsletter" data-atab="newsletter" onclick="switchAdminTab('newsletter')">📰 Newsletter</button>
+      <button id="atab-update" data-atab="update" onclick="switchAdminTab('update')">🔄 Update</button>
+    </div>
+
+    <div class="admin-subview active" id="admintab-content">
+      <div id="dropzone" onclick="document.getElementById('fileInput').click()">＋ Bilder oder Videos hochladen — klicken oder hierher ziehen</div>
+      <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+      <div class="grid" id="adminGrid"></div>
+      <div class="empty" id="adminEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+    </div>
+
+    <div class="admin-subview" id="admintab-promo">
+      <div class="panel-card" id="promoPanel" style="max-width:520px;">
+        <h3>Aktionen</h3>
+        <div class="promo-row"><input type="checkbox" id="promoFirstFree" onchange="savePromos()"><label>Erstes Bild gratis<small>Einmalig pro Kundenkonto</small></label></div>
+        <div class="promo-row"><input type="checkbox" id="promoTwoForOne" onchange="savePromos()"><label>2 für 1<small>Günstigeres von je 2 Bildern gratis</small></label></div>
+        <div class="promo-row"><input type="checkbox" id="promoPercent" onchange="savePromos()"><label>Prozent-Rabatt</label><input type="number" id="promoPercentValue" value="20" onchange="savePromos()"> %</div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-team">
+      <div class="panel-card" id="employeePanel" style="max-width:480px;">
+        <h3>Mitarbeiter</h3>
+        <div class="team-list" id="teamList"></div>
+        <div class="team-form">
+          <input type="text" id="newEmpName" placeholder="Name">
+          <input type="text" id="newEmpPass" placeholder="Passwort">
+          <button class="btn solid" onclick="addEmployee()">Hinzufügen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-ban">
+      <div class="panel-card" id="banPanel" style="max-width:480px;">
+        <h3>🚫 Konten sperren</h3>
+        <p style="color:var(--muted); font-size:12px; margin:-8px 0 14px;">Gesperrte Konten können sich nicht mehr anmelden — bereits angemeldete werden sofort abgemeldet.</p>
+        <div class="team-form" style="margin-bottom:16px;">
+          <input type="text" id="banIdentifierInput" placeholder="Name oder E-Mail">
+          <button class="btn danger" onclick="banUser()">Sperren</button>
+        </div>
+        <div class="redeem-msg" id="banMsg" style="margin-bottom:14px;"></div>
+        <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Gesperrte Konten</p>
+        <div class="team-list" id="bannedList"></div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-raffle">
+      <div class="panel-card" id="rafflePanel" style="max-width:520px;">
+        <h3>🎁 Gewinnspiel-Teilnehmer</h3>
+        <div class="promo-row" style="margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line);">
+          <input type="checkbox" id="raffleEnabledToggle" onchange="saveRaffleSettings()">
+          <label>Gewinnspiel auf der Seite anzeigen<small>Wenn ausgeschaltet, ist die Teilnahme-Box für Besucher nicht sichtbar</small></label>
+        </div>
+        <div class="team-list" id="raffleList"></div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin:14px 0 6px; text-transform:uppercase;">Welches Bild gewinnt der Gewinner?</label>
+        <select id="raffleImageSelect" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius-sm); margin-bottom:10px;"></select>
+        <button class="btn solid" style="width:100%;" onclick="drawRaffleWinner()">Gewinner auslosen &amp; Code automatisch senden</button>
+        <div class="redeem-msg" id="raffleWinnerMsg" style="margin-top:12px;"></div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Automatische Werbung</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt in einstellbaren Abständen eine Erinnerung an alle Newsletter-Abonnenten, um mehr Teilnehmer fürs Gewinnspiel zu gewinnen. Letzte Werbe-Mail: <b id="rafflePromoLast" style="color:var(--ink);">–</b></p>
+          <label style="display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin:0 0 6px; text-transform:uppercase;">Wie oft senden?</label>
+          <select id="rafflePromoIntervalSelect" onchange="saveRafflePromoInterval()" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius-sm); margin-bottom:12px;">
+            <option value="1">Alle 1 Stunde</option>
+            <option value="2">Alle 2 Stunden</option>
+            <option value="3">Alle 3 Stunden</option>
+            <option value="24">1 Mal pro Tag</option>
+            <option value="48">Alle 2 Tage</option>
+            <option value="168">1 Mal pro Woche</option>
+          </select>
+          <button class="btn solid" style="width:100%;" onclick="testRafflePromo()">Jetzt testen &amp; senden</button>
+          <div class="redeem-msg" id="rafflePromoMsg" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-support">
+      <div class="panel-card" id="supportPanel" style="max-width:520px;">
+        <h3>📬 Support-Nachrichten</h3>
+        <div class="team-list" id="supportMessagesList" style="max-height:400px;"></div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-newsletter">
+      <div class="panel-card" id="newsletterPanel" style="max-width:520px;">
+        <h3>📰 Newsletter</h3>
+        <p style="color:var(--muted); font-size:12px; margin:-8px 0 12px;"><span id="newsletterCount">0</span> Abonnent(en)</p>
+        <div class="team-list" id="newsletterList" style="max-height:120px; margin-bottom:14px;"></div>
+        <div class="field"><label>Betreff</label><input type="text" id="newsletterSubject"></div>
+        <div class="field"><label>Nachricht</label><textarea id="newsletterMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; margin-bottom:15px;"></textarea></div>
+        <button class="btn solid" style="width:100%;" onclick="sendNewsletter()">An alle Abonnenten senden</button>
+        <div class="redeem-msg" id="newsletterMsg" style="margin-top:12px;"></div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Tägliche Automatik</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt automatisch einmal am Tag "Es gibt neue Bilder!" (falls in 24h was Neues hochgeladen wurde) oder sonst eine allgemeine Erinnerung. Letzte automatische Mail: <b id="dailyLastSent" style="color:var(--ink);">–</b></p>
+          <div class="field"><label>Zusätzlicher Hinweis für die nächste Mail (optional, z.B. neues Feature)</label><input type="text" id="dailyNoteInput" placeholder="z.B. Neues Feature: Videos kaufen!"></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn muted" style="flex:1;" onclick="saveDailyNote()">Hinweis speichern</button>
+            <button class="btn solid" style="flex:1;" onclick="testDailySend()">Jetzt testen &amp; senden</button>
+          </div>
+          <div class="redeem-msg" id="dailyMsg" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-update">
+      <div class="panel-card" id="updatePanel" style="max-width:100%;">
+        <h3>🔄 Website aktualisieren</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-8px 0 14px;">Füge hier den kompletten Code ein, den du von Claude bekommst, und veröffentliche ihn — ohne dass Bilder, Mitarbeiter oder Kundenkonten verloren gehen.</p>
+        <textarea id="updateHtmlInput" placeholder="Kompletten HTML-Code hier einfügen..." style="width:100%; height:160px; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:12px; border-radius:var(--radius-sm); font-family:'Space Mono',monospace; font-size:11.5px; margin-bottom:12px;"></textarea>
+        <button class="btn solid" onclick="updateFrontend()">Veröffentlichen</button>
+        <div class="redeem-msg" id="updateMsg" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;">Fotografie zum Kauf oder kostenlosen Download.</p></div>
+    <div><h5>Produkt</h5><ul><li><a onclick="switchView('gallery')">Galerie</a></li><li><a onclick="switchView('cart')">Warenkorb</a></li><li><a onclick="switchView('account')">Mein Konto</a></li></ul></div>
+    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a onclick="switchView('support')">Support</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 Lumora</span><span>Läuft auf eigenem Server</span></div>
+</footer>
+
+<div class="cart-bar" id="cartBar"><div class="breakdown" id="cartBreakdown"></div><button class="btn solid" onclick="switchView('cart')">Zur Kasse</button></div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav prev" onclick="lightboxStep(-1)">‹</button>
+  <button class="lightbox-nav next" onclick="lightboxStep(1)">›</button>
+  <div class="lightbox-body">
+    <div style="position:relative;"><div id="lightboxMedia"></div><div class="protect" id="lightboxProtect" oncontextmenu="return false"></div><div class="watermark" id="lightboxWatermark"></div></div>
+    <div class="lightbox-info"><span class="lb-price" id="lightboxPrice"></span><div id="lightboxAction"></div></div>
+    <div class="lightbox-counter" id="lightboxCounter"></div>
+  </div>
+</div>
+
+<script>
+  let currentUserData = null; // {id,name,email,role,...}
+  let images = [];
+  let cart = new Set();
+  let lightboxId = null;
+
+  async function api(path, opts){
+    opts = opts || {};
+    opts.credentials = 'include';
+    if(opts.body){ opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(opts.body); }
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch(e){}
+    if(!res.ok) throw new Error(data.error || ('Fehler ' + res.status));
+    return data;
+  }
+
+  function role(){ return currentUserData ? currentUserData.role : 'guest'; }
+  function fmt(n){ n = Number(n)||0; return n.toFixed(2).replace('.', ',') + ' €'; }
+  function pwChecks(p){ return { len: p.length>=8, upper: /[A-Z]/.test(p), number: /[0-9]/.test(p) }; }
+
+  const WATERMARK_POSITIONS = [[15,15],[65,12],[35,32],[85,30],[10,50],[55,50],[80,68],[25,72],[60,88],[5,90]];
+  function watermarkSpans(){ return WATERMARK_POSITIONS.map(([x,y]) => `<span style="left:${x}%; top:${y}%;">Lumora</span>`).join(''); }
+
+  function mediaTagHtml(img, opts){
+    opts = opts || {};
+    if(img.type === 'video'){
+      const controlsAttr = opts.controls ? 'controls controlsList="nodownload"' : 'autoplay muted loop playsinline';
+      return `<video src="${img.url}" ${controlsAttr} oncontextmenu="return false" style="width:100%; ${opts.fill===false?'':'aspect-ratio:1/1; object-fit:cover;'} display:block; background:#000;"></video>`;
+    }
+    return `<img src="${img.url}" alt="Bild" draggable="false" oncontextmenu="return false">`;
+  }
+
+  // ---------- Navigation ----------
+  function switchView(name){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    window.scrollTo({top:0});
+    if(name === 'cart') renderCartView();
+    if(name === 'account') renderAccountView();
+    if(name === 'admin') switchAdminTab('content');
+  }
+
+  function switchAdminTab(name){
+    document.querySelectorAll('.admin-subview').forEach(v => v.classList.remove('active'));
+    document.getElementById('admintab-' + name).classList.add('active');
+    document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.toggle('active', b.dataset.atab === name));
+  }
+
+  // ---------- Laden ----------
+  async function loadMe(){
+    const r = await api('/api/me');
+    currentUserData = r.user;
+    applyRoleState();
+  }
+  async function loadImages(){
+    const r = await api('/api/images');
+    images = r.images;
+    renderShopGrid();
+    renderAdminGrid();
+    renderCartBar();
+    populateRaffleImageSelect();
+  }
+
+  function renderShopGrid(){
+    const grid = document.getElementById('shopGrid');
+    document.getElementById('shopEmpty').style.display = images.length === 0 ? 'block' : 'none';
+    grid.innerHTML = images.map(img => {
+      const inCart = cart.has(img.id);
+      const actionHtml = img.canDownload
+        ? `<button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button>`
+        : `<button class="cart-btn wide ${inCart?'in-cart':''}" onclick="event.stopPropagation(); toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+      return `
+        <div class="frame">
+          <div class="imgwrap" onclick="openLightbox('${img.id}')">
+            ${mediaTagHtml(img)}
+            <div class="protect" oncontextmenu="return false"></div>
+            ${img.canDownload ? '' : `<div class="watermark">${watermarkSpans()}</div>`}
+            <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
+          </div>
+          <div class="frame-foot">${actionHtml}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function populateRaffleImageSelect(){
+    const select = document.getElementById('raffleImageSelect');
+    if(!select) return;
+    const paidImages = images.filter(img => !img.free);
+    if(paidImages.length === 0){
+      select.innerHTML = '<option value="">Keine bezahlten Bilder vorhanden</option>';
+    } else {
+      const prevValue = select.value;
+      select.innerHTML = paidImages.map(img => `<option value="${img.id}">${img.type === 'video' ? '🎬 Video' : '🖼 Bild'} ${img.id.slice(0,6)} — ${fmt(img.price)}</option>`).join('');
+      if(paidImages.some(img => img.id === prevValue)) select.value = prevValue;
+    }
+  }
+
+  function renderAdminGrid(){
+    const grid = document.getElementById('adminGrid');
+    if(role() !== 'admin' && role() !== 'employee'){ grid.innerHTML=''; return; }
+    const managed = images.filter(i => i.canManage);
+    document.getElementById('adminEmpty').style.display = managed.length === 0 ? 'block' : 'none';
+    grid.innerHTML = managed.map(img => {
+      const adminControls = role() === 'admin' ? `
+        <div class="admin-controls">
+          <input type="checkbox" ${img.free?'checked':''} onchange="setFree('${img.id}', this.checked)"> Gratis
+          <input type="number" min="0" step="0.5" value="${img.price}" ${img.free?'disabled':''} onchange="setPrice('${img.id}', this.value)"> €
+        </div>` : '';
+      const graceNote = (img.graceCodes && img.graceCodes.length>0)
+        ? `<div class="uploader-tag">Alter Code ${img.graceCodes[img.graceCodes.length-1].code} noch gültig bis ${new Date(img.graceCodes[img.graceCodes.length-1].expires).toLocaleString('de-DE')}</div>` : '';
+      return `
+        <div class="frame">
+          <div class="imgwrap" onclick="openLightbox('${img.id}')">
+            ${mediaTagHtml(img)}
+            <div class="del" onclick="event.stopPropagation(); deleteImage('${img.id}')">✕</div>
+            <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
+          </div>
+          <div class="uploader-tag">hochgeladen von ${img.uploadedByName}</div>
+          <div class="code-row">
+            <div><span class="code-label">Code für Käufer</span><span class="code-val">${img.code}</span></div>
+            <button class="sent-btn" onclick="event.stopPropagation(); markSent('${img.id}')">Gesendet ✓</button>
+          </div>
+          ${graceNote}
+          ${adminControls}
+        </div>`;
+    }).join('');
+  }
+
+  function toggleCart(id){
+    if(cart.has(id)) cart.delete(id); else cart.add(id);
+    renderShopGrid(); renderCartBar();
+    if(document.getElementById('lightbox').classList.contains('show') && lightboxId === id) renderLightboxInfo();
+  }
+
+  async function setFree(id, val){
+    await api('/api/images/' + id, { method:'PATCH', body:{ free: val } });
+    await loadImages();
+  }
+  async function setPrice(id, val){
+    await api('/api/images/' + id, { method:'PATCH', body:{ price: Math.max(0, parseFloat(val)||0) } });
+    await loadImages();
+  }
+  async function deleteImage(id){
+    await api('/api/images/' + id, { method:'DELETE' });
+    cart.delete(id);
+    await loadImages();
+  }
+  async function markSent(id){
+    await api('/api/images/' + id + '/mark-sent', { method:'POST' });
+    await loadImages();
+  }
+  function downloadImage(id){
+    const img = images.find(x => x.id === id);
+    if(!img || !img.canDownload) return;
+    const a = document.createElement('a');
+    a.href = img.url; a.download = ''; a.click();
+  }
+
+  async function redeemCode(){
+    const input = document.getElementById('redeemInput');
+    const msg = document.getElementById('redeemMsg');
+    try {
+      const r = await api('/api/redeem', { method:'POST', body:{ code: input.value.trim() } });
+      const a = document.createElement('a'); a.href = r.url; a.download=''; a.click();
+      msg.textContent = 'Code gültig! Dein Bild wird heruntergeladen.'; msg.className = 'redeem-msg ok';
+      input.value = '';
+      await loadImages();
+    } catch(e){
+      msg.textContent = e.message; msg.className = 'redeem-msg err';
+    }
+  }
+
+  // ---------- Login / Registrierung ----------
+  async function resendVerification(){
+    const msgEl = document.getElementById('resendMsg');
+    try {
+      await api('/api/resend-verification', { method:'POST' });
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = 'Gesendet! Schau in dein Postfach.';
+    } catch(e){ msgEl.style.color = 'var(--danger)'; msgEl.textContent = e.message; }
+  }
+
+  function isValidEmailClient(email){
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/.test(email);
+  }
+
+  async function loadRaffleSettings(){
+    const r = await api('/api/raffle/settings');
+    document.getElementById('raffleEnabledToggle').checked = r.settings.enabled;
+    updateRaffleCardVisibility(r.settings.enabled);
+  }
+  function updateRaffleCardVisibility(enabled){
+    const card = document.getElementById('raffleGiveawayCard');
+    if(card) card.style.display = enabled ? 'block' : 'none';
+  }
+  async function saveRaffleSettings(){
+    const enabled = document.getElementById('raffleEnabledToggle').checked;
+    const r = await api('/api/raffle/settings', { method:'POST', body:{ enabled } });
+    updateRaffleCardVisibility(r.settings.enabled);
+  }
+
+  async function loadSupportMessages(){
+    try {
+      const r = await api('/api/support/messages');
+      const list = document.getElementById('supportMessagesList');
+      if(r.messages.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Nachrichten.</div>'; return; }
+      list.innerHTML = r.messages.map(m => `
+        <div class="team-row" style="align-items:flex-start; flex-direction:column; gap:6px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <b style="font-size:12.5px;">${m.name || 'Anonym'}${m.email ? ' · ' + m.email : ''}</b>
+            <button class="btn danger" style="padding:3px 8px; font-size:10px;" onclick="removeSupportMessage('${m.id}')">Entfernen</button>
+          </div>
+          <div style="font-size:13px; color:var(--muted);">${m.message}</div>
+          <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">${new Date(m.createdAt).toLocaleString('de-DE')}</div>
+        </div>`).join('');
+    } catch(e){}
+  }
+  async function removeSupportMessage(id){
+    await api('/api/support/messages/' + id, { method:'DELETE' });
+    loadSupportMessages();
+  }
+  async function sendSupportMessage(){
+    const errEl = document.getElementById('supportErr'); errEl.classList.remove('show');
+    const email = document.getElementById('supportEmail').value.trim();
+    if(email && !isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    try {
+      await api('/api/support/message', { method:'POST', body:{
+        name: document.getElementById('supportName').value.trim(),
+        email, message: document.getElementById('supportMessage').value.trim()
+      }});
+      document.getElementById('supportName').value = '';
+      document.getElementById('supportEmail').value = '';
+      document.getElementById('supportMessage').value = '';
+      errEl.style.color = 'var(--green)'; errEl.textContent = 'Danke! Deine Nachricht wurde gesendet.'; errEl.classList.add('show');
+    } catch(e){ errEl.style.color=''; errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
+  async function enterRaffle(){
+    const input = document.getElementById('raffleInput');
+    const msg = document.getElementById('raffleMsg');
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
+    try {
+      const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim() } });
+      msg.textContent = r.alreadyEntered ? 'Du nimmst bereits teil — viel Glück!' : 'Danke! Du nimmst jetzt an der Verlosung teil.';
+      msg.className = 'redeem-msg ok';
+      input.value = '';
+    } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
+  }
+
+  async function loadRafflePromoStatus(){
+    try {
+      const r = await api('/api/raffle/promo-status');
+      document.getElementById('rafflePromoLast').textContent = r.lastPromoSentAt ? new Date(r.lastPromoSentAt).toLocaleString('de-DE') : 'noch nie';
+      document.getElementById('rafflePromoIntervalSelect').value = String(r.intervalHours || 3);
+    } catch(e){}
+  }
+  async function saveRafflePromoInterval(){
+    const msgEl = document.getElementById('rafflePromoMsg');
+    const hours = document.getElementById('rafflePromoIntervalSelect').value;
+    try {
+      await api('/api/raffle/promo-interval', { method:'POST', body:{ hours: Number(hours) } });
+      msgEl.textContent = 'Gespeichert — gilt ab jetzt.';
+      msgEl.className = 'redeem-msg ok';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+  async function testRafflePromo(){
+    const msgEl = document.getElementById('rafflePromoMsg');
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/raffle/send-promo-now', { method:'POST' });
+      msgEl.textContent = r.skipped ? `Übersprungen (${r.reason === 'raffle-disabled' ? 'Gewinnspiel ist ausgeschaltet' : 'keine Abonnenten'}).` : `✅ An ${r.sentCount} von ${r.total} Abonnenten gesendet.`;
+      msgEl.className = 'redeem-msg ok';
+      loadRafflePromoStatus();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function loadRaffleList(){
+    try {
+      const r = await api('/api/raffle/entries');
+      const list = document.getElementById('raffleList');
+      if(r.entries.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Teilnehmer.</div>'; }
+      else {
+        list.innerHTML = r.entries.map(e => `<div class="team-row"><span>${e.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeRaffleEntry('${e.id}')">Entfernen</button></div>`).join('');
+      }
+      populateRaffleImageSelect();
+    } catch(e){}
+  }
+
+  async function removeRaffleEntry(id){
+    await api('/api/raffle/entries/' + id, { method:'DELETE' });
+    loadRaffleList();
+  }
+
+  async function drawRaffleWinner(){
+    const msgEl = document.getElementById('raffleWinnerMsg');
+    const imageId = document.getElementById('raffleImageSelect').value;
+    if(!imageId){ msgEl.textContent = 'Bitte zuerst ein Bild auswählen.'; msgEl.className = 'redeem-msg err'; return; }
+    try {
+      const r = await api('/api/raffle/draw', { method:'POST', body:{ imageId } });
+      msgEl.innerHTML = `🎉 Gewinner: <b>${r.winner}</b><br>Code: <b>${r.code}</b> (24h gültig)<br>${r.emailSent ? '✅ Gewinner-E-Mail verschickt.' : '⚠️ E-Mail-Versand nicht eingerichtet.'}<br>${r.loserCount} Verlierer benachrichtigt (${r.loserEmailsSent} E-Mails verschickt).`;
+      msgEl.className = 'redeem-msg ok';
+      await loadImages();
+      loadRaffleList();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function loadDailyStatus(){
+    try {
+      const r = await api('/api/newsletter/daily-status');
+      document.getElementById('dailyLastSent').textContent = r.lastSentDate || 'noch nie';
+      document.getElementById('dailyNoteInput').value = r.pendingNote || '';
+    } catch(e){}
+  }
+  async function saveDailyNote(){
+    const msgEl = document.getElementById('dailyMsg');
+    try {
+      await api('/api/newsletter/daily-note', { method:'POST', body:{ note: document.getElementById('dailyNoteInput').value.trim() } });
+      msgEl.textContent = 'Gespeichert — wird in die nächste automatische Mail aufgenommen.';
+      msgEl.className = 'redeem-msg ok';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+  async function testDailySend(){
+    const msgEl = document.getElementById('dailyMsg');
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/newsletter/send-daily-now', { method:'POST' });
+      msgEl.textContent = r.skipped ? 'Keine Abonnenten vorhanden.' : `✅ An ${r.sentCount} von ${r.total} gesendet (${r.newImagesCount} neue Bilder erkannt).`;
+      msgEl.className = 'redeem-msg ok';
+      loadDailyStatus();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function loadNewsletterList(){
+    try {
+      const r = await api('/api/newsletter/subscribers');
+      document.getElementById('newsletterCount').textContent = r.subscribers.length;
+      const list = document.getElementById('newsletterList');
+      if(r.subscribers.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Abonnenten.</div>'; return; }
+      list.innerHTML = r.subscribers.map(s => `<div class="team-row"><span>${s.email}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeNewsletterSub('${s.id}')">Entfernen</button></div>`).join('');
+    } catch(e){}
+  }
+  async function removeNewsletterSub(id){
+    await api('/api/newsletter/subscribers/' + id, { method:'DELETE' });
+    loadNewsletterList();
+  }
+  async function sendNewsletter(){
+    const msgEl = document.getElementById('newsletterMsg');
+    const subject = document.getElementById('newsletterSubject').value.trim();
+    const message = document.getElementById('newsletterMessage').value.trim();
+    if(!subject || !message){ msgEl.textContent = 'Bitte Betreff und Nachricht ausfüllen.'; msgEl.className = 'redeem-msg err'; return; }
+    msgEl.textContent = 'Wird gesendet...'; msgEl.className = 'redeem-msg ok';
+    try {
+      const r = await api('/api/newsletter/send', { method:'POST', body:{ subject, message } });
+      msgEl.textContent = `✅ An ${r.sentCount} von ${r.total} Abonnenten gesendet.`;
+      msgEl.className = 'redeem-msg ok';
+      document.getElementById('newsletterSubject').value = '';
+      document.getElementById('newsletterMessage').value = '';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function subscribeNewsletter(){
+    const input = document.getElementById('newsletterInput');
+    const msg = document.getElementById('newsletterSubMsg');
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
+    try {
+      const r = await api('/api/newsletter/subscribe', { method:'POST', body:{ email: input.value.trim() } });
+      msg.textContent = r.alreadySubscribed ? 'Du bist schon angemeldet!' : 'Danke für dein Abo!';
+      msg.className = 'redeem-msg ok';
+      input.value = '';
+    } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
+  }
+
+  async function updateFrontend(){
+    const html = document.getElementById('updateHtmlInput').value;
+    const msgEl = document.getElementById('updateMsg');
+    if(!html.trim()){ msgEl.textContent = 'Bitte zuerst den Code einfügen.'; msgEl.className = 'redeem-msg err'; return; }
+    try {
+      await api('/api/admin/update-frontend', { method:'POST', body:{ html } });
+      msgEl.textContent = 'Veröffentlicht! Lade die Seite in wenigen Sekunden neu (F5), um die Änderungen zu sehen.';
+      msgEl.className = 'redeem-msg ok';
+      document.getElementById('updateHtmlInput').value = '';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  function updatePwChecklist(){
+    const c = pwChecks(document.getElementById('regPass').value);
+    document.getElementById('pwLenCheck').classList.toggle('valid', c.len);
+    document.getElementById('pwUpperCheck').classList.toggle('valid', c.upper);
+    document.getElementById('pwNumberCheck').classList.toggle('valid', c.number);
+  }
+  function updateChangePwChecklist(){
+    const c = pwChecks(document.getElementById('changeNewPass').value);
+    document.getElementById('cpwLenCheck').classList.toggle('valid', c.len);
+    document.getElementById('cpwUpperCheck').classList.toggle('valid', c.upper);
+    document.getElementById('cpwNumberCheck').classList.toggle('valid', c.number);
+  }
+
+  async function attemptLogin(){
+    const errEl = document.getElementById('loginErr'); errEl.classList.remove('show');
+    try {
+      const r = await api('/api/login', { method:'POST', body:{ id: document.getElementById('loginId').value.trim(), password: document.getElementById('loginPass').value } });
+      currentUserData = r.user;
+      document.getElementById('loginId').value=''; document.getElementById('loginPass').value='';
+      applyRoleState(); await loadImages(); renderAccountView();
+    } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
+  function fillBirthdayDropdowns(){
+    const dayEl = document.getElementById('regBirthDay');
+    const monthEl = document.getElementById('regBirthMonth');
+    const yearEl = document.getElementById('regBirthYear');
+    dayEl.innerHTML = '<option value="">Tag</option>' + Array.from({length:31}, (_,i)=>i+1).map(d => `<option value="${d}">${d}</option>`).join('');
+    const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    monthEl.innerHTML = '<option value="">Monat</option>' + months.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+    const currentYear = new Date().getFullYear();
+    let yearOptions = '<option value="">Jahr</option>';
+    for(let y = currentYear; y >= currentYear - 100; y--){ yearOptions += `<option value="${y}">${y}</option>`; }
+    yearEl.innerHTML = yearOptions;
+  }
+  fillBirthdayDropdowns();
+
+  function isValidBirthdayClient(y, mo, d){
+    y = +y; mo = +mo; d = +d;
+    const date = new Date(y, mo - 1, d);
+    if(date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return false;
+    const today = new Date(); today.setHours(23,59,59,999);
+    if(date > today) return false;
+    if(y < 1900) return false;
+    return true;
+  }
+
+  async function registerCustomer(){
+    const errEl = document.getElementById('regErr'); errEl.classList.remove('show');
+    const day = document.getElementById('regBirthDay').value;
+    const month = document.getElementById('regBirthMonth').value;
+    const year = document.getElementById('regBirthYear').value;
+    if(!day || !month || !year){ errEl.textContent = 'Bitte einen vollständigen Geburtstag auswählen.'; errEl.classList.add('show'); return; }
+    if(!isValidBirthdayClient(year, month, day)){ errEl.textContent = 'Dieses Geburtsdatum gibt es nicht oder liegt in der Zukunft.'; errEl.classList.add('show'); return; }
+    const email = document.getElementById('regEmail').value.trim();
+    if(!isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    const birthday = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    try {
+      const r = await api('/api/register', { method:'POST', body:{
+        name: document.getElementById('regName').value.trim(),
+        birthday: birthday,
+        email: email,
+        password: document.getElementById('regPass').value
+      }});
+      currentUserData = r.user;
+      ['regName','regEmail','regPass'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('regBirthDay').value = '';
+      document.getElementById('regBirthMonth').value = '';
+      document.getElementById('regBirthYear').value = '';
+      applyRoleState(); await loadImages(); renderAccountView();
+    } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
+  }
+
+  async function logout(){
+    await api('/api/logout', { method:'POST' });
+    currentUserData = null; cart.clear();
+    applyRoleState(); await loadImages(); switchView('gallery');
+  }
+
+  async function changePassword(){
+    const msgEl = document.getElementById('changePwMsg'); msgEl.classList.remove('show');
+    try {
+      await api('/api/change-password', { method:'POST', body:{
+        oldPassword: document.getElementById('changeOldPass').value,
+        newPassword: document.getElementById('changeNewPass').value
+      }});
+      document.getElementById('changeOldPass').value=''; document.getElementById('changeNewPass').value='';
+      updateChangePwChecklist();
+      msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Passwort erfolgreich geändert.'; msgEl.classList.add('show');
+    } catch(e){ msgEl.style.color=''; msgEl.textContent = e.message; msgEl.classList.add('show'); }
+  }
+
+  function applyRoleState(){
+    const r = role();
+    const isAdmin = r === 'admin', isEmployee = r === 'employee', isCustomer = r === 'customer';
+    const isStaff = isAdmin || isEmployee;
+    document.getElementById('dropzone').classList.toggle('show', isStaff);
+    document.getElementById('promoPanel').classList.toggle('show', isAdmin);
+    document.getElementById('employeePanel').classList.toggle('show', isAdmin);
+    document.getElementById('banPanel').classList.toggle('show', isAdmin);
+    document.getElementById('rafflePanel').classList.toggle('show', isAdmin);
+    document.getElementById('supportPanel').classList.toggle('show', isAdmin);
+    document.getElementById('newsletterPanel').classList.toggle('show', isAdmin);
+    document.getElementById('updatePanel').classList.toggle('show', isAdmin);
+    ['promo','team','ban','raffle','support','newsletter','update'].forEach(t => {
+      document.getElementById('atab-' + t).classList.toggle('hidden', !isAdmin);
+    });
+    document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
+    document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
+    ['Admin','Employee','Customer'].forEach(k => document.getElementById('rolePill'+k).classList.remove('show'));
+    if(isAdmin){ document.getElementById('rolePillAdmin').classList.add('show'); document.getElementById('rolePillAdmin').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Admin</span>`; }
+    if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
+    if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
+    if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
+    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); loadRafflePromoStatus(); loadBannedList(); }
+  }
+
+  async function banUser(){
+    const input = document.getElementById('banIdentifierInput');
+    const msgEl = document.getElementById('banMsg');
+    if(!input.value.trim()){ msgEl.textContent = 'Bitte Name oder E-Mail eingeben.'; msgEl.className = 'redeem-msg err'; return; }
+    try {
+      const r = await api('/api/admin/ban-user', { method:'POST', body:{ identifier: input.value.trim() } });
+      msgEl.textContent = `"${r.user.name}" wurde gesperrt.`;
+      msgEl.className = 'redeem-msg ok';
+      input.value = '';
+      loadBannedList();
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+  async function unbanUser(identifier){
+    try {
+      await api('/api/admin/unban-user', { method:'POST', body:{ identifier } });
+      loadBannedList();
+    } catch(e){ alert(e.message); }
+  }
+  async function loadBannedList(){
+    try {
+      const r = await api('/api/admin/banned-users');
+      const list = document.getElementById('bannedList');
+      if(r.users.length === 0){ list.innerHTML = '<div class="team-empty">Keine gesperrten Konten.</div>'; return; }
+      list.innerHTML = r.users.map(u => `<div class="team-row"><span>${u.name}${u.email ? ' · ' + u.email : ''}</span><button class="btn solid" style="padding:4px 10px; font-size:10.5px;" onclick="unbanUser('${(u.email || u.name).replace(/'/g,"\\'")}')">Entsperren</button></div>`).join('');
+    } catch(e){}
+  }
+
+  async function loadTeamList(){
+    try {
+      const r = await api('/api/employees');
+      const list = document.getElementById('teamList');
+      if(r.employees.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Mitarbeiter angelegt.</div>'; return; }
+      list.innerHTML = r.employees.map(e => `<div class="team-row"><span>${e.name}</span><button class="btn danger" style="padding:4px 10px; font-size:10.5px;" onclick="removeEmployee('${e.id}')">Entfernen</button></div>`).join('');
+    } catch(e){}
+  }
+  async function addEmployee(){
+    const nameEl = document.getElementById('newEmpName'), passEl = document.getElementById('newEmpPass');
+    try {
+      await api('/api/employees', { method:'POST', body:{ name: nameEl.value.trim(), password: passEl.value } });
+      nameEl.value=''; passEl.value=''; loadTeamList();
+    } catch(e){ alert(e.message); }
+  }
+  async function removeEmployee(id){
+    await api('/api/employees/' + id, { method:'DELETE' });
+    loadTeamList();
+  }
+  async function savePromos(){
+    await api('/api/promos', { method:'POST', body:{
+      firstFree: document.getElementById('promoFirstFree').checked,
+      twoForOne: document.getElementById('promoTwoForOne').checked,
+      percent: document.getElementById('promoPercent').checked,
+      percentValue: parseFloat(document.getElementById('promoPercentValue').value)||0
+    }});
+    renderCartBar();
+  }
+  async function loadPromosIntoForm(){
+    const r = await api('/api/promos');
+    document.getElementById('promoFirstFree').checked = r.promos.firstFree;
+    document.getElementById('promoTwoForOne').checked = r.promos.twoForOne;
+    document.getElementById('promoPercent').checked = r.promos.percent;
+    document.getElementById('promoPercentValue').value = r.promos.percentValue;
+  }
+
+  // ---------- Warenkorb ----------
+  let cachedTotals = null;
+  async function computeCartPreview(){
+    if(role() === 'guest' || cart.size === 0){ cachedTotals = { itemIds:[], rawSubtotal:0, discount:0, percentOff:0, total:0 }; return cachedTotals; }
+    const r = await api('/api/cart/preview', { method:'POST', body:{ itemIds: [...cart] } });
+    cachedTotals = r.totals;
+    return cachedTotals;
+  }
+
+  async function renderCartBar(){
+    const t = await computeCartPreview();
+    const bar = document.getElementById('cartBar'), nc = document.getElementById('navCartCount');
+    if(cart.size === 0){ bar.classList.remove('show'); nc.style.display='none'; return; }
+    bar.classList.add('show'); nc.style.display='inline-block'; nc.textContent = cart.size;
+    let parts = [`<span><b>${cart.size}</b> im Warenkorb</span>`, `<span>Zwischensumme <b>${fmt(t.rawSubtotal)}</b></span>`];
+    if(t.discount>0) parts.push(`<span>Aktionen −<b>${fmt(t.discount)}</b></span>`);
+    if(t.percentOff>0) parts.push(`<span>Rabatt −<b>${fmt(t.percentOff)}</b></span>`);
+    parts.push(`<span class="total">Gesamt ${fmt(t.total)}</span>`);
+    document.getElementById('cartBreakdown').innerHTML = parts.join('');
+  }
+
+  async function renderCartView(){
+    const items = images.filter(img => cart.has(img.id) && !img.free && !img.purchased);
+    const listEl = document.getElementById('cartItemsList'), emptyEl = document.getElementById('cartEmpty'), summaryEl = document.getElementById('cartSummary');
+    if(items.length === 0){ listEl.innerHTML=''; emptyEl.style.display='block'; summaryEl.style.display='none'; return; }
+    emptyEl.style.display='none'; summaryEl.style.display='block';
+    listEl.innerHTML = items.map(img => `
+      <div class="cart-item">${mediaTagHtml(img,{fill:true})}
+        <div style="flex:1;"><div>${img.type==='video'?'Video':'Bild'} ${img.id.slice(0,6)}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
+        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">Entfernen</button>
+      </div>`).join('');
+
+    const t = await computeCartPreview();
+    document.getElementById('sumSubtotal').textContent = fmt(t.rawSubtotal);
+    document.getElementById('sumBundleLine').style.display = t.discount>0?'flex':'none';
+    document.getElementById('sumBundle').textContent = '−'+fmt(t.discount);
+    document.getElementById('sumPercentLine').style.display = t.percentOff>0?'flex':'none';
+    document.getElementById('sumPercentLabel').textContent = 'Prozent-Rabatt';
+    document.getElementById('sumPercent').textContent = '−'+fmt(t.percentOff);
+    document.getElementById('sumTotal').textContent = fmt(t.total);
+
+    const actionArea = document.getElementById('cartActionArea');
+    if(role() === 'guest'){
+      actionArea.innerHTML = `<div class="notice">Bitte <a onclick="switchView('account')">melde dich an oder erstelle ein kostenloses Kundenkonto</a>, um den Kauf abzuschließen.</div>`;
+    } else {
+      actionArea.innerHTML = `<button class="btn solid" style="width:100%;" onclick="confirmPurchase()" id="payButton">Jetzt sicher bezahlen 🔒</button><div class="notice">Die Zahlung läuft über Stripe — deine Zahlungsdaten laufen niemals über unseren Server.</div>`;
+    }
+  }
+
+  async function confirmPurchase(){
+    const btn = document.getElementById('payButton');
+    if(btn){ btn.disabled = true; btn.textContent = 'Einen Moment...'; }
+    try {
+      const r = await api('/api/checkout/create-session', { method:'POST', body:{ itemIds:[...cart] } });
+      if(r.freeCheckout){
+        cart.clear();
+        await loadImages();
+        alert('Kauf erfolgreich! Deine Bilder findest du jetzt unter "Mein Konto".');
+        switchView('account');
+        return;
+      }
+      window.location.href = r.url; // Weiterleitung zur sicheren Stripe-Bezahlseite
+    } catch(e){
+      alert(e.message);
+      if(btn){ btn.disabled = false; btn.textContent = 'Jetzt sicher bezahlen 🔒'; }
+    }
+  }
+
+  async function checkCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get('checkout');
+    if(!checkout) return;
+    if(checkout === 'success'){
+      const sessionId = params.get('session_id');
+      try {
+        const r = await api('/api/checkout/confirm', { method:'POST', body:{ sessionId } });
+        alert(`Zahlung erfolgreich! ${r.itemCount} Bild(er) sind jetzt in deinem Konto verfügbar.`);
+        await loadImages();
+        switchView('account');
+      } catch(e){
+        alert('Zahlung konnte nicht bestätigt werden: ' + e.message + '\n\nFalls Geld abgebucht wurde, melde dich bitte beim Support.');
+      }
+    } else if(checkout === 'cancel'){
+      switchView('cart');
+    }
+    // URL wieder säubern, damit ein Neuladen der Seite nicht erneut auslöst
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // ---------- Konto ----------
+  async function renderAccountView(){
+    const loggedOut = document.getElementById('loggedOutArea'), loggedIn = document.getElementById('loggedInArea');
+    if(role() === 'guest'){ loggedOut.style.display='grid'; loggedIn.style.display='none'; document.getElementById('accountHeading').textContent='Mein Konto'; return; }
+    loggedOut.style.display='none'; loggedIn.style.display='block';
+    document.getElementById('accountHeading').textContent = 'Hallo, ' + currentUserData.name + ' 👋';
+    document.getElementById('profileAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = currentUserData.name;
+    document.getElementById('profileRole').textContent = role()==='admin'?'Admin':role()==='employee'?'Mitarbeiter':'Kunde';
+
+    const detailsEl = document.getElementById('profileDetails'), statRow = document.getElementById('statRow');
+    if(role() === 'customer'){
+      const verifyBannerHtml = currentUserData.emailVerified ? '' : `
+        <div class="notice" style="margin-bottom:16px;">
+          ⚠️ Deine E-Mail ist noch nicht bestätigt. Schau in dein Postfach, oder
+          <a onclick="resendVerification()">Bestätigungsmail erneut senden</a>.
+          <div id="resendMsg" style="margin-top:6px; font-size:12px;"></div>
+        </div>`;
+      detailsEl.innerHTML = verifyBannerHtml + `<div class="detail">E-Mail: <b>${currentUserData.email}</b> ${currentUserData.emailVerified ? '✅' : ''}</div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
+      const r = await api('/api/purchases');
+      const memberSince = new Date(currentUserData.createdAt).toLocaleDateString('de-DE');
+      statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">Gekaufte Bilder</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">Mitglied seit</div></div>`;
+      document.getElementById('purchasesSection').style.display = 'block';
+      const grid = document.getElementById('purchasesGrid'), empty = document.getElementById('purchasesEmpty');
+      if(r.images.length === 0){ grid.innerHTML=''; empty.style.display='block'; }
+      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot"><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button></div></div>`).join(''); }
+    } else {
+      detailsEl.innerHTML = `<div class="detail">Zugang über "Verwaltung"</div>`;
+      statRow.innerHTML = '';
+      document.getElementById('purchasesSection').style.display = 'none';
+    }
+  }
+
+  // ---------- Lightbox ----------
+  function openLightbox(id){ lightboxId = id; document.getElementById('lightbox').classList.add('show'); renderLightboxInfo(); document.addEventListener('keydown', lbKey); }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.removeEventListener('keydown', lbKey); }
+  function lbKey(e){ if(e.key==='Escape') closeLightbox(); if(e.key==='ArrowRight') lightboxStep(1); if(e.key==='ArrowLeft') lightboxStep(-1); }
+  function lightboxStep(dir){ const idx = images.findIndex(x=>x.id===lightboxId); if(idx===-1) return; lightboxId = images[(idx+dir+images.length)%images.length].id; renderLightboxInfo(); }
+  function renderLightboxInfo(){
+    const img = images.find(x => x.id === lightboxId);
+    if(!img){ closeLightbox(); return; }
+    const idx = images.findIndex(x => x.id === lightboxId);
+    document.getElementById('lightboxMedia').innerHTML = mediaTagHtml(img, { controls:true, fill:false });
+    document.getElementById('lightboxProtect').style.display = img.type==='video' ? 'none' : 'block';
+    document.getElementById('lightboxWatermark').innerHTML = img.canDownload ? '' : watermarkSpans();
+    const priceEl = document.getElementById('lightboxPrice');
+    priceEl.textContent = img.free ? 'Gratis' : img.purchased ? 'Gekauft' : fmt(img.price);
+    priceEl.className = 'lb-price' + ((img.free||img.purchased)?' free':'');
+    const inCart = cart.has(img.id);
+    document.getElementById('lightboxAction').innerHTML = img.canDownload
+      ? `<button class="dl-btn" onclick="downloadImage('${img.id}')">Herunterladen</button>`
+      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+    document.getElementById('lightboxCounter').textContent = (idx+1)+' / '+images.length;
+  }
+
+  // ---------- Upload ----------
+  function handleFiles(fileList){
+    if(!fileList || fileList.length===0) return;
+    [...fileList].forEach(file => {
+      if(!file.type.startsWith('image/') && !file.type.startsWith('video/')){ alert('Bitte nur Bild- oder Videodateien auswählen.'); return; }
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          await api('/api/images', { method:'POST', body:{ dataUrl: ev.target.result } });
+          await loadImages();
+        } catch(e){ alert('Upload fehlgeschlagen: ' + e.message); }
+      };
+      reader.onerror = () => alert('Datei "'+file.name+'" konnte nicht gelesen werden.');
+      reader.readAsDataURL(file);
+    });
+  }
+  document.getElementById('fileInput').addEventListener('change', e => { handleFiles(e.target.files); e.target.value=''; });
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='var(--amber)'; });
+  dz.addEventListener('dragleave', () => { dz.style.borderColor=''; });
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+  // ---------- Start ----------
+  // ---------- Chat-Bot (rein regelbasiert, ohne externen KI-Dienst) ----------
+  const FAQ_KB = [
+    { keywords: ['konto','erstell','registrier','account'], answer: 'Kostenlos: Geh zu "Mein Konto" → "Konto erstellen" und trag Name, Geburtstag, E-Mail und Passwort ein.' },
+    { keywords: ['anmelden','einloggen','login'], answer: 'Unter "Mein Konto" kannst du dich mit deiner E-Mail (oder deinem Namen) und Passwort anmelden.' },
+    { keywords: ['kauf','bezahl','kasse'], answer: 'Klick bei einem Bild auf "In den Warenkorb", geh dann zu "Warenkorb". Aktuell bekommst du dein Bild über einen Code, den wir dir nach der Zahlung zuschicken.' },
+    { keywords: ['code','einlös','eingeb','7-stellig'], answer: 'In der Galerie findest du die Box "Bild-Code einlösen" — dort den 7-stelligen Code eingeben, den du von uns bekommen hast, und das Bild lädt direkt herunter.' },
+    { keywords: ['gültig','24 stunden','abgelaufen','ablauf'], answer: 'Ein Code bleibt gültig, bis er benutzt wird. Wird er erneuert, bleibt der alte Code noch 24 Stunden zusätzlich gültig.' },
+    { keywords: ['passwort'], answer: 'Unter "Mein Konto" gibt es den Bereich "Passwort ändern" — dort aktuelles und neues Passwort eintragen.' },
+    { keywords: ['gratis','kostenlos','umsonst'], answer: 'Bilder, die mit "GRATIS" markiert sind, kannst du direkt ohne Kauf herunterladen.' },
+    { keywords: ['rabatt','aktion','prozent'], answer: 'Manchmal laufen Aktionen wie "2 für 1" oder Prozent-Rabatte — die siehst du automatisch im Warenkorb, wenn sie aktiv sind.' },
+    { keywords: ['newsletter','abonnier'], answer: 'In der Galerie kannst du dich mit deiner E-Mail für den Newsletter eintragen und bekommst Neuigkeiten über neue Bilder und Aktionen.' },
+    { keywords: ['gewinnspiel','gewinn','verlosung'], answer: 'Falls aktiv, findest du in der Galerie eine Box zum Mitmachen — bei Gewinn bekommst du automatisch eine E-Mail mit einem 24h gültigen Gratis-Code.' },
+    { keywords: ['support','kontakt','hilfe','problem'], answer: 'Über den "Support"-Tab oben kannst du uns direkt eine Nachricht schreiben, oder per E-Mail an lumora.fotos.lumora@gmail.com.' },
+    { keywords: ['mitarbeiter','job','arbeiten'], answer: 'Mitarbeiter-Zugänge werden ausschließlich vom Admin angelegt, das geht nicht selbst über die Seite.' },
+    { keywords: ['gekauft','wo finde','meine bilder'], answer: 'Unter "Mein Konto" im Bereich "Meine gekauften Bilder" findest du alles, was du je gekauft oder per Code erhalten hast.' },
+    { keywords: ['bestätig'], answer: 'Nach der Registrierung bekommst du eine Bestätigungsmail. Kommt sie nicht an, kannst du sie unter "Mein Konto" erneut anfordern.' },
+    { keywords: ['video'], answer: 'Ja, neben Bildern gibt es bei uns auch Videos — die funktionieren genauso (kaufen, gratis, oder per Code).' },
+    { keywords: ['datenschutz','sicher','privat'], answer: 'Deine Zugangsdaten werden sicher verschlüsselt gespeichert und nicht an Dritte weitergegeben.' },
+  ];
+
+  function matchFaq(question){
+    const q = question.toLowerCase();
+    let best = null, bestScore = 0;
+    FAQ_KB.forEach(entry => {
+      let score = 0;
+      entry.keywords.forEach(kw => { if(q.includes(kw)) score++; });
+      if(score > bestScore){ bestScore = score; best = entry; }
+    });
+    return best ? best.answer : null;
+  }
+
+  function toggleChat(){
+    document.getElementById('chatWindow').classList.toggle('show');
+  }
+
+  function addChatMsg(text, who){
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + who;
+    div.innerHTML = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function sendChatMessage(){
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if(!question) return;
+    addChatMsg(question, 'user');
+    input.value = '';
+    setTimeout(() => {
+      const answer = matchFaq(question);
+      if(answer){
+        addChatMsg(answer, 'bot');
+      } else {
+        addChatMsg('Das weiß ich leider nicht genau. Schreib uns gerne über <a onclick="toggleChat(); switchView(\'support\');">Support</a> — wir melden uns!', 'bot');
+      }
+    }, 400);
+  }
+
+  (async () => {
+    await loadMe();
+    await loadImages();
+    await loadPromosIntoForm();
+    const raffleStatus = await api('/api/raffle/settings');
+    updateRaffleCardVisibility(raffleStatus.settings.enabled);
+    await checkCheckoutReturn();
+  })();
+</script>
+<button class="chat-bubble" onclick="toggleChat()" title="Fragen zur Website?">💬</button>
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header"><b>Lumora-Hilfe 🤖</b><span onclick="toggleChat()">✕</span></div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot">Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Deine Frage..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+    <button class="btn solid" style="padding:9px 14px;" onclick="sendChatMessage()">➤</button>
+  </div>
+</div>
+
+</body>
+</html>
