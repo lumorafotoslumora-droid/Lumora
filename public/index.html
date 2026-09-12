@@ -41,6 +41,8 @@
   nav.tabs button.hidden{ display:none; }
   .cart-count{ display:inline-block; margin-left:6px; background:var(--amber); color:#141220; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; }
   .header-actions{ display:flex; align-items:center; gap:12px; }
+  .lang-select{ font-family:'Space Mono',monospace; font-size:12px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:8px 10px; border-radius:999px; cursor:pointer; }
+  .lang-select:focus{ outline:none; border-color:var(--amber); }
   .role-pill{ display:none; align-items:center; gap:8px; font-family:'Space Mono',monospace; font-size:12px; padding:7px 14px; border-radius:999px; background: var(--panel-2); border:1px solid var(--line); color:var(--muted); }
   .role-pill.show{ display:inline-flex; }
   .role-pill .badge{ font-size:10px; padding:2px 7px; border-radius:999px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700; }
@@ -221,19 +223,30 @@
 <body>
 
 <header>
-  <div class="brand"><div class="mark">L</div><div class="txt"><h1>Lumora</h1><span>Fotografie</span></div></div>
+  <div class="brand"><div class="mark">L</div><div class="txt"><h1>Lumora</h1><span data-i18n="brand_tagline">Fotografie</span></div></div>
   <nav class="tabs">
-    <button class="active" data-view="gallery" onclick="switchView('gallery')">Galerie</button>
-    <button data-view="cart" onclick="switchView('cart')">Warenkorb<span class="cart-count" id="navCartCount" style="display:none;"></span></button>
-    <button data-view="account" onclick="switchView('account')">Mein Konto</button>
-    <button data-view="support" onclick="switchView('support')">Support</button>
+    <button class="active" data-view="gallery" data-i18n="nav_gallery" onclick="switchView('gallery')">Galerie</button>
+    <button data-view="cart" onclick="switchView('cart')"><span data-i18n="nav_cart">Warenkorb</span><span class="cart-count" id="navCartCount" style="display:none;"></span></button>
+    <button data-view="account" data-i18n="nav_account" onclick="switchView('account')">Mein Konto</button>
+    <button data-view="support" data-i18n="nav_support" onclick="switchView('support')">Support</button>
     <button data-view="admin" id="navAdminTab" class="hidden" onclick="switchView('admin')">Verwaltung</button>
   </nav>
   <div class="header-actions">
+    <select id="langSelect" onchange="setLanguage(this.value)" class="lang-select">
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="it">🇮🇹 Italiano</option>
+      <option value="sl">🇸🇮 Slovenščina</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="nl">🇳🇱 Nederlands</option>
+      <option value="pl">🇵🇱 Polski</option>
+    </select>
     <div class="role-pill admin-tag" id="rolePillAdmin"></div>
     <div class="role-pill employee-tag" id="rolePillEmployee"></div>
     <div class="role-pill customer-tag" id="rolePillCustomer"></div>
-    <button class="btn muted" id="logoutBtn" style="display:none;" onclick="logout()">Abmelden</button>
+    <button class="btn muted" id="logoutBtn" style="display:none;" onclick="logout()" data-i18n="logout_btn">Abmelden</button>
   </div>
 </header>
 
@@ -242,48 +255,48 @@
     <div class="hero">
       <div class="hero-glow g1"></div>
       <div class="hero-glow g2"></div>
-      <span class="hero-badge">✦ Läuft auf einem echten Server</span>
-      <h2>Fotografie, die etwas <span class="accent-word">hermacht</span>.</h2>
-      <p>Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.</p>
+      <span class="hero-badge" data-i18n="hero_badge">✦ Läuft auf einem echten Server</span>
+      <h2 data-i18n-html="hero_title">Fotografie, die etwas <span class="accent-word">hermacht</span>.</h2>
+      <p data-i18n="hero_sub">Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.</p>
       <div class="cta-row">
-        <button class="btn solid" onclick="document.getElementById('shopGrid').scrollIntoView({behavior:'smooth'})">Galerie durchsuchen</button>
-        <button class="btn muted" onclick="switchView('account')">Konto erstellen</button>
+        <button class="btn solid" onclick="document.getElementById('shopGrid').scrollIntoView({behavior:'smooth'})" data-i18n="hero_cta1">Galerie durchsuchen</button>
+        <button class="btn muted" onclick="switchView('account')" data-i18n="hero_cta2">Konto erstellen</button>
       </div>
-      <p class="hero-note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
+      <p class="hero-note" data-i18n="hero_note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
     </div>
     <div class="grid" id="shopGrid"></div>
-    <div class="empty" id="shopEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+    <div class="empty" id="shopEmpty" style="display:none;" data-i18n="shop_empty">Noch keine Bilder vorhanden.</div>
 
     <div class="extras-grid">
       <div class="extra-card">
         <div class="extra-icon">🔑</div>
-        <h3>Code einlösen</h3>
-        <p>Hast du von uns einen 7-stelligen Code bekommen? Gib ihn ein und lade dein Bild direkt herunter.</p>
+        <h3 data-i18n="redeem_title">Code einlösen</h3>
+        <p data-i18n="redeem_sub">Hast du von uns einen 7-stelligen Code bekommen? Gib ihn ein und lade dein Bild direkt herunter.</p>
         <div class="extra-row">
           <input type="text" id="redeemInput" maxlength="7" placeholder="1234567">
-          <button class="btn solid" onclick="redeemCode()">Einlösen</button>
+          <button class="btn solid" onclick="redeemCode()" data-i18n="redeem_btn">Einlösen</button>
         </div>
         <div class="redeem-msg" id="redeemMsg"></div>
       </div>
 
       <div class="extra-card" id="raffleGiveawayCard">
         <div class="extra-icon">🎁</div>
-        <h3>Gewinnspiel</h3>
-        <p>Trag deine E-Mail ein und nimm an der Verlosung eines Gratisbildes teil.</p>
+        <h3 data-i18n="raffle_title">Gewinnspiel</h3>
+        <p data-i18n="raffle_sub">Trag deine E-Mail ein und nimm an der Verlosung eines Gratisbildes teil.</p>
         <div class="extra-row">
           <input type="email" id="raffleInput" placeholder="deine@email.com">
-          <button class="btn solid" onclick="enterRaffle()">Teilnehmen</button>
+          <button class="btn solid" onclick="enterRaffle()" data-i18n="raffle_btn">Teilnehmen</button>
         </div>
         <div class="redeem-msg" id="raffleMsg"></div>
       </div>
 
       <div class="extra-card">
         <div class="extra-icon">📰</div>
-        <h3>Newsletter</h3>
-        <p>Trag dich ein und verpasse keine neuen Bilder und Aktionen mehr.</p>
+        <h3 data-i18n="newsletter_title">Newsletter</h3>
+        <p data-i18n="newsletter_sub">Trag dich ein und verpasse keine neuen Bilder und Aktionen mehr.</p>
         <div class="extra-row">
           <input type="email" id="newsletterInput" placeholder="deine@email.com">
-          <button class="btn solid" onclick="subscribeNewsletter()">Abonnieren</button>
+          <button class="btn solid" onclick="subscribeNewsletter()" data-i18n="newsletter_btn">Abonnieren</button>
         </div>
         <div class="redeem-msg" id="newsletterSubMsg"></div>
       </div>
@@ -291,53 +304,53 @@
   </section>
 
   <section class="view" id="view-cart">
-    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kasse</p><h2 style="font-size:28px;">Warenkorb</h2></div>
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow" data-i18n="cart_eyebrow">Kasse</p><h2 style="font-size:28px;" data-i18n="cart_title">Warenkorb</h2></div>
     <div class="cart-page">
       <div id="cartItemsList"></div>
-      <div class="empty" id="cartEmpty" style="display:none;">Dein Warenkorb ist leer.</div>
+      <div class="empty" id="cartEmpty" style="display:none;" data-i18n="cart_empty">Dein Warenkorb ist leer.</div>
       <div class="cart-summary" id="cartSummary" style="display:none;">
-        <div class="line"><span>Zwischensumme</span><b id="sumSubtotal"></b></div>
-        <div class="line" id="sumBundleLine" style="display:none;"><span>Aktionsrabatt</span><b id="sumBundle"></b></div>
+        <div class="line"><span data-i18n="cart_subtotal">Zwischensumme</span><b id="sumSubtotal"></b></div>
+        <div class="line" id="sumBundleLine" style="display:none;"><span data-i18n="cart_bundle">Aktionsrabatt</span><b id="sumBundle"></b></div>
         <div class="line" id="sumPercentLine" style="display:none;"><span id="sumPercentLabel"></span><b id="sumPercent"></b></div>
-        <div class="line total"><span>Gesamt</span><b id="sumTotal"></b></div>
+        <div class="line total"><span data-i18n="cart_total">Gesamt</span><b id="sumTotal"></b></div>
         <div id="cartActionArea" style="margin-top:16px;"></div>
       </div>
     </div>
   </section>
 
   <section class="view" id="view-account">
-    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Konto</p><h2 id="accountHeading" style="font-size:28px;">Mein Konto</h2></div>
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow" data-i18n="account_eyebrow">Konto</p><h2 id="accountHeading" style="font-size:28px;" data-i18n="account_title">Mein Konto</h2></div>
 
     <div id="loggedOutArea" class="account-grid">
       <div class="auth-card">
-        <h3>Willkommen zurück</h3>
-        <p class="sub">Melde dich mit deinem bestehenden Zugang an</p>
-        <div class="field"><label>Name oder E-Mail</label><input type="text" id="loginId"></div>
-        <div class="field"><label>Passwort</label><input type="password" id="loginPass"></div>
+        <h3 data-i18n="login_title">Willkommen zurück</h3>
+        <p class="sub" data-i18n="login_sub">Melde dich mit deinem bestehenden Zugang an</p>
+        <div class="field"><label data-i18n="login_label_id">Name oder E-Mail</label><input type="text" id="loginId"></div>
+        <div class="field"><label data-i18n="label_password">Passwort</label><input type="password" id="loginPass"></div>
         <div class="err-text" id="loginErr"></div>
-        <button class="btn solid" style="width:100%;" onclick="attemptLogin()">Anmelden</button>
+        <button class="btn solid" style="width:100%;" onclick="attemptLogin()" data-i18n="login_btn">Anmelden</button>
       </div>
       <div class="auth-card">
-        <h3>Konto erstellen</h3>
-        <p class="sub">Kostenlos — nur für Kunden</p>
-        <div class="field"><label>Name</label><input type="text" id="regName"></div>
+        <h3 data-i18n="register_title">Konto erstellen</h3>
+        <p class="sub" data-i18n="register_sub">Kostenlos — nur für Kunden</p>
+        <div class="field"><label data-i18n="label_name">Name</label><input type="text" id="regName"></div>
         <div class="field">
-          <label>Geburtstag</label>
+          <label data-i18n="label_birthday">Geburtstag</label>
           <div style="display:flex; gap:8px; margin-bottom:15px;">
             <select id="regBirthDay" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
             <select id="regBirthMonth" style="flex:1.4; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
             <select id="regBirthYear" style="flex:1; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 6px; border-radius:var(--radius-sm); font-size:14px;"></select>
           </div>
         </div>
-        <div class="field"><label>E-Mail</label><input type="email" id="regEmail"></div>
-        <div class="field"><label>Passwort</label><input type="password" id="regPass" oninput="updatePwChecklist()"></div>
+        <div class="field"><label data-i18n="label_email">E-Mail</label><input type="email" id="regEmail"></div>
+        <div class="field"><label data-i18n="label_password">Passwort</label><input type="password" id="regPass" oninput="updatePwChecklist()"></div>
         <div class="pw-checklist">
-          <div class="pw-item" id="pwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
-          <div class="pw-item" id="pwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
-          <div class="pw-item" id="pwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+          <div class="pw-item" id="pwLenCheck"><span class="dot"></span><span data-i18n="pw_len">Mindestens 8 Zeichen</span></div>
+          <div class="pw-item" id="pwUpperCheck"><span class="dot"></span><span data-i18n="pw_upper">Ein Großbuchstabe</span></div>
+          <div class="pw-item" id="pwNumberCheck"><span class="dot"></span><span data-i18n="pw_number">Eine Zahl</span></div>
         </div>
         <div class="err-text" id="regErr"></div>
-        <button class="btn solid" style="width:100%;" onclick="registerCustomer()">Konto erstellen</button>
+        <button class="btn solid" style="width:100%;" onclick="registerCustomer()" data-i18n="register_btn">Konto erstellen</button>
       </div>
     </div>
 
@@ -350,36 +363,36 @@
       </div>
       <div class="stat-row" id="statRow"></div>
       <div class="auth-card" style="max-width:420px; margin-bottom:36px;">
-        <h3>Passwort ändern</h3>
-        <div class="field"><label>Aktuelles Passwort</label><input type="password" id="changeOldPass"></div>
-        <div class="field"><label>Neues Passwort</label><input type="password" id="changeNewPass" oninput="updateChangePwChecklist()"></div>
+        <h3 data-i18n="change_pw_title">Passwort ändern</h3>
+        <div class="field"><label data-i18n="label_current_password">Aktuelles Passwort</label><input type="password" id="changeOldPass"></div>
+        <div class="field"><label data-i18n="label_new_password">Neues Passwort</label><input type="password" id="changeNewPass" oninput="updateChangePwChecklist()"></div>
         <div class="pw-checklist">
-          <div class="pw-item" id="cpwLenCheck"><span class="dot"></span>Mindestens 8 Zeichen</div>
-          <div class="pw-item" id="cpwUpperCheck"><span class="dot"></span>Ein Großbuchstabe</div>
-          <div class="pw-item" id="cpwNumberCheck"><span class="dot"></span>Eine Zahl</div>
+          <div class="pw-item" id="cpwLenCheck"><span class="dot"></span><span data-i18n="pw_len">Mindestens 8 Zeichen</span></div>
+          <div class="pw-item" id="cpwUpperCheck"><span class="dot"></span><span data-i18n="pw_upper">Ein Großbuchstabe</span></div>
+          <div class="pw-item" id="cpwNumberCheck"><span class="dot"></span><span data-i18n="pw_number">Eine Zahl</span></div>
         </div>
         <div class="err-text" id="changePwMsg"></div>
-        <button class="btn solid" style="width:100%;" onclick="changePassword()">Passwort speichern</button>
+        <button class="btn solid" style="width:100%;" onclick="changePassword()" data-i18n="change_pw_btn">Passwort speichern</button>
       </div>
       <div id="purchasesSection">
-        <p class="eyebrow">Meine gekauften Bilder</p>
+        <p class="eyebrow" data-i18n="my_purchases">Meine gekauften Bilder</p>
         <div class="grid" id="purchasesGrid"></div>
-        <div class="empty" id="purchasesEmpty" style="display:none;">Noch keine Bilder gekauft.</div>
+        <div class="empty" id="purchasesEmpty" style="display:none;" data-i18n="no_purchases">Noch keine Bilder gekauft.</div>
       </div>
     </div>
   </section>
 
   <section class="view" id="view-support">
-    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow">Kontakt</p><h2 style="font-size:28px;">Support</h2><p>Schreib uns eine Nachricht direkt hier auf der Seite, oder per E-Mail.</p></div>
+    <div class="hero" style="margin-bottom:28px;"><p class="eyebrow" data-i18n="support_eyebrow">Kontakt</p><h2 style="font-size:28px;" data-i18n="support_title">Support</h2><p data-i18n="support_sub">Schreib uns eine Nachricht direkt hier auf der Seite, oder per E-Mail.</p></div>
     <div class="auth-card" style="max-width:480px;">
-      <h3>Nachricht senden</h3>
-      <p class="sub">Wir antworten dir per E-Mail, falls du eine angibst.</p>
-      <div class="field"><label>Name (optional)</label><input type="text" id="supportName"></div>
-      <div class="field"><label>E-Mail (optional, für Antwort)</label><input type="email" id="supportEmail"></div>
-      <div class="field"><label>Nachricht</label><textarea id="supportMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif;"></textarea></div>
+      <h3 data-i18n="support_form_title">Nachricht senden</h3>
+      <p class="sub" data-i18n="support_form_sub">Wir antworten dir per E-Mail, falls du eine angibst.</p>
+      <div class="field"><label data-i18n="label_name_optional">Name (optional)</label><input type="text" id="supportName"></div>
+      <div class="field"><label data-i18n="label_email_optional">E-Mail (optional, für Antwort)</label><input type="email" id="supportEmail"></div>
+      <div class="field"><label data-i18n="label_message">Nachricht</label><textarea id="supportMessage" rows="4" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:11px 13px; font-size:14px; border-radius:var(--radius-sm); font-family:'Inter',sans-serif;"></textarea></div>
       <div class="err-text" id="supportErr"></div>
-      <button class="btn solid" style="width:100%;" onclick="sendSupportMessage()">Nachricht senden</button>
-      <p class="terms-note" style="margin-top:16px; text-align:left;">Oder schreib uns direkt: <a href="mailto:lumora.fotos.lumora@gmail.com" style="color:var(--amber);">lumora.fotos.lumora@gmail.com</a></p>
+      <button class="btn solid" style="width:100%;" onclick="sendSupportMessage()" data-i18n="support_send_btn">Nachricht senden</button>
+      <p class="terms-note" style="margin-top:16px; text-align:left;"><span data-i18n="support_or_email">Oder schreib uns direkt:</span> <a href="mailto:lumora.fotos.lumora@gmail.com" style="color:var(--amber);">lumora.fotos.lumora@gmail.com</a></p>
     </div>
   </section>
 
@@ -488,8 +501,17 @@
         <div class="redeem-msg" id="newsletterMsg" style="margin-top:12px;"></div>
 
         <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
-          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Tägliche Automatik</p>
-          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt automatisch einmal am Tag "Es gibt neue Bilder!" (falls in 24h was Neues hochgeladen wurde) oder sonst eine allgemeine Erinnerung. Letzte automatische Mail: <b id="dailyLastSent" style="color:var(--ink);">–</b></p>
+          <p style="font-family:'Space Mono',monospace; font-size:10.5px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin:0 0 8px;">Automatische Mail</p>
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Verschickt automatisch in einstellbaren Abständen "Es gibt neue Bilder!" (falls neu hochgeladen wurde) oder sonst eine allgemeine Erinnerung. Letzte automatische Mail: <b id="dailyLastSent" style="color:var(--ink);">–</b></p>
+          <label style="display:block; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin:0 0 6px; text-transform:uppercase;">Wie oft senden?</label>
+          <select id="dailyIntervalSelect" onchange="saveDailyInterval()" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius-sm); margin-bottom:14px;">
+            <option value="1">Alle 1 Stunde</option>
+            <option value="2">Alle 2 Stunden</option>
+            <option value="3">Alle 3 Stunden</option>
+            <option value="24">1 Mal pro Tag</option>
+            <option value="48">Alle 2 Tage</option>
+            <option value="168">1 Mal pro Woche</option>
+          </select>
           <div class="field"><label>Zusätzlicher Hinweis für die nächste Mail (optional, z.B. neues Feature)</label><input type="text" id="dailyNoteInput" placeholder="z.B. Neues Feature: Videos kaufen!"></div>
           <div style="display:flex; gap:8px;">
             <button class="btn muted" style="flex:1;" onclick="saveDailyNote()">Hinweis speichern</button>
@@ -514,14 +536,14 @@
 
 <footer>
   <div class="foot-grid">
-    <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;">Fotografie zum Kauf oder kostenlosen Download.</p></div>
-    <div><h5>Produkt</h5><ul><li><a onclick="switchView('gallery')">Galerie</a></li><li><a onclick="switchView('cart')">Warenkorb</a></li><li><a onclick="switchView('account')">Mein Konto</a></li></ul></div>
-    <div><h5>Unternehmen</h5><ul><li><a>Über uns</a></li><li><a onclick="switchView('support')">Support</a></li></ul></div>
+    <div><h5 style="font-family:'Fraunces',serif; font-size:17px; text-transform:none; color:var(--ink);">Lumora</h5><p style="color:var(--muted); font-size:13px;" data-i18n="footer_tagline">Fotografie zum Kauf oder kostenlosen Download.</p></div>
+    <div><h5 data-i18n="footer_product">Produkt</h5><ul><li><a onclick="switchView('gallery')" data-i18n="nav_gallery">Galerie</a></li><li><a onclick="switchView('cart')" data-i18n="nav_cart">Warenkorb</a></li><li><a onclick="switchView('account')" data-i18n="nav_account">Mein Konto</a></li></ul></div>
+    <div><h5 data-i18n="footer_company">Unternehmen</h5><ul><li><a data-i18n="footer_about">Über uns</a></li><li><a onclick="switchView('support')" data-i18n="nav_support">Support</a></li></ul></div>
   </div>
-  <div class="foot-bottom"><span>© 2026 Lumora</span><span>Läuft auf eigenem Server</span></div>
+  <div class="foot-bottom"><span>© 2026 Lumora</span><span data-i18n="footer_ownserver">Läuft auf eigenem Server</span></div>
 </footer>
 
-<div class="cart-bar" id="cartBar"><div class="breakdown" id="cartBreakdown"></div><button class="btn solid" onclick="switchView('cart')">Zur Kasse</button></div>
+<div class="cart-bar" id="cartBar"><div class="breakdown" id="cartBreakdown"></div><button class="btn solid" onclick="switchView('cart')" data-i18n="cart_checkout_btn">Zur Kasse</button></div>
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -535,6 +557,276 @@
 </div>
 
 <script>
+  // ---------- Mehrsprachigkeit ----------
+  const I18N = {
+    de: {
+      nav_gallery:"Galerie", nav_cart:"Warenkorb", nav_account:"Mein Konto", nav_support:"Support",
+      brand_tagline:"Fotografie", logout_btn:"Abmelden",
+      hero_badge:"✦ Läuft auf einem echten Server",
+      hero_title_html:'Fotografie, die etwas <span class="accent-word">hermacht</span>.',
+      hero_sub:"Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.",
+      hero_cta1:"Galerie durchsuchen", hero_cta2:"Konto erstellen", hero_note:"Kostenlos ansehen · Kein Abo nötig · Sofort startklar",
+      shop_empty:"Noch keine Bilder vorhanden.",
+      redeem_title:"Code einlösen", redeem_sub:"Hast du von uns einen 7-stelligen Code bekommen? Gib ihn ein und lade dein Bild direkt herunter.", redeem_btn:"Einlösen",
+      raffle_title:"Gewinnspiel", raffle_sub:"Trag deine E-Mail ein und nimm an der Verlosung eines Gratisbildes teil.", raffle_btn:"Teilnehmen",
+      newsletter_title:"Newsletter", newsletter_sub:"Trag dich ein und verpasse keine neuen Bilder und Aktionen mehr.", newsletter_btn:"Abonnieren",
+      cart_eyebrow:"Kasse", cart_title:"Warenkorb", cart_empty:"Dein Warenkorb ist leer.", cart_subtotal:"Zwischensumme", cart_bundle:"Aktionsrabatt", cart_total:"Gesamt", cart_checkout_btn:"Zur Kasse",
+      account_eyebrow:"Konto", account_title:"Mein Konto",
+      login_title:"Willkommen zurück", login_sub:"Melde dich mit deinem bestehenden Zugang an", login_label_id:"Name oder E-Mail", label_password:"Passwort", login_btn:"Anmelden",
+      register_title:"Konto erstellen", register_sub:"Kostenlos — nur für Kunden", label_name:"Name", label_birthday:"Geburtstag", label_email:"E-Mail", register_btn:"Konto erstellen",
+      pw_len:"Mindestens 8 Zeichen", pw_upper:"Ein Großbuchstabe", pw_number:"Eine Zahl",
+      change_pw_title:"Passwort ändern", label_current_password:"Aktuelles Passwort", label_new_password:"Neues Passwort", change_pw_btn:"Passwort speichern",
+      my_purchases:"Meine gekauften Bilder", no_purchases:"Noch keine Bilder gekauft.",
+      support_eyebrow:"Kontakt", support_title:"Support", support_sub:"Schreib uns eine Nachricht direkt hier auf der Seite, oder per E-Mail.",
+      support_form_title:"Nachricht senden", support_form_sub:"Wir antworten dir per E-Mail, falls du eine angibst.",
+      label_name_optional:"Name (optional)", label_email_optional:"E-Mail (optional, für Antwort)", label_message:"Nachricht", support_send_btn:"Nachricht senden", support_or_email:"Oder schreib uns direkt:",
+      footer_tagline:"Fotografie zum Kauf oder kostenlosen Download.", footer_product:"Produkt", footer_company:"Unternehmen", footer_about:"Über uns", footer_ownserver:"Läuft auf eigenem Server",
+      chat_greeting:"Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.",
+      cart_add:"+ In den Warenkorb", cart_in_cart:"✓ Im Warenkorb", download_btn:"Herunterladen", free_tag:"GRATIS", remove_btn:"Entfernen",
+      role_admin:"Admin", role_employee:"Mitarbeiter", role_customer:"Kunde",
+      stat_purchased:"Gekaufte Bilder", stat_member_since:"Mitglied seit", greeting_hello:"Hallo, {name} 👋"
+    },
+    en: {
+      nav_gallery:"Gallery", nav_cart:"Cart", nav_account:"My Account", nav_support:"Support",
+      brand_tagline:"Photography", logout_btn:"Log out",
+      hero_badge:"✦ Running on a real server",
+      hero_title_html:'Photography that makes an <span class="accent-word">impact</span>.',
+      hero_sub:"Curated photos and videos to buy or download for free — visible to all visitors.",
+      hero_cta1:"Browse gallery", hero_cta2:"Create account", hero_note:"Browse for free · No subscription · Ready instantly",
+      shop_empty:"No images yet.",
+      redeem_title:"Redeem code", redeem_sub:"Got a 7-digit code from us? Enter it and download your image right away.", redeem_btn:"Redeem",
+      raffle_title:"Giveaway", raffle_sub:"Enter your email and join the draw for a free image.", raffle_btn:"Join",
+      newsletter_title:"Newsletter", newsletter_sub:"Sign up and never miss new images or deals.", newsletter_btn:"Subscribe",
+      cart_eyebrow:"Checkout", cart_title:"Cart", cart_empty:"Your cart is empty.", cart_subtotal:"Subtotal", cart_bundle:"Deal discount", cart_total:"Total", cart_checkout_btn:"Checkout",
+      account_eyebrow:"Account", account_title:"My Account",
+      login_title:"Welcome back", login_sub:"Sign in with your existing account", login_label_id:"Name or email", label_password:"Password", login_btn:"Sign in",
+      register_title:"Create account", register_sub:"Free — for customers only", label_name:"Name", label_birthday:"Date of birth", label_email:"Email", register_btn:"Create account",
+      pw_len:"At least 8 characters", pw_upper:"One uppercase letter", pw_number:"One number",
+      change_pw_title:"Change password", label_current_password:"Current password", label_new_password:"New password", change_pw_btn:"Save password",
+      my_purchases:"My purchased images", no_purchases:"No images purchased yet.",
+      support_eyebrow:"Contact", support_title:"Support", support_sub:"Write us a message right here, or by email.",
+      support_form_title:"Send a message", support_form_sub:"We'll reply by email if you give us one.",
+      label_name_optional:"Name (optional)", label_email_optional:"Email (optional, for a reply)", label_message:"Message", support_send_btn:"Send message", support_or_email:"Or email us directly:",
+      footer_tagline:"Photography to buy or download for free.", footer_product:"Product", footer_company:"Company", footer_about:"About us", footer_ownserver:"Running on our own server",
+      chat_greeting:"Hi! 👋 Ask me anything about Lumora — e.g. how to buy an image, redeem a code, create an account, or subscribe to the newsletter.",
+      cart_add:"+ Add to cart", cart_in_cart:"✓ In cart", download_btn:"Download", free_tag:"FREE", remove_btn:"Remove",
+      role_admin:"Admin", role_employee:"Staff", role_customer:"Customer",
+      stat_purchased:"Purchased images", stat_member_since:"Member since", greeting_hello:"Hi, {name} 👋"
+    },
+    fr: {
+      nav_gallery:"Galerie", nav_cart:"Panier", nav_account:"Mon compte", nav_support:"Support",
+      brand_tagline:"Photographie", logout_btn:"Se déconnecter",
+      hero_badge:"✦ Fonctionne sur un vrai serveur",
+      hero_title_html:'De la photographie qui a de l\'<span class="accent-word">impact</span>.',
+      hero_sub:"Photos et vidéos sélectionnées à acheter ou télécharger gratuitement — visibles pour tous les visiteurs.",
+      hero_cta1:"Parcourir la galerie", hero_cta2:"Créer un compte", hero_note:"Consultation gratuite · Sans abonnement · Prêt immédiatement",
+      shop_empty:"Aucune image pour le moment.",
+      redeem_title:"Utiliser un code", redeem_sub:"Vous avez reçu un code à 7 chiffres ? Entrez-le pour télécharger votre image immédiatement.", redeem_btn:"Utiliser",
+      raffle_title:"Concours", raffle_sub:"Entrez votre e-mail et participez au tirage au sort d'une image gratuite.", raffle_btn:"Participer",
+      newsletter_title:"Newsletter", newsletter_sub:"Inscrivez-vous pour ne manquer aucune nouvelle image ni promotion.", newsletter_btn:"S'abonner",
+      cart_eyebrow:"Caisse", cart_title:"Panier", cart_empty:"Votre panier est vide.", cart_subtotal:"Sous-total", cart_bundle:"Remise promo", cart_total:"Total", cart_checkout_btn:"Passer à la caisse",
+      account_eyebrow:"Compte", account_title:"Mon compte",
+      login_title:"Bon retour", login_sub:"Connectez-vous avec votre compte existant", login_label_id:"Nom ou e-mail", label_password:"Mot de passe", login_btn:"Se connecter",
+      register_title:"Créer un compte", register_sub:"Gratuit — pour les clients uniquement", label_name:"Nom", label_birthday:"Date de naissance", label_email:"E-mail", register_btn:"Créer un compte",
+      pw_len:"Au moins 8 caractères", pw_upper:"Une majuscule", pw_number:"Un chiffre",
+      change_pw_title:"Changer le mot de passe", label_current_password:"Mot de passe actuel", label_new_password:"Nouveau mot de passe", change_pw_btn:"Enregistrer",
+      my_purchases:"Mes images achetées", no_purchases:"Aucune image achetée pour le moment.",
+      support_eyebrow:"Contact", support_title:"Support", support_sub:"Écrivez-nous un message directement ici, ou par e-mail.",
+      support_form_title:"Envoyer un message", support_form_sub:"Nous répondrons par e-mail si vous en indiquez un.",
+      label_name_optional:"Nom (facultatif)", label_email_optional:"E-mail (facultatif, pour la réponse)", label_message:"Message", support_send_btn:"Envoyer le message", support_or_email:"Ou écrivez-nous directement :",
+      footer_tagline:"Photographie à acheter ou télécharger gratuitement.", footer_product:"Produit", footer_company:"Entreprise", footer_about:"À propos", footer_ownserver:"Fonctionne sur notre propre serveur",
+      chat_greeting:"Bonjour ! 👋 Posez-moi vos questions sur Lumora — par ex. comment acheter une image, utiliser un code, créer un compte ou s'abonner à la newsletter.",
+      cart_add:"+ Ajouter au panier", cart_in_cart:"✓ Dans le panier", download_btn:"Télécharger", free_tag:"GRATUIT", remove_btn:"Retirer",
+      role_admin:"Admin", role_employee:"Employé", role_customer:"Client",
+      stat_purchased:"Images achetées", stat_member_since:"Membre depuis", greeting_hello:"Bonjour, {name} 👋"
+    },
+    it: {
+      nav_gallery:"Galleria", nav_cart:"Carrello", nav_account:"Il mio account", nav_support:"Assistenza",
+      brand_tagline:"Fotografia", logout_btn:"Disconnetti",
+      hero_badge:"✦ In esecuzione su un server reale",
+      hero_title_html:'Fotografia che fa <span class="accent-word">colpo</span>.',
+      hero_sub:"Foto e video selezionati da acquistare o scaricare gratis — visibili a tutti i visitatori.",
+      hero_cta1:"Sfoglia la galleria", hero_cta2:"Crea account", hero_note:"Visione gratuita · Nessun abbonamento · Pronto subito",
+      shop_empty:"Ancora nessuna immagine.",
+      redeem_title:"Riscatta codice", redeem_sub:"Hai ricevuto da noi un codice a 7 cifre? Inseriscilo e scarica subito la tua immagine.", redeem_btn:"Riscatta",
+      raffle_title:"Concorso", raffle_sub:"Inserisci la tua email e partecipa all'estrazione di un'immagine gratuita.", raffle_btn:"Partecipa",
+      newsletter_title:"Newsletter", newsletter_sub:"Iscriviti per non perdere nuove immagini e promozioni.", newsletter_btn:"Iscriviti",
+      cart_eyebrow:"Cassa", cart_title:"Carrello", cart_empty:"Il tuo carrello è vuoto.", cart_subtotal:"Subtotale", cart_bundle:"Sconto promo", cart_total:"Totale", cart_checkout_btn:"Vai alla cassa",
+      account_eyebrow:"Account", account_title:"Il mio account",
+      login_title:"Bentornato", login_sub:"Accedi con il tuo account esistente", login_label_id:"Nome o email", label_password:"Password", login_btn:"Accedi",
+      register_title:"Crea account", register_sub:"Gratis — solo per i clienti", label_name:"Nome", label_birthday:"Data di nascita", label_email:"Email", register_btn:"Crea account",
+      pw_len:"Almeno 8 caratteri", pw_upper:"Una lettera maiuscola", pw_number:"Un numero",
+      change_pw_title:"Cambia password", label_current_password:"Password attuale", label_new_password:"Nuova password", change_pw_btn:"Salva password",
+      my_purchases:"Le mie immagini acquistate", no_purchases:"Nessuna immagine acquistata ancora.",
+      support_eyebrow:"Contatto", support_title:"Assistenza", support_sub:"Scrivici un messaggio qui, oppure via email.",
+      support_form_title:"Invia un messaggio", support_form_sub:"Ti risponderemo via email se ne indichi una.",
+      label_name_optional:"Nome (facoltativo)", label_email_optional:"Email (facoltativa, per la risposta)", label_message:"Messaggio", support_send_btn:"Invia messaggio", support_or_email:"Oppure scrivici direttamente:",
+      footer_tagline:"Fotografia da acquistare o scaricare gratis.", footer_product:"Prodotto", footer_company:"Azienda", footer_about:"Chi siamo", footer_ownserver:"In esecuzione su un server proprio",
+      chat_greeting:"Ciao! 👋 Chiedimi qualsiasi cosa su Lumora — ad es. come acquistare un'immagine, riscattare un codice, creare un account o iscriverti alla newsletter.",
+      cart_add:"+ Aggiungi al carrello", cart_in_cart:"✓ Nel carrello", download_btn:"Scarica", free_tag:"GRATIS", remove_btn:"Rimuovi",
+      role_admin:"Admin", role_employee:"Collaboratore", role_customer:"Cliente",
+      stat_purchased:"Immagini acquistate", stat_member_since:"Membro da", greeting_hello:"Ciao, {name} 👋"
+    },
+    sl: {
+      nav_gallery:"Galerija", nav_cart:"Košarica", nav_account:"Moj račun", nav_support:"Podpora",
+      brand_tagline:"Fotografija", logout_btn:"Odjava",
+      hero_badge:"✦ Deluje na pravem strežniku",
+      hero_title_html:'Fotografija, ki naredi <span class="accent-word">vtis</span>.',
+      hero_sub:"Izbrane fotografije in videi za nakup ali brezplačen prenos — vidni vsem obiskovalcem.",
+      hero_cta1:"Prebrskaj galerijo", hero_cta2:"Ustvari račun", hero_note:"Brezplačen ogled · Brez naročnine · Takoj pripravljeno",
+      shop_empty:"Še ni slik.",
+      redeem_title:"Unovči kodo", redeem_sub:"Si od nas dobil 7-mestno kodo? Vnesi jo in takoj prenesi svojo sliko.", redeem_btn:"Unovči",
+      raffle_title:"Nagradna igra", raffle_sub:"Vnesi svoj e-poštni naslov in sodeluj v žrebanju za brezplačno sliko.", raffle_btn:"Sodeluj",
+      newsletter_title:"Novice", newsletter_sub:"Prijavi se in ne zamudi novih slik ter akcij.", newsletter_btn:"Naroči se",
+      cart_eyebrow:"Blagajna", cart_title:"Košarica", cart_empty:"Tvoja košarica je prazna.", cart_subtotal:"Vmesna vsota", cart_bundle:"Popust akcije", cart_total:"Skupaj", cart_checkout_btn:"K blagajni",
+      account_eyebrow:"Račun", account_title:"Moj račun",
+      login_title:"Dobrodošel nazaj", login_sub:"Prijavi se z obstoječim računom", login_label_id:"Ime ali e-pošta", label_password:"Geslo", login_btn:"Prijava",
+      register_title:"Ustvari račun", register_sub:"Brezplačno — samo za stranke", label_name:"Ime", label_birthday:"Rojstni dan", label_email:"E-pošta", register_btn:"Ustvari račun",
+      pw_len:"Vsaj 8 znakov", pw_upper:"Ena velika črka", pw_number:"Ena številka",
+      change_pw_title:"Spremeni geslo", label_current_password:"Trenutno geslo", label_new_password:"Novo geslo", change_pw_btn:"Shrani geslo",
+      my_purchases:"Moje kupljene slike", no_purchases:"Še ni kupljenih slik.",
+      support_eyebrow:"Kontakt", support_title:"Podpora", support_sub:"Napiši nam sporočilo neposredno tukaj ali po e-pošti.",
+      support_form_title:"Pošlji sporočilo", support_form_sub:"Odgovorili bomo po e-pošti, če jo navedeš.",
+      label_name_optional:"Ime (neobvezno)", label_email_optional:"E-pošta (neobvezno, za odgovor)", label_message:"Sporočilo", support_send_btn:"Pošlji sporočilo", support_or_email:"Ali nam piši neposredno:",
+      footer_tagline:"Fotografija za nakup ali brezplačen prenos.", footer_product:"Izdelek", footer_company:"Podjetje", footer_about:"O nas", footer_ownserver:"Deluje na lastnem strežniku",
+      chat_greeting:"Živjo! 👋 Vprašaj me karkoli o Lumori — npr. kako kupiti sliko, unovčiti kodo, ustvariti račun ali se naročiti na novice.",
+      cart_add:"+ V košarico", cart_in_cart:"✓ V košarici", download_btn:"Prenesi", free_tag:"BREZPLAČNO", remove_btn:"Odstrani",
+      role_admin:"Skrbnik", role_employee:"Zaposleni", role_customer:"Stranka",
+      stat_purchased:"Kupljene slike", stat_member_since:"Član od", greeting_hello:"Živjo, {name} 👋"
+    },
+    es: {
+      nav_gallery:"Galería", nav_cart:"Carrito", nav_account:"Mi cuenta", nav_support:"Soporte",
+      brand_tagline:"Fotografía", logout_btn:"Cerrar sesión",
+      hero_badge:"✦ Funciona en un servidor real",
+      hero_title_html:'Fotografía con <span class="accent-word">impacto</span>.',
+      hero_sub:"Fotos y vídeos seleccionados para comprar o descargar gratis — visibles para todos los visitantes.",
+      hero_cta1:"Explorar galería", hero_cta2:"Crear cuenta", hero_note:"Visualización gratuita · Sin suscripción · Listo al instante",
+      shop_empty:"Todavía no hay imágenes.",
+      redeem_title:"Canjear código", redeem_sub:"¿Recibiste un código de 7 dígitos? Introdúcelo y descarga tu imagen al instante.", redeem_btn:"Canjear",
+      raffle_title:"Sorteo", raffle_sub:"Introduce tu email y participa en el sorteo de una imagen gratis.", raffle_btn:"Participar",
+      newsletter_title:"Boletín", newsletter_sub:"Suscríbete y no te pierdas nuevas imágenes ni ofertas.", newsletter_btn:"Suscribirse",
+      cart_eyebrow:"Caja", cart_title:"Carrito", cart_empty:"Tu carrito está vacío.", cart_subtotal:"Subtotal", cart_bundle:"Descuento promo", cart_total:"Total", cart_checkout_btn:"Ir a pagar",
+      account_eyebrow:"Cuenta", account_title:"Mi cuenta",
+      login_title:"Bienvenido de nuevo", login_sub:"Inicia sesión con tu cuenta existente", login_label_id:"Nombre o email", label_password:"Contraseña", login_btn:"Iniciar sesión",
+      register_title:"Crear cuenta", register_sub:"Gratis — solo para clientes", label_name:"Nombre", label_birthday:"Fecha de nacimiento", label_email:"Email", register_btn:"Crear cuenta",
+      pw_len:"Al menos 8 caracteres", pw_upper:"Una letra mayúscula", pw_number:"Un número",
+      change_pw_title:"Cambiar contraseña", label_current_password:"Contraseña actual", label_new_password:"Nueva contraseña", change_pw_btn:"Guardar contraseña",
+      my_purchases:"Mis imágenes compradas", no_purchases:"Todavía no has comprado imágenes.",
+      support_eyebrow:"Contacto", support_title:"Soporte", support_sub:"Escríbenos un mensaje aquí mismo, o por email.",
+      support_form_title:"Enviar mensaje", support_form_sub:"Te responderemos por email si nos das uno.",
+      label_name_optional:"Nombre (opcional)", label_email_optional:"Email (opcional, para responder)", label_message:"Mensaje", support_send_btn:"Enviar mensaje", support_or_email:"O escríbenos directamente:",
+      footer_tagline:"Fotografía para comprar o descargar gratis.", footer_product:"Producto", footer_company:"Empresa", footer_about:"Sobre nosotros", footer_ownserver:"Funciona en nuestro propio servidor",
+      chat_greeting:"¡Hola! 👋 Pregúntame lo que quieras sobre Lumora — p. ej. cómo comprar una imagen, canjear un código, crear una cuenta o suscribirte al boletín.",
+      cart_add:"+ Añadir al carrito", cart_in_cart:"✓ En el carrito", download_btn:"Descargar", free_tag:"GRATIS", remove_btn:"Quitar",
+      role_admin:"Admin", role_employee:"Empleado", role_customer:"Cliente",
+      stat_purchased:"Imágenes compradas", stat_member_since:"Miembro desde", greeting_hello:"Hola, {name} 👋"
+    },
+    pt: {
+      nav_gallery:"Galeria", nav_cart:"Carrinho", nav_account:"Minha conta", nav_support:"Suporte",
+      brand_tagline:"Fotografia", logout_btn:"Sair",
+      hero_badge:"✦ Funciona num servidor real",
+      hero_title_html:'Fotografia com <span class="accent-word">impacto</span>.',
+      hero_sub:"Fotos e vídeos selecionados para comprar ou baixar gratuitamente — visíveis a todos os visitantes.",
+      hero_cta1:"Ver galeria", hero_cta2:"Criar conta", hero_note:"Visualização gratuita · Sem assinatura · Pronto na hora",
+      shop_empty:"Ainda não há imagens.",
+      redeem_title:"Resgatar código", redeem_sub:"Recebeu um código de 7 dígitos? Digite-o e baixe sua imagem na hora.", redeem_btn:"Resgatar",
+      raffle_title:"Sorteio", raffle_sub:"Insira seu email e participe do sorteio de uma imagem grátis.", raffle_btn:"Participar",
+      newsletter_title:"Newsletter", newsletter_sub:"Inscreva-se e não perca novas imagens e promoções.", newsletter_btn:"Assinar",
+      cart_eyebrow:"Checkout", cart_title:"Carrinho", cart_empty:"Seu carrinho está vazio.", cart_subtotal:"Subtotal", cart_bundle:"Desconto promo", cart_total:"Total", cart_checkout_btn:"Finalizar compra",
+      account_eyebrow:"Conta", account_title:"Minha conta",
+      login_title:"Bem-vindo de volta", login_sub:"Entre com sua conta existente", login_label_id:"Nome ou email", label_password:"Senha", login_btn:"Entrar",
+      register_title:"Criar conta", register_sub:"Grátis — apenas para clientes", label_name:"Nome", label_birthday:"Data de nascimento", label_email:"Email", register_btn:"Criar conta",
+      pw_len:"Pelo menos 8 caracteres", pw_upper:"Uma letra maiúscula", pw_number:"Um número",
+      change_pw_title:"Alterar senha", label_current_password:"Senha atual", label_new_password:"Nova senha", change_pw_btn:"Salvar senha",
+      my_purchases:"Minhas imagens compradas", no_purchases:"Nenhuma imagem comprada ainda.",
+      support_eyebrow:"Contato", support_title:"Suporte", support_sub:"Escreva-nos uma mensagem aqui, ou por email.",
+      support_form_title:"Enviar mensagem", support_form_sub:"Responderemos por email se você informar um.",
+      label_name_optional:"Nome (opcional)", label_email_optional:"Email (opcional, para resposta)", label_message:"Mensagem", support_send_btn:"Enviar mensagem", support_or_email:"Ou escreva-nos diretamente:",
+      footer_tagline:"Fotografia para comprar ou baixar gratuitamente.", footer_product:"Produto", footer_company:"Empresa", footer_about:"Sobre nós", footer_ownserver:"Funciona em servidor próprio",
+      chat_greeting:"Olá! 👋 Pergunte-me qualquer coisa sobre a Lumora — ex. como comprar uma imagem, resgatar um código, criar conta ou assinar a newsletter.",
+      cart_add:"+ Adicionar ao carrinho", cart_in_cart:"✓ No carrinho", download_btn:"Baixar", free_tag:"GRÁTIS", remove_btn:"Remover",
+      role_admin:"Admin", role_employee:"Funcionário", role_customer:"Cliente",
+      stat_purchased:"Imagens compradas", stat_member_since:"Membro desde", greeting_hello:"Olá, {name} 👋"
+    },
+    nl: {
+      nav_gallery:"Galerij", nav_cart:"Winkelwagen", nav_account:"Mijn account", nav_support:"Support",
+      brand_tagline:"Fotografie", logout_btn:"Uitloggen",
+      hero_badge:"✦ Draait op een echte server",
+      hero_title_html:'Fotografie die <span class="accent-word">indruk</span> maakt.',
+      hero_sub:"Geselecteerde foto's en video's om te kopen of gratis te downloaden — zichtbaar voor alle bezoekers.",
+      hero_cta1:"Bekijk galerij", hero_cta2:"Account aanmaken", hero_note:"Gratis bekijken · Geen abonnement · Direct klaar",
+      shop_empty:"Nog geen afbeeldingen.",
+      redeem_title:"Code inwisselen", redeem_sub:"Heb je van ons een 7-cijferige code gekregen? Voer hem in en download je afbeelding direct.", redeem_btn:"Inwisselen",
+      raffle_title:"Winactie", raffle_sub:"Vul je e-mail in en doe mee aan de trekking van een gratis afbeelding.", raffle_btn:"Meedoen",
+      newsletter_title:"Nieuwsbrief", newsletter_sub:"Meld je aan en mis geen nieuwe afbeeldingen of acties.", newsletter_btn:"Aanmelden",
+      cart_eyebrow:"Kassa", cart_title:"Winkelwagen", cart_empty:"Je winkelwagen is leeg.", cart_subtotal:"Subtotaal", cart_bundle:"Actiekorting", cart_total:"Totaal", cart_checkout_btn:"Afrekenen",
+      account_eyebrow:"Account", account_title:"Mijn account",
+      login_title:"Welkom terug", login_sub:"Log in met je bestaande account", login_label_id:"Naam of e-mail", label_password:"Wachtwoord", login_btn:"Inloggen",
+      register_title:"Account aanmaken", register_sub:"Gratis — alleen voor klanten", label_name:"Naam", label_birthday:"Geboortedatum", label_email:"E-mail", register_btn:"Account aanmaken",
+      pw_len:"Minimaal 8 tekens", pw_upper:"Eén hoofdletter", pw_number:"Eén cijfer",
+      change_pw_title:"Wachtwoord wijzigen", label_current_password:"Huidig wachtwoord", label_new_password:"Nieuw wachtwoord", change_pw_btn:"Wachtwoord opslaan",
+      my_purchases:"Mijn gekochte afbeeldingen", no_purchases:"Nog geen afbeeldingen gekocht.",
+      support_eyebrow:"Contact", support_title:"Support", support_sub:"Stuur ons hier direct een bericht, of per e-mail.",
+      support_form_title:"Bericht versturen", support_form_sub:"We antwoorden per e-mail als je er een opgeeft.",
+      label_name_optional:"Naam (optioneel)", label_email_optional:"E-mail (optioneel, voor antwoord)", label_message:"Bericht", support_send_btn:"Bericht versturen", support_or_email:"Of mail ons direct:",
+      footer_tagline:"Fotografie om te kopen of gratis te downloaden.", footer_product:"Product", footer_company:"Bedrijf", footer_about:"Over ons", footer_ownserver:"Draait op eigen server",
+      chat_greeting:"Hoi! 👋 Vraag me alles over Lumora — bijv. hoe je een afbeelding koopt, een code inwisselt, een account aanmaakt of je aanmeldt voor de nieuwsbrief.",
+      cart_add:"+ In winkelwagen", cart_in_cart:"✓ In winkelwagen", download_btn:"Downloaden", free_tag:"GRATIS", remove_btn:"Verwijderen",
+      role_admin:"Beheerder", role_employee:"Medewerker", role_customer:"Klant",
+      stat_purchased:"Gekochte afbeeldingen", stat_member_since:"Lid sinds", greeting_hello:"Hoi, {name} 👋"
+    },
+    pl: {
+      nav_gallery:"Galeria", nav_cart:"Koszyk", nav_account:"Moje konto", nav_support:"Wsparcie",
+      brand_tagline:"Fotografia", logout_btn:"Wyloguj",
+      hero_badge:"✦ Działa na prawdziwym serwerze",
+      hero_title_html:'Fotografia, która robi <span class="accent-word">wrażenie</span>.',
+      hero_sub:"Wyselekcjonowane zdjęcia i filmy do kupienia lub bezpłatnego pobrania — widoczne dla wszystkich odwiedzających.",
+      hero_cta1:"Przeglądaj galerię", hero_cta2:"Utwórz konto", hero_note:"Darmowe przeglądanie · Bez subskrypcji · Gotowe od razu",
+      shop_empty:"Brak zdjęć.",
+      redeem_title:"Wykorzystaj kod", redeem_sub:"Dostałeś od nas 7-cyfrowy kod? Wpisz go i od razu pobierz swoje zdjęcie.", redeem_btn:"Wykorzystaj",
+      raffle_title:"Konkurs", raffle_sub:"Wpisz swój e-mail i weź udział w losowaniu darmowego zdjęcia.", raffle_btn:"Dołącz",
+      newsletter_title:"Newsletter", newsletter_sub:"Zapisz się i nie przegap nowych zdjęć ani promocji.", newsletter_btn:"Zapisz się",
+      cart_eyebrow:"Kasa", cart_title:"Koszyk", cart_empty:"Twój koszyk jest pusty.", cart_subtotal:"Suma częściowa", cart_bundle:"Rabat promocyjny", cart_total:"Razem", cart_checkout_btn:"Do kasy",
+      account_eyebrow:"Konto", account_title:"Moje konto",
+      login_title:"Witaj ponownie", login_sub:"Zaloguj się na istniejące konto", login_label_id:"Nazwa lub e-mail", label_password:"Hasło", login_btn:"Zaloguj się",
+      register_title:"Utwórz konto", register_sub:"Bezpłatnie — tylko dla klientów", label_name:"Imię", label_birthday:"Data urodzenia", label_email:"E-mail", register_btn:"Utwórz konto",
+      pw_len:"Co najmniej 8 znaków", pw_upper:"Jedna wielka litera", pw_number:"Jedna cyfra",
+      change_pw_title:"Zmień hasło", label_current_password:"Obecne hasło", label_new_password:"Nowe hasło", change_pw_btn:"Zapisz hasło",
+      my_purchases:"Moje kupione zdjęcia", no_purchases:"Nie kupiono jeszcze żadnych zdjęć.",
+      support_eyebrow:"Kontakt", support_title:"Wsparcie", support_sub:"Napisz do nas wiadomość tutaj lub e-mailem.",
+      support_form_title:"Wyślij wiadomość", support_form_sub:"Odpowiemy e-mailem, jeśli go podasz.",
+      label_name_optional:"Imię (opcjonalnie)", label_email_optional:"E-mail (opcjonalnie, do odpowiedzi)", label_message:"Wiadomość", support_send_btn:"Wyślij wiadomość", support_or_email:"Lub napisz do nas bezpośrednio:",
+      footer_tagline:"Fotografia do kupienia lub bezpłatnego pobrania.", footer_product:"Produkt", footer_company:"Firma", footer_about:"O nas", footer_ownserver:"Działa na własnym serwerze",
+      chat_greeting:"Cześć! 👋 Zapytaj mnie o cokolwiek związanego z Lumora — np. jak kupić zdjęcie, wykorzystać kod, założyć konto lub zapisać się do newslettera.",
+      cart_add:"+ Do koszyka", cart_in_cart:"✓ W koszyku", download_btn:"Pobierz", free_tag:"DARMOWE", remove_btn:"Usuń",
+      role_admin:"Admin", role_employee:"Pracownik", role_customer:"Klient",
+      stat_purchased:"Kupione zdjęcia", stat_member_since:"Członek od", greeting_hello:"Cześć, {name} 👋"
+    }
+  };
+
+  let currentLang = localStorage.getItem('lumora_lang') || 'de';
+
+  function t(key){
+    const dict = I18N[currentLang] || I18N.de;
+    return dict[key] !== undefined ? dict[key] : (I18N.de[key] || key);
+  }
+
+  function applyLanguage(lang){
+    if(!I18N[lang]) lang = 'de';
+    currentLang = lang;
+    localStorage.setItem('lumora_lang', lang);
+    const dict = I18N[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => { if(dict[el.getAttribute('data-i18n')] !== undefined) el.textContent = dict[el.getAttribute('data-i18n')]; });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => { if(dict[el.getAttribute('data-i18n-html')] !== undefined) el.innerHTML = dict[el.getAttribute('data-i18n-html')]; });
+    const langSelect = document.getElementById('langSelect');
+    if(langSelect) langSelect.value = lang;
+    renderShopGrid();
+    renderCartBar();
+    if(document.getElementById('view-cart') && document.getElementById('view-cart').classList.contains('active')) renderCartView();
+    if(document.getElementById('view-account') && document.getElementById('view-account').classList.contains('active')) renderAccountView();
+  }
+  function setLanguage(lang){ applyLanguage(lang); }
+
   let currentUserData = null; // {id,name,email,role,...}
   let images = [];
   let cart = new Set();
@@ -605,15 +897,15 @@
     grid.innerHTML = images.map(img => {
       const inCart = cart.has(img.id);
       const actionHtml = img.canDownload
-        ? `<button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button>`
-        : `<button class="cart-btn wide ${inCart?'in-cart':''}" onclick="event.stopPropagation(); toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+        ? `<button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button>`
+        : `<button class="cart-btn wide ${inCart?'in-cart':''}" onclick="event.stopPropagation(); toggleCart('${img.id}')">${inCart?t('cart_in_cart'):t('cart_add')}</button>`;
       return `
         <div class="frame">
           <div class="imgwrap" onclick="openLightbox('${img.id}')">
             ${mediaTagHtml(img)}
             <div class="protect" oncontextmenu="return false"></div>
             ${img.canDownload ? '' : `<div class="watermark">${watermarkSpans()}</div>`}
-            <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
+            <div class="tag ${img.free?'free':'paid'}">${img.free?t('free_tag'):fmt(img.price)}</div>
           </div>
           <div class="frame-foot">${actionHtml}</div>
         </div>`;
@@ -845,9 +1137,19 @@
   async function loadDailyStatus(){
     try {
       const r = await api('/api/newsletter/daily-status');
-      document.getElementById('dailyLastSent').textContent = r.lastSentDate || 'noch nie';
+      document.getElementById('dailyLastSent').textContent = r.lastSentAt ? new Date(r.lastSentAt).toLocaleString('de-DE') : 'noch nie';
       document.getElementById('dailyNoteInput').value = r.pendingNote || '';
+      document.getElementById('dailyIntervalSelect').value = String(r.intervalHours || 24);
     } catch(e){}
+  }
+  async function saveDailyInterval(){
+    const msgEl = document.getElementById('dailyMsg');
+    const hours = document.getElementById('dailyIntervalSelect').value;
+    try {
+      await api('/api/newsletter/daily-interval', { method:'POST', body:{ hours: Number(hours) } });
+      msgEl.textContent = 'Gespeichert — gilt ab jetzt.';
+      msgEl.className = 'redeem-msg ok';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
   }
   async function saveDailyNote(){
     const msgEl = document.getElementById('dailyMsg');
@@ -1129,7 +1431,7 @@
     listEl.innerHTML = items.map(img => `
       <div class="cart-item">${mediaTagHtml(img,{fill:true})}
         <div style="flex:1;"><div>${img.type==='video'?'Video':'Bild'} ${img.id.slice(0,6)}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
-        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">Entfernen</button>
+        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">${t('remove_btn')}</button>
       </div>`).join('');
 
     const t = await computeCartPreview();
@@ -1194,10 +1496,10 @@
     const loggedOut = document.getElementById('loggedOutArea'), loggedIn = document.getElementById('loggedInArea');
     if(role() === 'guest'){ loggedOut.style.display='grid'; loggedIn.style.display='none'; document.getElementById('accountHeading').textContent='Mein Konto'; return; }
     loggedOut.style.display='none'; loggedIn.style.display='block';
-    document.getElementById('accountHeading').textContent = 'Hallo, ' + currentUserData.name + ' 👋';
+    document.getElementById('accountHeading').textContent = t('greeting_hello').replace('{name}', currentUserData.name);
     document.getElementById('profileAvatar').textContent = currentUserData.name.charAt(0).toUpperCase();
     document.getElementById('profileName').textContent = currentUserData.name;
-    document.getElementById('profileRole').textContent = role()==='admin'?'Admin':role()==='employee'?'Mitarbeiter':'Kunde';
+    document.getElementById('profileRole').textContent = role()==='admin'?t('role_admin'):role()==='employee'?t('role_employee'):t('role_customer');
 
     const detailsEl = document.getElementById('profileDetails'), statRow = document.getElementById('statRow');
     if(role() === 'customer'){
@@ -1210,11 +1512,11 @@
       detailsEl.innerHTML = verifyBannerHtml + `<div class="detail">E-Mail: <b>${currentUserData.email}</b> ${currentUserData.emailVerified ? '✅' : ''}</div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
       const r = await api('/api/purchases');
       const memberSince = new Date(currentUserData.createdAt).toLocaleDateString('de-DE');
-      statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">Gekaufte Bilder</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">Mitglied seit</div></div>`;
+      statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">${t('stat_purchased')}</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">${t('stat_member_since')}</div></div>`;
       document.getElementById('purchasesSection').style.display = 'block';
       const grid = document.getElementById('purchasesGrid'), empty = document.getElementById('purchasesEmpty');
       if(r.images.length === 0){ grid.innerHTML=''; empty.style.display='block'; }
-      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot"><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">Herunterladen</button></div></div>`).join(''); }
+      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot"><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button></div></div>`).join(''); }
     } else {
       detailsEl.innerHTML = `<div class="detail">Zugang über "Verwaltung"</div>`;
       statRow.innerHTML = '';
@@ -1239,8 +1541,8 @@
     priceEl.className = 'lb-price' + ((img.free||img.purchased)?' free':'');
     const inCart = cart.has(img.id);
     document.getElementById('lightboxAction').innerHTML = img.canDownload
-      ? `<button class="dl-btn" onclick="downloadImage('${img.id}')">Herunterladen</button>`
-      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?'✓ Im Warenkorb':'+ In den Warenkorb'}</button>`;
+      ? `<button class="dl-btn" onclick="downloadImage('${img.id}')">${t('download_btn')}</button>`
+      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?t('cart_in_cart'):t('cart_add')}</button>`;
     document.getElementById('lightboxCounter').textContent = (idx+1)+' / '+images.length;
   }
 
@@ -1340,7 +1642,7 @@
 <div class="chat-window" id="chatWindow">
   <div class="chat-header"><b>Lumora-Hilfe 🤖</b><span onclick="toggleChat()">✕</span></div>
   <div class="chat-messages" id="chatMessages">
-    <div class="chat-msg bot">Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.</div>
+    <div class="chat-msg bot" id="chatGreeting" data-i18n="chat_greeting">Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.</div>
   </div>
   <div class="chat-input-row">
     <input type="text" id="chatInput" placeholder="Deine Frage..." onkeydown="if(event.key==='Enter') sendChatMessage()">
