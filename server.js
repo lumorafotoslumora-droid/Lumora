@@ -34,7 +34,7 @@ function loadDB(){
       raffleSettings: { enabled: true },
       supportMessages: [],
       newsletterSubscribers: [],
-      dailyEmail: { lastSentDate: null, pendingNote: '' },
+      dailyEmail: { lastSentAt: null, pendingNote: '', intervalHours: 24 },
       raffleEmail: { lastPromoSentAt: null, intervalHours: 3 },
       pendingCheckouts: {} // sessionId -> {userId, itemIds, usesFirstFree, createdAt}
     };
@@ -52,7 +52,13 @@ if(!Array.isArray(db.raffleEntries)) db.raffleEntries = [];
 if(!db.raffleSettings) db.raffleSettings = { enabled: true };
 if(!Array.isArray(db.supportMessages)) db.supportMessages = [];
 if(!Array.isArray(db.newsletterSubscribers)) db.newsletterSubscribers = [];
-if(!db.dailyEmail) db.dailyEmail = { lastSentDate: null, pendingNote: '' };
+if(!db.dailyEmail) db.dailyEmail = { lastSentAt: null, pendingNote: '', intervalHours: 24 };
+if(typeof db.dailyEmail.lastSentAt === 'undefined'){
+  // Migration von der alten kalendertag-basierten Version
+  db.dailyEmail.lastSentAt = db.dailyEmail.lastSentDate ? new Date(db.dailyEmail.lastSentDate).getTime() : null;
+  delete db.dailyEmail.lastSentDate;
+}
+if(typeof db.dailyEmail.intervalHours !== 'number') db.dailyEmail.intervalHours = 24;
 if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null, intervalHours: 3 };
 if(typeof db.raffleEmail.intervalHours !== 'number') db.raffleEmail.intervalHours = 3;
 if(!db.pendingCheckouts) db.pendingCheckouts = {};
@@ -159,26 +165,29 @@ function buildDailyEmailHtml(newImagesCount, note, siteUrl){
 }
 
 async function runDailySend(siteUrl, force){
-  const todayStr = new Date().toISOString().slice(0, 10);
-  if(!force && db.dailyEmail.lastSentDate === todayStr) return { skipped: true, reason: 'already-sent-today' };
+  const now = Date.now();
+  const intervalMs = (db.dailyEmail.intervalHours || 24) * 60 * 60 * 1000;
+  if(!force && db.dailyEmail.lastSentAt && (now - db.dailyEmail.lastSentAt) < intervalMs){
+    return { skipped: true, reason: 'too-soon' };
+  }
   if(db.newsletterSubscribers.length === 0){
-    if(!force){ db.dailyEmail.lastSentDate = todayStr; saveDB(db); }
+    if(!force){ db.dailyEmail.lastSentAt = now; saveDB(db); }
     return { skipped: true, reason: 'no-subscribers' };
   }
-  const since = Date.now() - 24 * 60 * 60 * 1000;
+  const since = now - intervalMs;
   const newImagesCount = db.images.filter(img => new Date(img.createdAt).getTime() >= since).length;
   const note = db.dailyEmail.pendingNote || '';
   const html = buildDailyEmailHtml(newImagesCount, note, siteUrl);
   const subject = note
     ? '📢 Neuigkeiten von Lumora'
-    : (newImagesCount > 0 ? `🆕 ${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'} bei Lumora!` : '📸 Dein täglicher Lumora-Blick');
+    : (newImagesCount > 0 ? `🆕 ${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'} bei Lumora!` : '📸 Dein Lumora-Update');
 
   let sentCount = 0;
   for(const sub of db.newsletterSubscribers){
     const ok = await sendEmail(sub.email, subject, html);
     if(ok) sentCount++;
   }
-  db.dailyEmail.lastSentDate = todayStr;
+  db.dailyEmail.lastSentAt = now;
   db.dailyEmail.pendingNote = '';
   saveDB(db);
   return { sentCount, total: db.newsletterSubscribers.length, newImagesCount };
@@ -866,7 +875,16 @@ async function handleApi(req, res, pathname, method, parsed){
 
   if(pathname === '/api/newsletter/daily-status' && method === 'GET'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
-    return sendJson(res, 200, { lastSentDate: db.dailyEmail.lastSentDate, pendingNote: db.dailyEmail.pendingNote });
+    return sendJson(res, 200, { lastSentAt: db.dailyEmail.lastSentAt, pendingNote: db.dailyEmail.pendingNote, intervalHours: db.dailyEmail.intervalHours });
+  }
+  if(pathname === '/api/newsletter/daily-interval' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const hours = Number(body.hours);
+    if(!hours || hours <= 0) return sendJson(res, 400, { error: 'Ungültiger Zeitabstand.' });
+    db.dailyEmail.intervalHours = hours;
+    saveDB(db);
+    return sendJson(res, 200, { ok: true, intervalHours: hours });
   }
   if(pathname === '/api/newsletter/daily-note' && method === 'POST'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
