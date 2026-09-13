@@ -1431,7 +1431,7 @@
     listEl.innerHTML = items.map(img => `
       <div class="cart-item">${mediaTagHtml(img,{fill:true})}
         <div style="flex:1;"><div>${img.type==='video'?'Video':'Bild'} ${img.id.slice(0,6)}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
-        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">${t('remove_btn')}</button>
+        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">Entfernen</button>
       </div>`).join('');
 
     const t = await computeCartPreview();
