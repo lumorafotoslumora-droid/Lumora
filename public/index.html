@@ -242,6 +242,13 @@
       <option value="pt">🇵🇹 Português</option>
       <option value="nl">🇳🇱 Nederlands</option>
       <option value="pl">🇵🇱 Polski</option>
+      <option value="tr">🇹🇷 Türkçe</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="ar">🇸🇦 العربية</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ja">🇯🇵 日本語</option>
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="hi">🇮🇳 हिन्दी</option>
     </select>
     <div class="role-pill admin-tag" id="rolePillAdmin"></div>
     <div class="role-pill employee-tag" id="rolePillEmployee"></div>
@@ -401,6 +408,7 @@
 
     <div class="admin-tabs">
       <button class="active" data-atab="content" onclick="switchAdminTab('content')">🖼️ Bilder</button>
+      <button data-atab="sales" onclick="switchAdminTab('sales')">📊 Verkäufe</button>
       <button id="atab-promo" data-atab="promo" onclick="switchAdminTab('promo')">💸 Aktionen</button>
       <button id="atab-team" data-atab="team" onclick="switchAdminTab('team')">👥 Team</button>
       <button id="atab-ban" data-atab="ban" onclick="switchAdminTab('ban')">🚫 Sperren</button>
@@ -415,6 +423,31 @@
       <input type="file" id="fileInput" accept="image/*,video/*" multiple>
       <div class="grid" id="adminGrid"></div>
       <div class="empty" id="adminEmpty" style="display:none;">Noch keine Bilder vorhanden.</div>
+    </div>
+
+    <div class="admin-subview" id="admintab-sales">
+      <div class="panel-card" id="salesPanel" style="max-width:100%;">
+        <h3 id="salesTitle">📊 Verkäufe</h3>
+        <div class="stat-row" style="margin:14px 0 20px;">
+          <div class="stat-tile"><div class="num" id="salesCount">0</div><div class="label">Verkäufe</div></div>
+          <div class="stat-tile"><div class="num" id="salesRevenue">0,00 €</div><div class="label">Umsatz gesamt</div></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="text-align:left; border-bottom:1px solid var(--line); color:var(--muted); font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase;">
+                <th style="padding:8px 10px;">Käufer</th>
+                <th style="padding:8px 10px;">Bild</th>
+                <th style="padding:8px 10px;" id="salesUploaderCol">Hochgeladen von</th>
+                <th style="padding:8px 10px;">Preis</th>
+                <th style="padding:8px 10px;">Datum</th>
+              </tr>
+            </thead>
+            <tbody id="salesTableBody"></tbody>
+          </table>
+          <div class="empty" id="salesEmpty" style="display:none; margin-top:14px;">Noch keine Verkäufe.</div>
+        </div>
+      </div>
     </div>
 
     <div class="admin-subview" id="admintab-promo">
@@ -551,7 +584,13 @@
   <button class="lightbox-nav next" onclick="lightboxStep(1)">›</button>
   <div class="lightbox-body">
     <div style="position:relative;"><div id="lightboxMedia"></div><div class="protect" id="lightboxProtect" oncontextmenu="return false"></div><div class="watermark" id="lightboxWatermark"></div></div>
-    <div class="lightbox-info"><span class="lb-price" id="lightboxPrice"></span><div id="lightboxAction"></div></div>
+    <div class="lightbox-info">
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <span id="lightboxImageName" style="font-family:'Fraunces',serif; font-size:14px;"></span>
+        <span class="lb-price" id="lightboxPrice"></span>
+      </div>
+      <div id="lightboxAction"></div>
+    </div>
     <div class="lightbox-counter" id="lightboxCounter"></div>
   </div>
 </div>
@@ -801,6 +840,195 @@
       cart_add:"+ Do koszyka", cart_in_cart:"✓ W koszyku", download_btn:"Pobierz", free_tag:"DARMOWE", remove_btn:"Usuń",
       role_admin:"Admin", role_employee:"Pracownik", role_customer:"Klient",
       stat_purchased:"Kupione zdjęcia", stat_member_since:"Członek od", greeting_hello:"Cześć, {name} 👋"
+    },
+    tr: {
+      nav_gallery:"Galeri", nav_cart:"Sepet", nav_account:"Hesabım", nav_support:"Destek",
+      brand_tagline:"Fotoğrafçılık", logout_btn:"Çıkış yap",
+      hero_badge:"✦ Gerçek bir sunucuda çalışıyor",
+      hero_title_html:'Etkileyici <span class="accent-word">fotoğrafçılık</span>.',
+      hero_sub:"Satın alınabilen veya ücretsiz indirilebilen özenle seçilmiş fotoğraf ve videolar — tüm ziyaretçiler için görünür.",
+      hero_cta1:"Galeriye göz at", hero_cta2:"Hesap oluştur", hero_note:"Ücretsiz göz at · Abonelik yok · Hemen başla",
+      shop_empty:"Henüz resim yok.",
+      redeem_title:"Kodu kullan", redeem_sub:"Bizden 7 haneli bir kod mu aldın? Girip resmini hemen indir.", redeem_btn:"Kullan",
+      raffle_title:"Çekiliş", raffle_sub:"E-postanı gir ve ücretsiz bir resim çekilişine katıl.", raffle_btn:"Katıl",
+      newsletter_title:"Bülten", newsletter_sub:"Kaydol, yeni resimleri ve kampanyaları kaçırma.", newsletter_btn:"Abone ol",
+      cart_eyebrow:"Ödeme", cart_title:"Sepet", cart_empty:"Sepetin boş.", cart_subtotal:"Ara toplam", cart_bundle:"Kampanya indirimi", cart_total:"Toplam", cart_checkout_btn:"Ödemeye geç",
+      account_eyebrow:"Hesap", account_title:"Hesabım",
+      login_title:"Tekrar hoş geldin", login_sub:"Mevcut hesabınla giriş yap", login_label_id:"Ad veya e-posta", label_password:"Şifre", login_btn:"Giriş yap",
+      register_title:"Hesap oluştur", register_sub:"Ücretsiz — sadece müşteriler için", label_name:"Ad", label_birthday:"Doğum tarihi", label_email:"E-posta", register_btn:"Hesap oluştur",
+      pw_len:"En az 8 karakter", pw_upper:"Bir büyük harf", pw_number:"Bir rakam",
+      change_pw_title:"Şifreyi değiştir", label_current_password:"Mevcut şifre", label_new_password:"Yeni şifre", change_pw_btn:"Şifreyi kaydet",
+      my_purchases:"Satın aldığım resimler", no_purchases:"Henüz resim satın alınmadı.",
+      support_eyebrow:"İletişim", support_title:"Destek", support_sub:"Bize doğrudan burada veya e-posta ile yaz.",
+      support_form_title:"Mesaj gönder", support_form_sub:"Belirtirsen e-posta ile cevap veririz.",
+      label_name_optional:"Ad (opsiyonel)", label_email_optional:"E-posta (opsiyonel, cevap için)", label_message:"Mesaj", support_send_btn:"Mesaj gönder", support_or_email:"Ya da doğrudan yaz:",
+      footer_tagline:"Satın alınabilen veya ücretsiz indirilebilen fotoğrafçılık.", footer_product:"Ürün", footer_company:"Şirket", footer_about:"Hakkımızda", footer_ownserver:"Kendi sunucusunda çalışıyor",
+      chat_greeting:"Merhaba! 👋 Lumora hakkında her şeyi sor — örneğin nasıl resim satın alınır, kod kullanılır, hesap oluşturulur veya bültene abone olunur.",
+      cart_add:"+ Sepete ekle", cart_in_cart:"✓ Sepette", download_btn:"İndir", free_tag:"ÜCRETSİZ", remove_btn:"Kaldır",
+      role_admin:"Yönetici", role_employee:"Çalışan", role_customer:"Müşteri",
+      stat_purchased:"Satın alınan resimler", stat_member_since:"Üyelik tarihi", greeting_hello:"Merhaba, {name} 👋"
+    },
+    ru: {
+      nav_gallery:"Галерея", nav_cart:"Корзина", nav_account:"Мой аккаунт", nav_support:"Поддержка",
+      brand_tagline:"Фотография", logout_btn:"Выйти",
+      hero_badge:"✦ Работает на настоящем сервере",
+      hero_title_html:'Фотография, которая <span class="accent-word">впечатляет</span>.',
+      hero_sub:"Отобранные фото и видео для покупки или бесплатного скачивания — видны всем посетителям.",
+      hero_cta1:"Смотреть галерею", hero_cta2:"Создать аккаунт", hero_note:"Бесплатный просмотр · Без подписки · Готово сразу",
+      shop_empty:"Пока нет изображений.",
+      redeem_title:"Использовать код", redeem_sub:"Получили от нас 7-значный код? Введите его и скачайте фото сразу.", redeem_btn:"Использовать",
+      raffle_title:"Розыгрыш", raffle_sub:"Введите email и участвуйте в розыгрыше бесплатного фото.", raffle_btn:"Участвовать",
+      newsletter_title:"Рассылка", newsletter_sub:"Подпишитесь и не пропустите новые фото и акции.", newsletter_btn:"Подписаться",
+      cart_eyebrow:"Оплата", cart_title:"Корзина", cart_empty:"Ваша корзина пуста.", cart_subtotal:"Промежуточный итог", cart_bundle:"Скидка по акции", cart_total:"Итого", cart_checkout_btn:"Оформить заказ",
+      account_eyebrow:"Аккаунт", account_title:"Мой аккаунт",
+      login_title:"С возвращением", login_sub:"Войдите в существующий аккаунт", login_label_id:"Имя или email", label_password:"Пароль", login_btn:"Войти",
+      register_title:"Создать аккаунт", register_sub:"Бесплатно — только для клиентов", label_name:"Имя", label_birthday:"Дата рождения", label_email:"Email", register_btn:"Создать аккаунт",
+      pw_len:"Минимум 8 символов", pw_upper:"Одна заглавная буква", pw_number:"Одна цифра",
+      change_pw_title:"Изменить пароль", label_current_password:"Текущий пароль", label_new_password:"Новый пароль", change_pw_btn:"Сохранить пароль",
+      my_purchases:"Мои купленные фото", no_purchases:"Пока нет купленных фото.",
+      support_eyebrow:"Контакт", support_title:"Поддержка", support_sub:"Напишите нам прямо здесь или по email.",
+      support_form_title:"Отправить сообщение", support_form_sub:"Мы ответим по email, если вы его укажете.",
+      label_name_optional:"Имя (необязательно)", label_email_optional:"Email (необязательно, для ответа)", label_message:"Сообщение", support_send_btn:"Отправить сообщение", support_or_email:"Или напишите нам напрямую:",
+      footer_tagline:"Фотография для покупки или бесплатного скачивания.", footer_product:"Продукт", footer_company:"Компания", footer_about:"О нас", footer_ownserver:"Работает на собственном сервере",
+      chat_greeting:"Привет! 👋 Спроси меня о чём угодно про Lumora — например, как купить фото, использовать код, создать аккаунт или подписаться на рассылку.",
+      cart_add:"+ В корзину", cart_in_cart:"✓ В корзине", download_btn:"Скачать", free_tag:"БЕСПЛАТНО", remove_btn:"Удалить",
+      role_admin:"Админ", role_employee:"Сотрудник", role_customer:"Клиент",
+      stat_purchased:"Купленные фото", stat_member_since:"Участник с", greeting_hello:"Привет, {name} 👋"
+    },
+    ar: {
+      nav_gallery:"المعرض", nav_cart:"السلة", nav_account:"حسابي", nav_support:"الدعم",
+      brand_tagline:"تصوير فوتوغرافي", logout_btn:"تسجيل الخروج",
+      hero_badge:"✦ يعمل على خادم حقيقي",
+      hero_title_html:'تصوير <span class="accent-word">مميز</span>.',
+      hero_sub:"صور وفيديوهات مختارة للشراء أو التنزيل المجاني — مرئية لجميع الزوار.",
+      hero_cta1:"تصفح المعرض", hero_cta2:"إنشاء حساب", hero_note:"تصفح مجاني · بدون اشتراك · جاهز فورًا",
+      shop_empty:"لا توجد صور بعد.",
+      redeem_title:"استخدام الرمز", redeem_sub:"هل حصلت على رمز مكوّن من 7 أرقام؟ أدخله وحمّل صورتك فورًا.", redeem_btn:"استخدام",
+      raffle_title:"السحب", raffle_sub:"أدخل بريدك الإلكتروني وشارك في سحب صورة مجانية.", raffle_btn:"مشاركة",
+      newsletter_title:"النشرة الإخبارية", newsletter_sub:"اشترك ولا تفوّت الصور والعروض الجديدة.", newsletter_btn:"اشتراك",
+      cart_eyebrow:"الدفع", cart_title:"السلة", cart_empty:"سلتك فارغة.", cart_subtotal:"المجموع الفرعي", cart_bundle:"خصم العرض", cart_total:"الإجمالي", cart_checkout_btn:"إتمام الشراء",
+      account_eyebrow:"الحساب", account_title:"حسابي",
+      login_title:"مرحبًا بعودتك", login_sub:"سجّل الدخول إلى حسابك الحالي", login_label_id:"الاسم أو البريد الإلكتروني", label_password:"كلمة المرور", login_btn:"تسجيل الدخول",
+      register_title:"إنشاء حساب", register_sub:"مجانًا — للعملاء فقط", label_name:"الاسم", label_birthday:"تاريخ الميلاد", label_email:"البريد الإلكتروني", register_btn:"إنشاء حساب",
+      pw_len:"8 أحرف على الأقل", pw_upper:"حرف كبير واحد", pw_number:"رقم واحد",
+      change_pw_title:"تغيير كلمة المرور", label_current_password:"كلمة المرور الحالية", label_new_password:"كلمة المرور الجديدة", change_pw_btn:"حفظ كلمة المرور",
+      my_purchases:"صوري المشتراة", no_purchases:"لم يتم شراء أي صور بعد.",
+      support_eyebrow:"تواصل", support_title:"الدعم", support_sub:"اكتب لنا رسالة هنا مباشرة أو عبر البريد الإلكتروني.",
+      support_form_title:"إرسال رسالة", support_form_sub:"سنرد عبر البريد الإلكتروني إذا قمت بتقديمه.",
+      label_name_optional:"الاسم (اختياري)", label_email_optional:"البريد الإلكتروني (اختياري، للرد)", label_message:"الرسالة", support_send_btn:"إرسال الرسالة", support_or_email:"أو راسلنا مباشرة:",
+      footer_tagline:"تصوير فوتوغرافي للشراء أو التنزيل المجاني.", footer_product:"المنتج", footer_company:"الشركة", footer_about:"من نحن", footer_ownserver:"يعمل على خادم خاص",
+      chat_greeting:"مرحبًا! 👋 اسألني أي شيء عن Lumora — مثل كيفية شراء صورة، استخدام رمز، إنشاء حساب أو الاشتراك في النشرة الإخبارية.",
+      cart_add:"+ أضف إلى السلة", cart_in_cart:"✓ في السلة", download_btn:"تنزيل", free_tag:"مجاني", remove_btn:"إزالة",
+      role_admin:"مدير", role_employee:"موظف", role_customer:"عميل",
+      stat_purchased:"الصور المشتراة", stat_member_since:"عضو منذ", greeting_hello:"مرحبًا، {name} 👋"
+    },
+    zh: {
+      nav_gallery:"图库", nav_cart:"购物车", nav_account:"我的账户", nav_support:"支持",
+      brand_tagline:"摄影", logout_btn:"退出登录",
+      hero_badge:"✦ 运行在真实服务器上",
+      hero_title_html:'令人惊艳的<span class="accent-word">摄影作品</span>。',
+      hero_sub:"精选图片和视频，可购买或免费下载——所有访客都可见。",
+      hero_cta1:"浏览图库", hero_cta2:"创建账户", hero_note:"免费浏览 · 无需订阅 · 即刻使用",
+      shop_empty:"暂无图片。",
+      redeem_title:"兑换代码", redeem_sub:"收到了我们的7位代码？输入后立即下载图片。", redeem_btn:"兑换",
+      raffle_title:"抽奖", raffle_sub:"输入邮箱参与免费图片抽奖。", raffle_btn:"参加",
+      newsletter_title:"新闻通讯", newsletter_sub:"订阅后不错过新图片和优惠活动。", newsletter_btn:"订阅",
+      cart_eyebrow:"结账", cart_title:"购物车", cart_empty:"购物车是空的。", cart_subtotal:"小计", cart_bundle:"活动折扣", cart_total:"总计", cart_checkout_btn:"去结账",
+      account_eyebrow:"账户", account_title:"我的账户",
+      login_title:"欢迎回来", login_sub:"使用现有账户登录", login_label_id:"姓名或邮箱", label_password:"密码", login_btn:"登录",
+      register_title:"创建账户", register_sub:"免费——仅限顾客", label_name:"姓名", label_birthday:"出生日期", label_email:"邮箱", register_btn:"创建账户",
+      pw_len:"至少8个字符", pw_upper:"一个大写字母", pw_number:"一个数字",
+      change_pw_title:"修改密码", label_current_password:"当前密码", label_new_password:"新密码", change_pw_btn:"保存密码",
+      my_purchases:"我购买的图片", no_purchases:"尚未购买任何图片。",
+      support_eyebrow:"联系我们", support_title:"支持", support_sub:"在这里直接给我们留言，或通过邮箱联系。",
+      support_form_title:"发送消息", support_form_sub:"如果您留下邮箱，我们会通过邮箱回复。",
+      label_name_optional:"姓名（可选）", label_email_optional:"邮箱（可选，用于回复）", label_message:"消息", support_send_btn:"发送消息", support_or_email:"或直接给我们发邮件：",
+      footer_tagline:"可购买或免费下载的摄影作品。", footer_product:"产品", footer_company:"公司", footer_about:"关于我们", footer_ownserver:"运行在自己的服务器上",
+      chat_greeting:"你好！👋 问我任何关于Lumora的问题——例如如何购买图片、使用兑换码、创建账户或订阅新闻通讯。",
+      cart_add:"+ 加入购物车", cart_in_cart:"✓ 已在购物车", download_btn:"下载", free_tag:"免费", remove_btn:"移除",
+      role_admin:"管理员", role_employee:"员工", role_customer:"顾客",
+      stat_purchased:"已购买图片", stat_member_since:"注册于", greeting_hello:"你好，{name} 👋"
+    },
+    ja: {
+      nav_gallery:"ギャラリー", nav_cart:"カート", nav_account:"マイアカウント", nav_support:"サポート",
+      brand_tagline:"写真", logout_btn:"ログアウト",
+      hero_badge:"✦ 実際のサーバーで稼働中",
+      hero_title_html:'魅力的な<span class="accent-word">写真</span>。',
+      hero_sub:"購入または無料ダウンロードできる厳選された写真・動画——すべての訪問者に公開。",
+      hero_cta1:"ギャラリーを見る", hero_cta2:"アカウント作成", hero_note:"無料閲覧 · 登録不要 · すぐに利用可能",
+      shop_empty:"まだ画像がありません。",
+      redeem_title:"コードを使う", redeem_sub:"7桁のコードをお持ちですか？入力してすぐに画像をダウンロード。", redeem_btn:"使用する",
+      raffle_title:"プレゼント企画", raffle_sub:"メールアドレスを入力して無料画像の抽選に参加。", raffle_btn:"参加する",
+      newsletter_title:"ニュースレター", newsletter_sub:"登録して新しい画像やキャンペーンをお見逃しなく。", newsletter_btn:"登録する",
+      cart_eyebrow:"お会計", cart_title:"カート", cart_empty:"カートは空です。", cart_subtotal:"小計", cart_bundle:"キャンペーン割引", cart_total:"合計", cart_checkout_btn:"レジに進む",
+      account_eyebrow:"アカウント", account_title:"マイアカウント",
+      login_title:"おかえりなさい", login_sub:"既存のアカウントでログイン", login_label_id:"名前またはメール", label_password:"パスワード", login_btn:"ログイン",
+      register_title:"アカウント作成", register_sub:"無料——顧客のみ", label_name:"名前", label_birthday:"生年月日", label_email:"メール", register_btn:"アカウント作成",
+      pw_len:"8文字以上", pw_upper:"大文字を1つ", pw_number:"数字を1つ",
+      change_pw_title:"パスワード変更", label_current_password:"現在のパスワード", label_new_password:"新しいパスワード", change_pw_btn:"パスワードを保存",
+      my_purchases:"購入した画像", no_purchases:"まだ画像を購入していません。",
+      support_eyebrow:"お問い合わせ", support_title:"サポート", support_sub:"ここから直接メッセージを送るか、メールでご連絡ください。",
+      support_form_title:"メッセージを送る", support_form_sub:"メールアドレスをご記入いただければ返信します。",
+      label_name_optional:"名前（任意）", label_email_optional:"メール（任意、返信用）", label_message:"メッセージ", support_send_btn:"メッセージを送る", support_or_email:"または直接メールで:",
+      footer_tagline:"購入または無料ダウンロードできる写真。", footer_product:"製品", footer_company:"会社", footer_about:"私たちについて", footer_ownserver:"独自サーバーで稼働中",
+      chat_greeting:"こんにちは！👋 Lumoraについて何でも聞いてください——画像の購入方法、コードの使用方法、アカウント作成、ニュースレター登録など。",
+      cart_add:"+ カートに追加", cart_in_cart:"✓ カートに追加済み", download_btn:"ダウンロード", free_tag:"無料", remove_btn:"削除",
+      role_admin:"管理者", role_employee:"スタッフ", role_customer:"顧客",
+      stat_purchased:"購入した画像", stat_member_since:"登録日", greeting_hello:"こんにちは、{name} 👋"
+    },
+    ko: {
+      nav_gallery:"갤러리", nav_cart:"장바구니", nav_account:"내 계정", nav_support:"지원",
+      brand_tagline:"사진", logout_btn:"로그아웃",
+      hero_badge:"✦ 실제 서버에서 운영 중",
+      hero_title_html:'인상적인 <span class="accent-word">사진</span>.',
+      hero_sub:"구매하거나 무료로 다운로드할 수 있는 엄선된 사진과 동영상 — 모든 방문자에게 공개.",
+      hero_cta1:"갤러리 둘러보기", hero_cta2:"계정 만들기", hero_note:"무료 열람 · 구독 불필요 · 바로 시작",
+      shop_empty:"아직 이미지가 없습니다.",
+      redeem_title:"코드 사용", redeem_sub:"7자리 코드를 받으셨나요? 입력하고 바로 이미지를 다운로드하세요.", redeem_btn:"사용하기",
+      raffle_title:"경품 이벤트", raffle_sub:"이메일을 입력하고 무료 이미지 추첨에 참여하세요.", raffle_btn:"참여하기",
+      newsletter_title:"뉴스레터", newsletter_sub:"구독하고 새로운 이미지와 이벤트를 놓치지 마세요.", newsletter_btn:"구독하기",
+      cart_eyebrow:"결제", cart_title:"장바구니", cart_empty:"장바구니가 비어 있습니다.", cart_subtotal:"소계", cart_bundle:"이벤트 할인", cart_total:"합계", cart_checkout_btn:"결제하기",
+      account_eyebrow:"계정", account_title:"내 계정",
+      login_title:"다시 오신 것을 환영합니다", login_sub:"기존 계정으로 로그인하세요", login_label_id:"이름 또는 이메일", label_password:"비밀번호", login_btn:"로그인",
+      register_title:"계정 만들기", register_sub:"무료 — 고객 전용", label_name:"이름", label_birthday:"생년월일", label_email:"이메일", register_btn:"계정 만들기",
+      pw_len:"최소 8자", pw_upper:"대문자 1개", pw_number:"숫자 1개",
+      change_pw_title:"비밀번호 변경", label_current_password:"현재 비밀번호", label_new_password:"새 비밀번호", change_pw_btn:"비밀번호 저장",
+      my_purchases:"내가 구매한 이미지", no_purchases:"아직 구매한 이미지가 없습니다.",
+      support_eyebrow:"문의", support_title:"지원", support_sub:"여기서 바로 메시지를 보내거나 이메일로 문의하세요.",
+      support_form_title:"메시지 보내기", support_form_sub:"이메일을 남기시면 답변드리겠습니다.",
+      label_name_optional:"이름 (선택)", label_email_optional:"이메일 (선택, 답변용)", label_message:"메시지", support_send_btn:"메시지 보내기", support_or_email:"또는 직접 이메일 보내기:",
+      footer_tagline:"구매하거나 무료로 다운로드할 수 있는 사진.", footer_product:"제품", footer_company:"회사", footer_about:"소개", footer_ownserver:"자체 서버에서 운영 중",
+      chat_greeting:"안녕하세요! 👋 Lumora에 대해 무엇이든 물어보세요 — 이미지 구매 방법, 코드 사용법, 계정 생성, 뉴스레터 구독 등.",
+      cart_add:"+ 장바구니에 추가", cart_in_cart:"✓ 장바구니에 있음", download_btn:"다운로드", free_tag:"무료", remove_btn:"제거",
+      role_admin:"관리자", role_employee:"직원", role_customer:"고객",
+      stat_purchased:"구매한 이미지", stat_member_since:"가입일", greeting_hello:"안녕하세요, {name} 👋"
+    },
+    hi: {
+      nav_gallery:"गैलरी", nav_cart:"कार्ट", nav_account:"मेरा खाता", nav_support:"सहायता",
+      brand_tagline:"फ़ोटोग्राफ़ी", logout_btn:"लॉग आउट",
+      hero_badge:"✦ एक वास्तविक सर्वर पर चल रहा है",
+      hero_title_html:'शानदार <span class="accent-word">फ़ोटोग्राफ़ी</span>।',
+      hero_sub:"खरीदने या मुफ़्त डाउनलोड करने के लिए चुनी हुई तस्वीरें और वीडियो — सभी आगंतुकों के लिए दृश्यमान।",
+      hero_cta1:"गैलरी देखें", hero_cta2:"खाता बनाएं", hero_note:"मुफ़्त देखें · कोई सदस्यता नहीं · तुरंत तैयार",
+      shop_empty:"अभी तक कोई तस्वीर नहीं है।",
+      redeem_title:"कोड रिडीम करें", redeem_sub:"क्या आपको हमसे 7 अंकों का कोड मिला है? इसे दर्ज करें और तुरंत अपनी तस्वीर डाउनलोड करें।", redeem_btn:"रिडीम करें",
+      raffle_title:"गिवअवे", raffle_sub:"अपना ईमेल दर्ज करें और मुफ़्त तस्वीर जीतने के लिए भाग लें।", raffle_btn:"भाग लें",
+      newsletter_title:"न्यूज़लेटर", newsletter_sub:"साइन अप करें और नई तस्वीरें और ऑफ़र न चूकें।", newsletter_btn:"सदस्यता लें",
+      cart_eyebrow:"चेकआउट", cart_title:"कार्ट", cart_empty:"आपका कार्ट खाली है।", cart_subtotal:"उप-योग", cart_bundle:"ऑफ़र छूट", cart_total:"कुल", cart_checkout_btn:"चेकआउट करें",
+      account_eyebrow:"खाता", account_title:"मेरा खाता",
+      login_title:"वापसी पर स्वागत है", login_sub:"अपने मौजूदा खाते से लॉग इन करें", login_label_id:"नाम या ईमेल", label_password:"पासवर्ड", login_btn:"लॉग इन करें",
+      register_title:"खाता बनाएं", register_sub:"मुफ़्त — केवल ग्राहकों के लिए", label_name:"नाम", label_birthday:"जन्मदिन", label_email:"ईमेल", register_btn:"खाता बनाएं",
+      pw_len:"कम से कम 8 अक्षर", pw_upper:"एक बड़ा अक्षर", pw_number:"एक अंक",
+      change_pw_title:"पासवर्ड बदलें", label_current_password:"वर्तमान पासवर्ड", label_new_password:"नया पासवर्ड", change_pw_btn:"पासवर्ड सहेजें",
+      my_purchases:"मेरी खरीदी गई तस्वीरें", no_purchases:"अभी तक कोई तस्वीर नहीं खरीदी गई।",
+      support_eyebrow:"संपर्क", support_title:"सहायता", support_sub:"हमें यहीं सीधे संदेश भेजें, या ईमेल करें।",
+      support_form_title:"संदेश भेजें", support_form_sub:"यदि आप ईमेल देंगे तो हम उसी पर जवाब देंगे।",
+      label_name_optional:"नाम (वैकल्पिक)", label_email_optional:"ईमेल (वैकल्पिक, जवाब के लिए)", label_message:"संदेश", support_send_btn:"संदेश भेजें", support_or_email:"या सीधे हमें ईमेल करें:",
+      footer_tagline:"खरीदने या मुफ़्त डाउनलोड करने के लिए फ़ोटोग्राफ़ी।", footer_product:"उत्पाद", footer_company:"कंपनी", footer_about:"हमारे बारे में", footer_ownserver:"अपने खुद के सर्वर पर चल रहा है",
+      chat_greeting:"नमस्ते! 👋 Lumora के बारे में कुछ भी पूछें — जैसे तस्वीर कैसे खरीदें, कोड कैसे रिडीम करें, खाता कैसे बनाएं या न्यूज़लेटर की सदस्यता कैसे लें।",
+      cart_add:"+ कार्ट में जोड़ें", cart_in_cart:"✓ कार्ट में है", download_btn:"डाउनलोड करें", free_tag:"मुफ़्त", remove_btn:"हटाएं",
+      role_admin:"एडमिन", role_employee:"कर्मचारी", role_customer:"ग्राहक",
+      stat_purchased:"खरीदी गई तस्वीरें", stat_member_since:"सदस्य बने", greeting_hello:"नमस्ते, {name} 👋"
     }
   };
 
@@ -825,7 +1053,12 @@
     if(document.getElementById('view-cart') && document.getElementById('view-cart').classList.contains('active')) renderCartView();
     if(document.getElementById('view-account') && document.getElementById('view-account').classList.contains('active')) renderAccountView();
   }
-  function setLanguage(lang){ applyLanguage(lang); }
+  function setLanguage(lang){
+    applyLanguage(lang);
+    if(currentUserData){
+      api('/api/change-language', { method:'POST', body:{ language: lang } }).catch(()=>{});
+    }
+  }
 
   let currentUserData = null; // {id,name,email,role,...}
   let images = [];
@@ -874,12 +1107,40 @@
     document.querySelectorAll('.admin-subview').forEach(v => v.classList.remove('active'));
     document.getElementById('admintab-' + name).classList.add('active');
     document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.toggle('active', b.dataset.atab === name));
+    if(name === 'sales') loadSalesData();
+  }
+
+  async function loadSalesData(){
+    try {
+      const r = await api('/api/sales');
+      document.getElementById('salesCount').textContent = r.count;
+      document.getElementById('salesRevenue').textContent = fmt(r.totalRevenue);
+      document.getElementById('salesTitle').textContent = role() === 'admin' ? '📊 Alle Verkäufe' : '📊 Meine Verkäufe';
+      document.getElementById('salesUploaderCol').style.display = role() === 'admin' ? '' : 'none';
+      const tbody = document.getElementById('salesTableBody');
+      const empty = document.getElementById('salesEmpty');
+      if(r.rows.length === 0){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      tbody.innerHTML = r.rows.map(row => `
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:9px 10px;">${row.buyerName}${row.buyerEmail ? '<br><span style="color:var(--muted); font-size:11px;">'+row.buyerEmail+'</span>' : ''}</td>
+          <td style="padding:9px 10px;">${row.imageName}</td>
+          <td style="padding:9px 10px; ${role()!=='admin'?'display:none;':''}">${row.uploadedByName}</td>
+          <td style="padding:9px 10px; font-family:'Space Mono',monospace; color:var(--amber);">${fmt(row.pricePaid)}</td>
+          <td style="padding:9px 10px; font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">${new Date(row.purchasedAt).toLocaleDateString('de-DE')}</td>
+        </tr>`).join('');
+    } catch(e){
+      document.getElementById('salesTableBody').innerHTML = '';
+      document.getElementById('salesEmpty').textContent = e.message;
+      document.getElementById('salesEmpty').style.display = 'block';
+    }
   }
 
   // ---------- Laden ----------
   async function loadMe(){
     const r = await api('/api/me');
     currentUserData = r.user;
+    if(currentUserData && currentUserData.language && currentUserData.language !== currentLang) applyLanguage(currentUserData.language);
     applyRoleState();
   }
   async function loadImages(){
@@ -907,6 +1168,7 @@
             ${img.canDownload ? '' : `<div class="watermark">${watermarkSpans()}</div>`}
             <div class="tag ${img.free?'free':'paid'}">${img.free?t('free_tag'):fmt(img.price)}</div>
           </div>
+          <div style="padding:10px 14px 0; font-size:12.5px; color:var(--muted); font-family:'Fraunces',serif;">${img.name || ''}</div>
           <div class="frame-foot">${actionHtml}</div>
         </div>`;
     }).join('');
@@ -920,7 +1182,7 @@
       select.innerHTML = '<option value="">Keine bezahlten Bilder vorhanden</option>';
     } else {
       const prevValue = select.value;
-      select.innerHTML = paidImages.map(img => `<option value="${img.id}">${img.type === 'video' ? '🎬 Video' : '🖼 Bild'} ${img.id.slice(0,6)} — ${fmt(img.price)}</option>`).join('');
+      select.innerHTML = paidImages.map(img => `<option value="${img.id}">${img.type === 'video' ? '🎬' : '🖼'} ${img.name || img.id.slice(0,6)} — ${fmt(img.price)}</option>`).join('');
       if(paidImages.some(img => img.id === prevValue)) select.value = prevValue;
     }
   }
@@ -945,6 +1207,9 @@
             <div class="del" onclick="event.stopPropagation(); deleteImage('${img.id}')">✕</div>
             <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
           </div>
+          <div style="padding:10px 14px 0;">
+            <input type="text" value="${(img.name||'').replace(/"/g,'&quot;')}" placeholder="Bildname..." onclick="event.stopPropagation();" onchange="setImageName('${img.id}', this.value)" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:7px 9px; border-radius:var(--radius-sm); font-size:12.5px; font-family:'Inter',sans-serif;">
+          </div>
           <div class="uploader-tag">hochgeladen von ${img.uploadedByName}</div>
           <div class="code-row">
             <div><span class="code-label">Code für Käufer</span><span class="code-val">${img.code}</span></div>
@@ -954,6 +1219,12 @@
           ${adminControls}
         </div>`;
     }).join('');
+  }
+
+  async function setImageName(id, name){
+    if(!name.trim()) return;
+    await api('/api/images/' + id, { method:'PATCH', body:{ name: name.trim() } });
+    await loadImages();
   }
 
   function toggleCart(id){
@@ -1070,7 +1341,7 @@
     const msg = document.getElementById('raffleMsg');
     if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
     try {
-      const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim() } });
+      const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim(), language: currentLang } });
       msg.textContent = r.alreadyEntered ? 'Du nimmst bereits teil — viel Glück!' : 'Danke! Du nimmst jetzt an der Verlosung teil.';
       msg.className = 'redeem-msg ok';
       input.value = '';
@@ -1203,7 +1474,7 @@
     const msg = document.getElementById('newsletterSubMsg');
     if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
     try {
-      const r = await api('/api/newsletter/subscribe', { method:'POST', body:{ email: input.value.trim() } });
+      const r = await api('/api/newsletter/subscribe', { method:'POST', body:{ email: input.value.trim(), language: currentLang } });
       msg.textContent = r.alreadySubscribed ? 'Du bist schon angemeldet!' : 'Danke für dein Abo!';
       msg.className = 'redeem-msg ok';
       input.value = '';
@@ -1240,6 +1511,7 @@
     try {
       const r = await api('/api/login', { method:'POST', body:{ id: document.getElementById('loginId').value.trim(), password: document.getElementById('loginPass').value } });
       currentUserData = r.user;
+      if(currentUserData && currentUserData.language && currentUserData.language !== currentLang) applyLanguage(currentUserData.language);
       document.getElementById('loginId').value=''; document.getElementById('loginPass').value='';
       applyRoleState(); await loadImages(); renderAccountView();
     } catch(e){ errEl.textContent = e.message; errEl.classList.add('show'); }
@@ -1284,7 +1556,8 @@
         name: document.getElementById('regName').value.trim(),
         birthday: birthday,
         email: email,
-        password: document.getElementById('regPass').value
+        password: document.getElementById('regPass').value,
+        language: currentLang
       }});
       currentUserData = r.user;
       ['regName','regEmail','regPass'].forEach(id => document.getElementById(id).value='');
@@ -1412,14 +1685,14 @@
   }
 
   async function renderCartBar(){
-    const t = await computeCartPreview();
+    const tot = await computeCartPreview();
     const bar = document.getElementById('cartBar'), nc = document.getElementById('navCartCount');
     if(cart.size === 0){ bar.classList.remove('show'); nc.style.display='none'; return; }
     bar.classList.add('show'); nc.style.display='inline-block'; nc.textContent = cart.size;
-    let parts = [`<span><b>${cart.size}</b> im Warenkorb</span>`, `<span>Zwischensumme <b>${fmt(t.rawSubtotal)}</b></span>`];
-    if(t.discount>0) parts.push(`<span>Aktionen −<b>${fmt(t.discount)}</b></span>`);
-    if(t.percentOff>0) parts.push(`<span>Rabatt −<b>${fmt(t.percentOff)}</b></span>`);
-    parts.push(`<span class="total">Gesamt ${fmt(t.total)}</span>`);
+    let parts = [`<span><b>${cart.size}</b> ${t('nav_cart')}</span>`, `<span>${t('cart_subtotal')} <b>${fmt(tot.rawSubtotal)}</b></span>`];
+    if(tot.discount>0) parts.push(`<span>${t('cart_bundle')} −<b>${fmt(tot.discount)}</b></span>`);
+    if(tot.percentOff>0) parts.push(`<span>Rabatt −<b>${fmt(tot.percentOff)}</b></span>`);
+    parts.push(`<span class="total">${t('cart_total')} ${fmt(tot.total)}</span>`);
     document.getElementById('cartBreakdown').innerHTML = parts.join('');
   }
 
@@ -1430,18 +1703,18 @@
     emptyEl.style.display='none'; summaryEl.style.display='block';
     listEl.innerHTML = items.map(img => `
       <div class="cart-item">${mediaTagHtml(img,{fill:true})}
-        <div style="flex:1;"><div>${img.type==='video'?'Video':'Bild'} ${img.id.slice(0,6)}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
-        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">Entfernen</button>
+        <div style="flex:1;"><div>${img.name || (img.type==='video'?'Video':'Bild')}</div><div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">${fmt(img.price)}</div></div>
+        <button class="btn muted" style="padding:6px 12px; font-size:11px;" onclick="toggleCart('${img.id}'); renderCartView();">${t('remove_btn')}</button>
       </div>`).join('');
 
-    const t = await computeCartPreview();
-    document.getElementById('sumSubtotal').textContent = fmt(t.rawSubtotal);
-    document.getElementById('sumBundleLine').style.display = t.discount>0?'flex':'none';
-    document.getElementById('sumBundle').textContent = '−'+fmt(t.discount);
-    document.getElementById('sumPercentLine').style.display = t.percentOff>0?'flex':'none';
+    const tot = await computeCartPreview();
+    document.getElementById('sumSubtotal').textContent = fmt(tot.rawSubtotal);
+    document.getElementById('sumBundleLine').style.display = tot.discount>0?'flex':'none';
+    document.getElementById('sumBundle').textContent = '−'+fmt(tot.discount);
+    document.getElementById('sumPercentLine').style.display = tot.percentOff>0?'flex':'none';
     document.getElementById('sumPercentLabel').textContent = 'Prozent-Rabatt';
-    document.getElementById('sumPercent').textContent = '−'+fmt(t.percentOff);
-    document.getElementById('sumTotal').textContent = fmt(t.total);
+    document.getElementById('sumPercent').textContent = '−'+fmt(tot.percentOff);
+    document.getElementById('sumTotal').textContent = fmt(tot.total);
 
     const actionArea = document.getElementById('cartActionArea');
     if(role() === 'guest'){
@@ -1516,7 +1789,7 @@
       document.getElementById('purchasesSection').style.display = 'block';
       const grid = document.getElementById('purchasesGrid'), empty = document.getElementById('purchasesEmpty');
       if(r.images.length === 0){ grid.innerHTML=''; empty.style.display='block'; }
-      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot"><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button></div></div>`).join(''); }
+      else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot" style="flex-direction:column; align-items:stretch; gap:8px;"><div style="font-size:12.5px; font-weight:500;">${img.name||''}</div><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button></div></div>`).join(''); }
     } else {
       detailsEl.innerHTML = `<div class="detail">Zugang über "Verwaltung"</div>`;
       statRow.innerHTML = '';
@@ -1536,6 +1809,8 @@
     document.getElementById('lightboxMedia').innerHTML = mediaTagHtml(img, { controls:true, fill:false });
     document.getElementById('lightboxProtect').style.display = img.type==='video' ? 'none' : 'block';
     document.getElementById('lightboxWatermark').innerHTML = img.canDownload ? '' : watermarkSpans();
+    const nameEl = document.getElementById('lightboxImageName');
+    if(nameEl) nameEl.textContent = img.name || '';
     const priceEl = document.getElementById('lightboxPrice');
     priceEl.textContent = img.free ? 'Gratis' : img.purchased ? 'Gekauft' : fmt(img.price);
     priceEl.className = 'lb-price' + ((img.free||img.purchased)?' free':'');
@@ -1630,6 +1905,7 @@
   }
 
   (async () => {
+    applyLanguage(currentLang);
     await loadMe();
     await loadImages();
     await loadPromosIntoForm();
