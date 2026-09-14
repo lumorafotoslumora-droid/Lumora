@@ -416,6 +416,7 @@
       <button id="atab-support" data-atab="support" onclick="switchAdminTab('support')">📬 Support</button>
       <button id="atab-newsletter" data-atab="newsletter" onclick="switchAdminTab('newsletter')">📰 Newsletter</button>
       <button id="atab-update" data-atab="update" onclick="switchAdminTab('update')">🔄 Update</button>
+      <button id="atab-permissions" data-atab="permissions" onclick="switchAdminTab('permissions')">🔐 Berechtigungen</button>
     </div>
 
     <div class="admin-subview active" id="admintab-content">
@@ -564,6 +565,16 @@
         <div class="redeem-msg" id="updateMsg" style="margin-top:12px;"></div>
       </div>
     </div>
+
+    <div class="admin-subview" id="admintab-permissions">
+      <div class="panel-card" id="permissionsPanel" style="max-width:560px;">
+        <h3>🔐 Was dürfen Mitarbeiter?</h3>
+        <p style="color:var(--muted); font-size:12.5px; margin:-8px 0 16px;">Lege für jede Funktion einzeln fest, ob deine Mitarbeiter sie auch nutzen dürfen. Standardmäßig ist alles ausgeschaltet.</p>
+        <div id="permissionsList" style="display:flex; flex-direction:column; gap:2px;"></div>
+        <button class="btn solid" style="width:100%; margin-top:16px;" onclick="savePermissions()">Speichern</button>
+        <div class="redeem-msg" id="permissionsMsg" style="margin-top:10px;"></div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -623,7 +634,8 @@
       chat_greeting:"Hallo! 👋 Frag mich alles rund um Lumora — z.B. wie man ein Bild kauft, einen Code einlöst, ein Konto erstellt oder den Newsletter abonniert.",
       cart_add:"+ In den Warenkorb", cart_in_cart:"✓ Im Warenkorb", download_btn:"Herunterladen", free_tag:"GRATIS", remove_btn:"Entfernen",
       role_admin:"Admin", role_employee:"Mitarbeiter", role_customer:"Kunde",
-      stat_purchased:"Gekaufte Bilder", stat_member_since:"Mitglied seit", greeting_hello:"Hallo, {name} 👋"
+      stat_purchased:"Gekaufte Bilder", stat_member_since:"Mitglied seit", greeting_hello:"Hallo, {name} 👋",
+      err_invalid_email:"Diese E-Mail-Adresse sieht ungültig aus.", redeem_success:"Code gültig! Dein Bild wird heruntergeladen.", raffle_already:"Du nimmst bereits teil — viel Glück!", raffle_success:"Danke! Du nimmst jetzt an der Verlosung teil.", newsletter_already:"Du bist schon angemeldet!", newsletter_success:"Danke für dein Abo!"
     },
     en: {
       nav_gallery:"Gallery", nav_cart:"Cart", nav_account:"My Account", nav_support:"Support",
@@ -650,7 +662,8 @@
       chat_greeting:"Hi! 👋 Ask me anything about Lumora — e.g. how to buy an image, redeem a code, create an account, or subscribe to the newsletter.",
       cart_add:"+ Add to cart", cart_in_cart:"✓ In cart", download_btn:"Download", free_tag:"FREE", remove_btn:"Remove",
       role_admin:"Admin", role_employee:"Staff", role_customer:"Customer",
-      stat_purchased:"Purchased images", stat_member_since:"Member since", greeting_hello:"Hi, {name} 👋"
+      stat_purchased:"Purchased images", stat_member_since:"Member since", greeting_hello:"Hi, {name} 👋",
+      err_invalid_email:"This email address looks invalid.", redeem_success:"Code valid! Your image is downloading.", raffle_already:"You're already entered — good luck!", raffle_success:"Thanks! You're now entered in the giveaway.", newsletter_already:"You're already subscribed!", newsletter_success:"Thanks for subscribing!"
     },
     fr: {
       nav_gallery:"Galerie", nav_cart:"Panier", nav_account:"Mon compte", nav_support:"Support",
@@ -677,7 +690,8 @@
       chat_greeting:"Bonjour ! 👋 Posez-moi vos questions sur Lumora — par ex. comment acheter une image, utiliser un code, créer un compte ou s'abonner à la newsletter.",
       cart_add:"+ Ajouter au panier", cart_in_cart:"✓ Dans le panier", download_btn:"Télécharger", free_tag:"GRATUIT", remove_btn:"Retirer",
       role_admin:"Admin", role_employee:"Employé", role_customer:"Client",
-      stat_purchased:"Images achetées", stat_member_since:"Membre depuis", greeting_hello:"Bonjour, {name} 👋"
+      stat_purchased:"Images achetées", stat_member_since:"Membre depuis", greeting_hello:"Bonjour, {name} 👋",
+      err_invalid_email:"Cette adresse e-mail semble invalide.", redeem_success:"Code valide ! Ton image est en cours de téléchargement.", raffle_already:"Tu participes déjà — bonne chance !", raffle_success:"Merci ! Tu participes maintenant au tirage.", newsletter_already:"Tu es déjà abonné !", newsletter_success:"Merci pour ton abonnement !"
     },
     it: {
       nav_gallery:"Galleria", nav_cart:"Carrello", nav_account:"Il mio account", nav_support:"Assistenza",
@@ -704,7 +718,8 @@
       chat_greeting:"Ciao! 👋 Chiedimi qualsiasi cosa su Lumora — ad es. come acquistare un'immagine, riscattare un codice, creare un account o iscriverti alla newsletter.",
       cart_add:"+ Aggiungi al carrello", cart_in_cart:"✓ Nel carrello", download_btn:"Scarica", free_tag:"GRATIS", remove_btn:"Rimuovi",
       role_admin:"Admin", role_employee:"Collaboratore", role_customer:"Cliente",
-      stat_purchased:"Immagini acquistate", stat_member_since:"Membro da", greeting_hello:"Ciao, {name} 👋"
+      stat_purchased:"Immagini acquistate", stat_member_since:"Membro da", greeting_hello:"Ciao, {name} 👋",
+      err_invalid_email:"Questo indirizzo email non sembra valido.", redeem_success:"Codice valido! La tua immagine si sta scaricando.", raffle_already:"Partecipi già — buona fortuna!", raffle_success:"Grazie! Ora partecipi all'estrazione.", newsletter_already:"Sei già iscritto!", newsletter_success:"Grazie per l'iscrizione!"
     },
     sl: {
       nav_gallery:"Galerija", nav_cart:"Košarica", nav_account:"Moj račun", nav_support:"Podpora",
@@ -731,7 +746,8 @@
       chat_greeting:"Živjo! 👋 Vprašaj me karkoli o Lumori — npr. kako kupiti sliko, unovčiti kodo, ustvariti račun ali se naročiti na novice.",
       cart_add:"+ V košarico", cart_in_cart:"✓ V košarici", download_btn:"Prenesi", free_tag:"BREZPLAČNO", remove_btn:"Odstrani",
       role_admin:"Skrbnik", role_employee:"Zaposleni", role_customer:"Stranka",
-      stat_purchased:"Kupljene slike", stat_member_since:"Član od", greeting_hello:"Živjo, {name} 👋"
+      stat_purchased:"Kupljene slike", stat_member_since:"Član od", greeting_hello:"Živjo, {name} 👋",
+      err_invalid_email:"Ta e-poštni naslov ni videti veljaven.", redeem_success:"Koda veljavna! Vaša slika se prenaša.", raffle_already:"Že sodelujete — srečno!", raffle_success:"Hvala! Zdaj sodelujete v žrebanju.", newsletter_already:"Že ste naročeni!", newsletter_success:"Hvala za naročnino!"
     },
     es: {
       nav_gallery:"Galería", nav_cart:"Carrito", nav_account:"Mi cuenta", nav_support:"Soporte",
@@ -758,7 +774,8 @@
       chat_greeting:"¡Hola! 👋 Pregúntame lo que quieras sobre Lumora — p. ej. cómo comprar una imagen, canjear un código, crear una cuenta o suscribirte al boletín.",
       cart_add:"+ Añadir al carrito", cart_in_cart:"✓ En el carrito", download_btn:"Descargar", free_tag:"GRATIS", remove_btn:"Quitar",
       role_admin:"Admin", role_employee:"Empleado", role_customer:"Cliente",
-      stat_purchased:"Imágenes compradas", stat_member_since:"Miembro desde", greeting_hello:"Hola, {name} 👋"
+      stat_purchased:"Imágenes compradas", stat_member_since:"Miembro desde", greeting_hello:"Hola, {name} 👋",
+      err_invalid_email:"Esta dirección de correo no parece válida.", redeem_success:"¡Código válido! Tu imagen se está descargando.", raffle_already:"Ya estás participando — ¡buena suerte!", raffle_success:"¡Gracias! Ahora participas en el sorteo.", newsletter_already:"¡Ya estás suscrito!", newsletter_success:"¡Gracias por suscribirte!"
     },
     pt: {
       nav_gallery:"Galeria", nav_cart:"Carrinho", nav_account:"Minha conta", nav_support:"Suporte",
@@ -785,7 +802,8 @@
       chat_greeting:"Olá! 👋 Pergunte-me qualquer coisa sobre a Lumora — ex. como comprar uma imagem, resgatar um código, criar conta ou assinar a newsletter.",
       cart_add:"+ Adicionar ao carrinho", cart_in_cart:"✓ No carrinho", download_btn:"Baixar", free_tag:"GRÁTIS", remove_btn:"Remover",
       role_admin:"Admin", role_employee:"Funcionário", role_customer:"Cliente",
-      stat_purchased:"Imagens compradas", stat_member_since:"Membro desde", greeting_hello:"Olá, {name} 👋"
+      stat_purchased:"Imagens compradas", stat_member_since:"Membro desde", greeting_hello:"Olá, {name} 👋",
+      err_invalid_email:"Este endereço de e-mail parece inválido.", redeem_success:"Código válido! Sua imagem está sendo baixada.", raffle_already:"Você já está participando — boa sorte!", raffle_success:"Obrigado! Agora você participa do sorteio.", newsletter_already:"Você já está inscrito!", newsletter_success:"Obrigado por se inscrever!"
     },
     nl: {
       nav_gallery:"Galerij", nav_cart:"Winkelwagen", nav_account:"Mijn account", nav_support:"Support",
@@ -812,7 +830,8 @@
       chat_greeting:"Hoi! 👋 Vraag me alles over Lumora — bijv. hoe je een afbeelding koopt, een code inwisselt, een account aanmaakt of je aanmeldt voor de nieuwsbrief.",
       cart_add:"+ In winkelwagen", cart_in_cart:"✓ In winkelwagen", download_btn:"Downloaden", free_tag:"GRATIS", remove_btn:"Verwijderen",
       role_admin:"Beheerder", role_employee:"Medewerker", role_customer:"Klant",
-      stat_purchased:"Gekochte afbeeldingen", stat_member_since:"Lid sinds", greeting_hello:"Hoi, {name} 👋"
+      stat_purchased:"Gekochte afbeeldingen", stat_member_since:"Lid sinds", greeting_hello:"Hoi, {name} 👋",
+      err_invalid_email:"Dit e-mailadres lijkt ongeldig.", redeem_success:"Code geldig! Je afbeelding wordt gedownload.", raffle_already:"Je doet al mee — veel succes!", raffle_success:"Bedankt! Je doet nu mee aan de actie.", newsletter_already:"Je bent al aangemeld!", newsletter_success:"Bedankt voor je aanmelding!"
     },
     pl: {
       nav_gallery:"Galeria", nav_cart:"Koszyk", nav_account:"Moje konto", nav_support:"Wsparcie",
@@ -839,7 +858,8 @@
       chat_greeting:"Cześć! 👋 Zapytaj mnie o cokolwiek związanego z Lumora — np. jak kupić zdjęcie, wykorzystać kod, założyć konto lub zapisać się do newslettera.",
       cart_add:"+ Do koszyka", cart_in_cart:"✓ W koszyku", download_btn:"Pobierz", free_tag:"DARMOWE", remove_btn:"Usuń",
       role_admin:"Admin", role_employee:"Pracownik", role_customer:"Klient",
-      stat_purchased:"Kupione zdjęcia", stat_member_since:"Członek od", greeting_hello:"Cześć, {name} 👋"
+      stat_purchased:"Kupione zdjęcia", stat_member_since:"Członek od", greeting_hello:"Cześć, {name} 👋",
+      err_invalid_email:"Ten adres e-mail wygląda na nieprawidłowy.", redeem_success:"Kod prawidłowy! Twoje zdjęcie jest pobierane.", raffle_already:"Już bierzesz udział — powodzenia!", raffle_success:"Dzięki! Teraz bierzesz udział w losowaniu.", newsletter_already:"Jesteś już zapisany!", newsletter_success:"Dzięki za zapisanie się!"
     },
     tr: {
       nav_gallery:"Galeri", nav_cart:"Sepet", nav_account:"Hesabım", nav_support:"Destek",
@@ -866,7 +886,8 @@
       chat_greeting:"Merhaba! 👋 Lumora hakkında her şeyi sor — örneğin nasıl resim satın alınır, kod kullanılır, hesap oluşturulur veya bültene abone olunur.",
       cart_add:"+ Sepete ekle", cart_in_cart:"✓ Sepette", download_btn:"İndir", free_tag:"ÜCRETSİZ", remove_btn:"Kaldır",
       role_admin:"Yönetici", role_employee:"Çalışan", role_customer:"Müşteri",
-      stat_purchased:"Satın alınan resimler", stat_member_since:"Üyelik tarihi", greeting_hello:"Merhaba, {name} 👋"
+      stat_purchased:"Satın alınan resimler", stat_member_since:"Üyelik tarihi", greeting_hello:"Merhaba, {name} 👋",
+      err_invalid_email:"Bu e-posta adresi geçersiz görünüyor.", redeem_success:"Kod geçerli! Resmin indiriliyor.", raffle_already:"Zaten katılıyorsun — bol şans!", raffle_success:"Teşekkürler! Artık çekilişe katılıyorsun.", newsletter_already:"Zaten abonesin!", newsletter_success:"Abone olduğun için teşekkürler!"
     },
     ru: {
       nav_gallery:"Галерея", nav_cart:"Корзина", nav_account:"Мой аккаунт", nav_support:"Поддержка",
@@ -893,7 +914,8 @@
       chat_greeting:"Привет! 👋 Спроси меня о чём угодно про Lumora — например, как купить фото, использовать код, создать аккаунт или подписаться на рассылку.",
       cart_add:"+ В корзину", cart_in_cart:"✓ В корзине", download_btn:"Скачать", free_tag:"БЕСПЛАТНО", remove_btn:"Удалить",
       role_admin:"Админ", role_employee:"Сотрудник", role_customer:"Клиент",
-      stat_purchased:"Купленные фото", stat_member_since:"Участник с", greeting_hello:"Привет, {name} 👋"
+      stat_purchased:"Купленные фото", stat_member_since:"Участник с", greeting_hello:"Привет, {name} 👋",
+      err_invalid_email:"Этот email выглядит недействительным.", redeem_success:"Код действителен! Ваше фото загружается.", raffle_already:"Вы уже участвуете — удачи!", raffle_success:"Спасибо! Теперь вы участвуете в розыгрыше.", newsletter_already:"Вы уже подписаны!", newsletter_success:"Спасибо за подписку!"
     },
     ar: {
       nav_gallery:"المعرض", nav_cart:"السلة", nav_account:"حسابي", nav_support:"الدعم",
@@ -920,7 +942,8 @@
       chat_greeting:"مرحبًا! 👋 اسألني أي شيء عن Lumora — مثل كيفية شراء صورة، استخدام رمز، إنشاء حساب أو الاشتراك في النشرة الإخبارية.",
       cart_add:"+ أضف إلى السلة", cart_in_cart:"✓ في السلة", download_btn:"تنزيل", free_tag:"مجاني", remove_btn:"إزالة",
       role_admin:"مدير", role_employee:"موظف", role_customer:"عميل",
-      stat_purchased:"الصور المشتراة", stat_member_since:"عضو منذ", greeting_hello:"مرحبًا، {name} 👋"
+      stat_purchased:"الصور المشتراة", stat_member_since:"عضو منذ", greeting_hello:"مرحبًا، {name} 👋",
+      err_invalid_email:"يبدو أن هذا البريد الإلكتروني غير صالح.", redeem_success:"الرمز صالح! جارٍ تنزيل صورتك.", raffle_already:"أنت مشارك بالفعل — بالتوفيق!", raffle_success:"شكرًا! أنت الآن مشارك في السحب.", newsletter_already:"أنت مشترك بالفعل!", newsletter_success:"شكرًا لاشتراكك!"
     },
     zh: {
       nav_gallery:"图库", nav_cart:"购物车", nav_account:"我的账户", nav_support:"支持",
@@ -947,7 +970,8 @@
       chat_greeting:"你好！👋 问我任何关于Lumora的问题——例如如何购买图片、使用兑换码、创建账户或订阅新闻通讯。",
       cart_add:"+ 加入购物车", cart_in_cart:"✓ 已在购物车", download_btn:"下载", free_tag:"免费", remove_btn:"移除",
       role_admin:"管理员", role_employee:"员工", role_customer:"顾客",
-      stat_purchased:"已购买图片", stat_member_since:"注册于", greeting_hello:"你好，{name} 👋"
+      stat_purchased:"已购买图片", stat_member_since:"注册于", greeting_hello:"你好，{name} 👋",
+      err_invalid_email:"此邮箱地址似乎无效。", redeem_success:"代码有效！您的图片正在下载。", raffle_already:"您已经参加了——祝好运！", raffle_success:"谢谢！您现在已参加抽奖。", newsletter_already:"您已经订阅了！", newsletter_success:"感谢订阅！"
     },
     ja: {
       nav_gallery:"ギャラリー", nav_cart:"カート", nav_account:"マイアカウント", nav_support:"サポート",
@@ -974,7 +998,8 @@
       chat_greeting:"こんにちは！👋 Lumoraについて何でも聞いてください——画像の購入方法、コードの使用方法、アカウント作成、ニュースレター登録など。",
       cart_add:"+ カートに追加", cart_in_cart:"✓ カートに追加済み", download_btn:"ダウンロード", free_tag:"無料", remove_btn:"削除",
       role_admin:"管理者", role_employee:"スタッフ", role_customer:"顧客",
-      stat_purchased:"購入した画像", stat_member_since:"登録日", greeting_hello:"こんにちは、{name} 👋"
+      stat_purchased:"購入した画像", stat_member_since:"登録日", greeting_hello:"こんにちは、{name} 👋",
+      err_invalid_email:"このメールアドレスは無効のようです。", redeem_success:"コードが有効です！画像をダウンロード中です。", raffle_already:"すでに参加しています——頑張ってください！", raffle_success:"ありがとうございます！抽選に参加しました。", newsletter_already:"すでに登録済みです！", newsletter_success:"ご登録ありがとうございます！"
     },
     ko: {
       nav_gallery:"갤러리", nav_cart:"장바구니", nav_account:"내 계정", nav_support:"지원",
@@ -1001,7 +1026,8 @@
       chat_greeting:"안녕하세요! 👋 Lumora에 대해 무엇이든 물어보세요 — 이미지 구매 방법, 코드 사용법, 계정 생성, 뉴스레터 구독 등.",
       cart_add:"+ 장바구니에 추가", cart_in_cart:"✓ 장바구니에 있음", download_btn:"다운로드", free_tag:"무료", remove_btn:"제거",
       role_admin:"관리자", role_employee:"직원", role_customer:"고객",
-      stat_purchased:"구매한 이미지", stat_member_since:"가입일", greeting_hello:"안녕하세요, {name} 👋"
+      stat_purchased:"구매한 이미지", stat_member_since:"가입일", greeting_hello:"안녕하세요, {name} 👋",
+      err_invalid_email:"이 이메일 주소는 유효하지 않은 것 같습니다.", redeem_success:"코드가 유효합니다! 이미지를 다운로드 중입니다.", raffle_already:"이미 참여 중입니다 — 행운을 빕니다!", raffle_success:"감사합니다! 이제 경품 이벤트에 참여합니다.", newsletter_already:"이미 구독 중입니다!", newsletter_success:"구독해 주셔서 감사합니다!"
     },
     hi: {
       nav_gallery:"गैलरी", nav_cart:"कार्ट", nav_account:"मेरा खाता", nav_support:"सहायता",
@@ -1028,7 +1054,8 @@
       chat_greeting:"नमस्ते! 👋 Lumora के बारे में कुछ भी पूछें — जैसे तस्वीर कैसे खरीदें, कोड कैसे रिडीम करें, खाता कैसे बनाएं या न्यूज़लेटर की सदस्यता कैसे लें।",
       cart_add:"+ कार्ट में जोड़ें", cart_in_cart:"✓ कार्ट में है", download_btn:"डाउनलोड करें", free_tag:"मुफ़्त", remove_btn:"हटाएं",
       role_admin:"एडमिन", role_employee:"कर्मचारी", role_customer:"ग्राहक",
-      stat_purchased:"खरीदी गई तस्वीरें", stat_member_since:"सदस्य बने", greeting_hello:"नमस्ते, {name} 👋"
+      stat_purchased:"खरीदी गई तस्वीरें", stat_member_since:"सदस्य बने", greeting_hello:"नमस्ते, {name} 👋",
+      err_invalid_email:"यह ईमेल पता अमान्य लगता है।", redeem_success:"कोड मान्य है! आपकी तस्वीर डाउनलोड हो रही है।", raffle_already:"आप पहले से भाग ले रहे हैं — शुभकामनाएं!", raffle_success:"धन्यवाद! अब आप गिवअवे में भाग ले रहे हैं।", newsletter_already:"आप पहले से सदस्यता ले चुके हैं!", newsletter_success:"सदस्यता लेने के लिए धन्यवाद!"
     }
   };
 
@@ -1193,7 +1220,7 @@
     const managed = images.filter(i => i.canManage);
     document.getElementById('adminEmpty').style.display = managed.length === 0 ? 'block' : 'none';
     grid.innerHTML = managed.map(img => {
-      const adminControls = role() === 'admin' ? `
+      const adminControls = img.canSetPrice ? `
         <div class="admin-controls">
           <input type="checkbox" ${img.free?'checked':''} onchange="setFree('${img.id}', this.checked)"> Gratis
           <input type="number" min="0" step="0.5" value="${img.price}" ${img.free?'disabled':''} onchange="setPrice('${img.id}', this.value)"> €
@@ -1204,7 +1231,7 @@
         <div class="frame">
           <div class="imgwrap" onclick="openLightbox('${img.id}')">
             ${mediaTagHtml(img)}
-            <div class="del" onclick="event.stopPropagation(); deleteImage('${img.id}')">✕</div>
+            ${img.canDelete ? `<div class="del" onclick="event.stopPropagation(); deleteImage('${img.id}')">✕</div>` : ''}
             <div class="tag ${img.free?'free':'paid'}">${img.free?'GRATIS':fmt(img.price)}</div>
           </div>
           <div style="padding:10px 14px 0;">
@@ -1263,7 +1290,7 @@
     try {
       const r = await api('/api/redeem', { method:'POST', body:{ code: input.value.trim() } });
       const a = document.createElement('a'); a.href = r.url; a.download=''; a.click();
-      msg.textContent = 'Code gültig! Dein Bild wird heruntergeladen.'; msg.className = 'redeem-msg ok';
+      msg.textContent = t('redeem_success'); msg.className = 'redeem-msg ok';
       input.value = '';
       await loadImages();
     } catch(e){
@@ -1323,7 +1350,7 @@
   async function sendSupportMessage(){
     const errEl = document.getElementById('supportErr'); errEl.classList.remove('show');
     const email = document.getElementById('supportEmail').value.trim();
-    if(email && !isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    if(email && !isValidEmailClient(email)){ errEl.textContent = t('err_invalid_email'); errEl.classList.add('show'); return; }
     try {
       await api('/api/support/message', { method:'POST', body:{
         name: document.getElementById('supportName').value.trim(),
@@ -1339,10 +1366,10 @@
   async function enterRaffle(){
     const input = document.getElementById('raffleInput');
     const msg = document.getElementById('raffleMsg');
-    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = t('err_invalid_email'); msg.className = 'redeem-msg err'; return; }
     try {
       const r = await api('/api/raffle/enter', { method:'POST', body:{ email: input.value.trim(), language: currentLang } });
-      msg.textContent = r.alreadyEntered ? 'Du nimmst bereits teil — viel Glück!' : 'Danke! Du nimmst jetzt an der Verlosung teil.';
+      msg.textContent = r.alreadyEntered ? t('raffle_already') : t('raffle_success');
       msg.className = 'redeem-msg ok';
       input.value = '';
     } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
@@ -1472,10 +1499,10 @@
   async function subscribeNewsletter(){
     const input = document.getElementById('newsletterInput');
     const msg = document.getElementById('newsletterSubMsg');
-    if(!isValidEmailClient(input.value.trim())){ msg.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; msg.className = 'redeem-msg err'; return; }
+    if(!isValidEmailClient(input.value.trim())){ msg.textContent = t('err_invalid_email'); msg.className = 'redeem-msg err'; return; }
     try {
       const r = await api('/api/newsletter/subscribe', { method:'POST', body:{ email: input.value.trim(), language: currentLang } });
-      msg.textContent = r.alreadySubscribed ? 'Du bist schon angemeldet!' : 'Danke für dein Abo!';
+      msg.textContent = r.alreadySubscribed ? t('newsletter_already') : t('newsletter_success');
       msg.className = 'redeem-msg ok';
       input.value = '';
     } catch(e){ msg.textContent = e.message; msg.className = 'redeem-msg err'; }
@@ -1549,7 +1576,7 @@
     if(!day || !month || !year){ errEl.textContent = 'Bitte einen vollständigen Geburtstag auswählen.'; errEl.classList.add('show'); return; }
     if(!isValidBirthdayClient(year, month, day)){ errEl.textContent = 'Dieses Geburtsdatum gibt es nicht oder liegt in der Zukunft.'; errEl.classList.add('show'); return; }
     const email = document.getElementById('regEmail').value.trim();
-    if(!isValidEmailClient(email)){ errEl.textContent = 'Diese E-Mail-Adresse sieht ungültig aus.'; errEl.classList.add('show'); return; }
+    if(!isValidEmailClient(email)){ errEl.textContent = t('err_invalid_email'); errEl.classList.add('show'); return; }
     const birthday = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     try {
       const r = await api('/api/register', { method:'POST', body:{
@@ -1592,16 +1619,6 @@
     const isAdmin = r === 'admin', isEmployee = r === 'employee', isCustomer = r === 'customer';
     const isStaff = isAdmin || isEmployee;
     document.getElementById('dropzone').classList.toggle('show', isStaff);
-    document.getElementById('promoPanel').classList.toggle('show', isAdmin);
-    document.getElementById('employeePanel').classList.toggle('show', isAdmin);
-    document.getElementById('banPanel').classList.toggle('show', isAdmin);
-    document.getElementById('rafflePanel').classList.toggle('show', isAdmin);
-    document.getElementById('supportPanel').classList.toggle('show', isAdmin);
-    document.getElementById('newsletterPanel').classList.toggle('show', isAdmin);
-    document.getElementById('updatePanel').classList.toggle('show', isAdmin);
-    ['promo','team','ban','raffle','support','newsletter','update'].forEach(t => {
-      document.getElementById('atab-' + t).classList.toggle('hidden', !isAdmin);
-    });
     document.getElementById('navAdminTab').classList.toggle('hidden', !isStaff);
     document.getElementById('logoutBtn').style.display = (isStaff||isCustomer) ? 'inline-block' : 'none';
     ['Admin','Employee','Customer'].forEach(k => document.getElementById('rolePill'+k).classList.remove('show'));
@@ -1609,7 +1626,84 @@
     if(isEmployee){ document.getElementById('rolePillEmployee').classList.add('show'); document.getElementById('rolePillEmployee').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Mitarbeiter</span>`; }
     if(isCustomer){ document.getElementById('rolePillCustomer').classList.add('show'); document.getElementById('rolePillCustomer').innerHTML = `<b style="color:var(--ink)">${currentUserData.name}</b><span class="badge">Kunde</span>`; }
     if(!isStaff && document.getElementById('view-admin').classList.contains('active')) switchView('gallery');
-    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); loadRafflePromoStatus(); loadBannedList(); }
+    if(isStaff) applyStaffTabVisibility(isAdmin);
+    else {
+      ['promo','team','ban','raffle','support','newsletter','update','permissions'].forEach(tk => {
+        const el = document.getElementById('atab-' + tk);
+        if(el) el.classList.add('hidden');
+      });
+    }
+    document.getElementById('permissionsPanel').classList.toggle('show', isAdmin);
+    if(isAdmin){ loadTeamList(); loadRaffleList(); loadRaffleSettings(); loadSupportMessages(); loadNewsletterList(); loadDailyStatus(); loadRafflePromoStatus(); loadBannedList(); loadPermissionsPanel(); }
+  }
+
+  const PERMISSION_TABS = {
+    promo: { perm:'promotions', panel:'promoPanel', loaders:[] },
+    team: { perm:'team', panel:'employeePanel', loaders:[loadTeamList] },
+    ban: { perm:'ban', panel:'banPanel', loaders:[loadBannedList] },
+    raffle: { perm:'raffle', panel:'rafflePanel', loaders:[loadRaffleList, loadRaffleSettings, loadRafflePromoStatus] },
+    support: { perm:'support', panel:'supportPanel', loaders:[loadSupportMessages] },
+    newsletter: { perm:'newsletter', panel:'newsletterPanel', loaders:[loadNewsletterList, loadDailyStatus] },
+    update: { perm:'update', panel:'updatePanel', loaders:[] }
+  };
+
+  async function applyStaffTabVisibility(isAdmin){
+    let perms = { prices:false, promotions:false, team:false, ban:false, raffle:false, support:false, newsletter:false, update:false, deleteOthers:false, viewAllSales:false };
+    if(!isAdmin){
+      try { const r = await api('/api/permissions'); perms = r.permissions; } catch(e){}
+    }
+    currentPermissions = perms;
+    Object.keys(PERMISSION_TABS).forEach(tabKey => {
+      const cfg = PERMISSION_TABS[tabKey];
+      const show = isAdmin || perms[cfg.perm];
+      const tabEl = document.getElementById('atab-' + tabKey);
+      if(tabEl) tabEl.classList.toggle('hidden', !show);
+      const panelEl = document.getElementById(cfg.panel);
+      if(panelEl) panelEl.classList.toggle('show', show);
+      if(show && !isAdmin){ cfg.loaders.forEach(fn => fn()); }
+    });
+    const permTabEl = document.getElementById('atab-permissions');
+    if(permTabEl) permTabEl.classList.toggle('hidden', !isAdmin);
+  }
+
+  let currentPermissions = {};
+  const PERMISSION_LABELS = {
+    prices: ['💸 Preise & Gratis-Status ändern', 'Preise festlegen und Bilder als gratis markieren'],
+    promotions: ['🏷️ Aktionen verwalten', 'Rabattaktionen wie "2 für 1" ein-/ausschalten'],
+    team: ['👥 Team verwalten', '⚠️ Kann selbst weitere Mitarbeiter hinzufügen/entfernen'],
+    ban: ['🚫 Konten sperren', 'Kunden- und Mitarbeiterkonten sperren/entsperren'],
+    raffle: ['🎁 Gewinnspiel verwalten', 'Einstellungen ändern, Gewinner auslosen'],
+    support: ['📬 Support-Nachrichten sehen', 'Eingehende Kontaktanfragen einsehen'],
+    newsletter: ['📰 Newsletter verwalten', 'Newsletter versenden, Abonnenten verwalten'],
+    update: ['🔄 Website-Updates veröffentlichen', '⚠️ Kann den Code der gesamten Website ersetzen'],
+    deleteOthers: ['🗑️ Bilder anderer löschen', 'Nicht nur eigene, sondern alle Bilder löschen'],
+    viewAllSales: ['📊 Alle Verkäufe sehen', 'Nicht nur eigene, sondern alle Verkäufe im Überblick']
+  };
+
+  function loadPermissionsPanel(){
+    api('/api/permissions').then(r => {
+      const list = document.getElementById('permissionsList');
+      if(!list) return;
+      list.innerHTML = Object.keys(PERMISSION_LABELS).map(key => `
+        <div class="promo-row">
+          <input type="checkbox" id="perm-${key}" ${r.permissions[key] ? 'checked' : ''}>
+          <label for="perm-${key}">${PERMISSION_LABELS[key][0]}<small>${PERMISSION_LABELS[key][1]}</small></label>
+        </div>`).join('');
+    }).catch(()=>{});
+  }
+
+  async function savePermissions(){
+    const msgEl = document.getElementById('permissionsMsg');
+    const body = {};
+    Object.keys(PERMISSION_LABELS).forEach(key => {
+      const el = document.getElementById('perm-' + key);
+      if(el) body[key] = el.checked;
+    });
+    try {
+      await api('/api/permissions', { method:'POST', body });
+      msgEl.textContent = 'Gespeichert!';
+      msgEl.className = 'redeem-msg ok';
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
   }
 
   async function banUser(){
