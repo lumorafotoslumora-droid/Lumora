@@ -37,7 +37,12 @@ function loadDB(){
       newsletterSubscribers: [],
       dailyEmail: { lastSentAt: null, pendingNote: '', intervalHours: 24 },
       raffleEmail: { lastPromoSentAt: null, intervalHours: 3 },
-      pendingCheckouts: {} // sessionId -> {userId, itemIds, usesFirstFree, createdAt}
+      pendingCheckouts: {}, // sessionId -> {userId, itemIds, usesFirstFree, createdAt}
+      employeePermissions: {
+        prices: false, promotions: false, team: false, ban: false,
+        raffle: false, support: false, newsletter: false, update: false,
+        deleteOthers: false, viewAllSales: false
+      }
     };
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
@@ -63,6 +68,10 @@ if(typeof db.dailyEmail.intervalHours !== 'number') db.dailyEmail.intervalHours 
 if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null, intervalHours: 3 };
 if(typeof db.raffleEmail.intervalHours !== 'number') db.raffleEmail.intervalHours = 3;
 if(!db.pendingCheckouts) db.pendingCheckouts = {};
+if(!db.employeePermissions) db.employeePermissions = { prices:false, promotions:false, team:false, ban:false, raffle:false, support:false, newsletter:false, update:false, deleteOthers:false, viewAllSales:false };
+function canEmployee(user, perm){
+  return user && (user.role === 'admin' || (user.role === 'employee' && db.employeePermissions[perm]));
+}
 db.users.forEach(u => { if(typeof u.banned !== 'boolean') u.banned = false; if(!u.language) u.language = 'de'; });
 db.images.forEach((img, i) => { if(!img.name) img.name = 'Bild ' + (i + 1); });
 
@@ -462,6 +471,7 @@ function publicImage(img, user){
   const purchased = user ? db.purchases.some(p => p.userId === user.id && p.imageId === img.id) : false;
   const isAdmin = user && user.role === 'admin';
   const isOwner = user && user.role === 'employee' && img.uploadedBy === user.id;
+  const isBroadEmployee = user && user.role === 'employee' && (db.employeePermissions.deleteOthers || db.employeePermissions.prices);
   const out = {
     id: img.id,
     name: img.name || 'Unbenanntes Bild',
@@ -474,11 +484,12 @@ function publicImage(img, user){
     uploadedByName: img.uploadedByName,
     createdAt: img.createdAt
   };
-  if(isAdmin || isOwner){
+  if(isAdmin || isOwner || isBroadEmployee){
     out.code = img.code;
     out.graceCodes = img.graceCodes;
     out.canManage = true;
-    out.canSetPrice = isAdmin;
+    out.canSetPrice = canEmployee(user, 'prices');
+    out.canDelete = isAdmin || isOwner || (user.role === 'employee' && db.employeePermissions.deleteOthers);
   }
   return out;
 }
@@ -805,7 +816,8 @@ async function handleApi(req, res, pathname, method, parsed){
     if(!user) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const img = db.images.find(i => i.id === imgMatch[1]);
     if(!img) return sendJson(res, 404, { error: 'Nicht gefunden.' });
-    const canManage = user.role === 'admin' || (user.role === 'employee' && img.uploadedBy === user.id);
+    const isOwnImage = user.role === 'employee' && img.uploadedBy === user.id;
+    const canManage = user.role === 'admin' || isOwnImage || (user.role === 'employee' && db.employeePermissions.deleteOthers);
     if(!canManage) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
 
     if(method === 'DELETE'){
@@ -821,7 +833,7 @@ async function handleApi(req, res, pathname, method, parsed){
         img.name = body.name.trim().slice(0, 80); // Name darf Admin ODER der besitzende Mitarbeiter ändern
       }
       if(typeof body.free === 'boolean' || typeof body.price === 'number'){
-        if(user.role !== 'admin') return sendJson(res, 403, { error: 'Nur Admin darf Preise ändern.' });
+        if(!canEmployee(user, 'prices')) return sendJson(res, 403, { error: 'Keine Berechtigung, Preise zu ändern.' });
         if(typeof body.free === 'boolean') img.free = body.free;
         if(typeof body.price === 'number' && body.price >= 0) img.price = body.price;
       }
@@ -867,7 +879,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { settings: db.raffleSettings });
   }
   if(pathname === '/api/raffle/settings' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     db.raffleSettings.enabled = !!body.enabled;
     saveDB(db);
@@ -887,11 +899,11 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, alreadyEntered: already });
   }
   if(pathname === '/api/raffle/entries' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { entries: db.raffleEntries });
   }
   if(pathname === '/api/raffle/draw' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const img = db.images.find(i => i.id === body.imageId);
     if(!img) return sendJson(res, 400, { error: 'Bitte zuerst ein Bild für den Gewinn auswählen.' });
@@ -923,7 +935,7 @@ async function handleApi(req, res, pathname, method, parsed){
   }
   const raffleMatch = pathname.match(/^\/api\/raffle\/entries\/([a-f0-9]+)$/);
   if(raffleMatch && method === 'DELETE'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     db.raffleEntries = db.raffleEntries.filter(e => e.id !== raffleMatch[1]);
     saveDB(db);
     return sendJson(res, 200, { ok: true });
@@ -931,7 +943,7 @@ async function handleApi(req, res, pathname, method, parsed){
 
   // ---- Website live aktualisieren (ohne Serverneustart, damit keine Daten verloren gehen) ----
   if(pathname === '/api/admin/update-frontend' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'update')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const html = body.html || '';
     if(!html.includes('<html') || !html.includes('</html>')) return sendJson(res, 400, { error: 'Das sieht nicht wie eine vollständige HTML-Datei aus. Bitte den kompletten Code einfügen.' });
@@ -952,12 +964,12 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true });
   }
   if(pathname === '/api/support/messages' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'support')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { messages: [...db.supportMessages].reverse() });
   }
   const supportMatch = pathname.match(/^\/api\/support\/messages\/([a-f0-9]+)$/);
   if(supportMatch && method === 'DELETE'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'support')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     db.supportMessages = db.supportMessages.filter(m => m.id !== supportMatch[1]);
     saveDB(db);
     return sendJson(res, 200, { ok: true });
@@ -977,18 +989,18 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, alreadySubscribed: already });
   }
   if(pathname === '/api/newsletter/subscribers' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { subscribers: db.newsletterSubscribers });
   }
   const nlMatch = pathname.match(/^\/api\/newsletter\/subscribers\/([a-f0-9]+)$/);
   if(nlMatch && method === 'DELETE'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     db.newsletterSubscribers = db.newsletterSubscribers.filter(s => s.id !== nlMatch[1]);
     saveDB(db);
     return sendJson(res, 200, { ok: true });
   }
   if(pathname === '/api/newsletter/send' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const subject = (body.subject || '').trim();
     const message = (body.message || '').trim();
@@ -1003,11 +1015,11 @@ async function handleApi(req, res, pathname, method, parsed){
   }
 
   if(pathname === '/api/newsletter/daily-status' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { lastSentAt: db.dailyEmail.lastSentAt, pendingNote: db.dailyEmail.pendingNote, intervalHours: db.dailyEmail.intervalHours });
   }
   if(pathname === '/api/newsletter/daily-interval' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const hours = Number(body.hours);
     if(!hours || hours <= 0) return sendJson(res, 400, { error: 'Ungültiger Zeitabstand.' });
@@ -1016,7 +1028,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, intervalHours: hours });
   }
   if(pathname === '/api/newsletter/daily-note' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'newsletter')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     db.dailyEmail.pendingNote = (body.note || '').trim();
     saveDB(db);
@@ -1031,11 +1043,11 @@ async function handleApi(req, res, pathname, method, parsed){
   }
 
   if(pathname === '/api/raffle/promo-status' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { lastPromoSentAt: db.raffleEmail.lastPromoSentAt, intervalHours: db.raffleEmail.intervalHours });
   }
   if(pathname === '/api/raffle/promo-interval' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const hours = Number(body.hours);
     if(!hours || hours <= 0) return sendJson(res, 400, { error: 'Ungültiger Zeitabstand.' });
@@ -1044,7 +1056,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, intervalHours: hours });
   }
   if(pathname === '/api/raffle/send-promo-now' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'raffle')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}/`;
     const result = await runRafflePromoSend(siteUrl, true);
@@ -1053,7 +1065,7 @@ async function handleApi(req, res, pathname, method, parsed){
 
   // ---- Konten sperren/entsperren ----
   if(pathname === '/api/admin/ban-user' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'ban')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const identifier = (body.identifier || '').trim().toLowerCase();
     if(!identifier) return sendJson(res, 400, { error: 'Bitte Name oder E-Mail eingeben.' });
@@ -1066,7 +1078,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, user: publicUser(target) });
   }
   if(pathname === '/api/admin/unban-user' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'ban')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const identifier = (body.identifier || '').trim().toLowerCase();
     const target = db.users.find(u => u.name.toLowerCase() === identifier || (u.email && u.email.toLowerCase() === identifier));
@@ -1076,7 +1088,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { ok: true, user: publicUser(target) });
   }
   if(pathname === '/api/admin/banned-users' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'ban')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { users: db.users.filter(u => u.banned).map(publicUser) });
   }
 
@@ -1084,7 +1096,7 @@ async function handleApi(req, res, pathname, method, parsed){
   if(pathname === '/api/sales' && method === 'GET'){
     if(!user || (user.role !== 'admin' && user.role !== 'employee')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     let relevant = db.purchases.filter(p => (p.pricePaid || 0) > 0);
-    if(user.role === 'employee'){
+    if(user.role === 'employee' && !db.employeePermissions.viewAllSales){
       const myImageIds = db.images.filter(img => img.uploadedBy === user.id).map(img => img.id);
       relevant = relevant.filter(p => myImageIds.includes(p.imageId));
     }
@@ -1105,6 +1117,20 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { rows, totalRevenue, count: rows.length });
   }
 
+  // ---- Mitarbeiter-Berechtigungen ----
+  if(pathname === '/api/permissions' && method === 'GET'){
+    if(!user || (user.role !== 'admin' && user.role !== 'employee')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { permissions: db.employeePermissions });
+  }
+  if(pathname === '/api/permissions' && method === 'POST'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const body = await readJsonBody(req);
+    const keys = ['prices','promotions','team','ban','raffle','support','newsletter','update','deleteOthers','viewAllSales'];
+    keys.forEach(k => { if(typeof body[k] === 'boolean') db.employeePermissions[k] = body[k]; });
+    saveDB(db);
+    return sendJson(res, 200, { permissions: db.employeePermissions });
+  }
+
   // ---- Sprache ändern ----
   if(pathname === '/api/change-language' && method === 'POST'){
     if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
@@ -1118,11 +1144,11 @@ async function handleApi(req, res, pathname, method, parsed){
 
   // ---- Mitarbeiter ----
   if(pathname === '/api/employees' && method === 'GET'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'team')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     return sendJson(res, 200, { employees: db.users.filter(u => u.role === 'employee').map(publicUser) });
   }
   if(pathname === '/api/employees' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'team')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     const name = (body.name || '').trim();
     const password = body.password || '';
@@ -1137,7 +1163,7 @@ async function handleApi(req, res, pathname, method, parsed){
   }
   const empMatch = pathname.match(/^\/api\/employees\/([a-f0-9]+)$/);
   if(empMatch && method === 'DELETE'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'team')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     db.users = db.users.filter(u => u.id !== empMatch[1]);
     saveDB(db);
     return sendJson(res, 200, { ok: true });
@@ -1148,7 +1174,7 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { promos: db.promos });
   }
   if(pathname === '/api/promos' && method === 'POST'){
-    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    if(!canEmployee(user, 'promotions')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
     const body = await readJsonBody(req);
     db.promos = {
       firstFree: !!body.firstFree,
