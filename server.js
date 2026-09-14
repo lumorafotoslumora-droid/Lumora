@@ -14,6 +14,7 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 
 const ADMIN_NAME = 'Matic';
 const GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
+const SUPPORTED_LANGUAGES = ['de','en','es','fr','it','pt','nl','pl','sl','tr','ru','ar','zh','ja','ko','hi'];
 
 // Verzeichnisse sicherstellen (wichtig, falls der Ordner z.B. von GitHub leer war
 // und deshalb beim Hochladen des Projekts gar nicht mit übertragen wurde — Git
@@ -62,7 +63,8 @@ if(typeof db.dailyEmail.intervalHours !== 'number') db.dailyEmail.intervalHours 
 if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null, intervalHours: 3 };
 if(typeof db.raffleEmail.intervalHours !== 'number') db.raffleEmail.intervalHours = 3;
 if(!db.pendingCheckouts) db.pendingCheckouts = {};
-db.users.forEach(u => { if(typeof u.banned !== 'boolean') u.banned = false; });
+db.users.forEach(u => { if(typeof u.banned !== 'boolean') u.banned = false; if(!u.language) u.language = 'de'; });
+db.images.forEach((img, i) => { if(!img.name) img.name = 'Bild ' + (i + 1); });
 
 // Admin-Konto beim ersten Start anlegen
 function ensureAdmin(){
@@ -111,56 +113,164 @@ function sendEmail(toEmail, subject, htmlContent){
   });
 }
 
-function sendVerificationEmail(toEmail, verifyUrl){
-  const html = `
-    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
-      <h2>Willkommen bei Lumora! 📸</h2>
-      <p>Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiviert ist.</p>
-      <p><a href="${verifyUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">E-Mail bestätigen</a></p>
-      <p style="color:#888; font-size:13px;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>${verifyUrl}</p>
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
-    </div>`;
-  return sendEmail(toEmail, 'Bestätige deine E-Mail-Adresse bei Lumora', html);
+// ---------- Mehrsprachige E-Mail-Texte ----------
+const EMAIL_I18N = {
+  de: { verify_subject:'Bestätige deine E-Mail-Adresse bei Lumora', verify_title:'Willkommen bei Lumora! 📸', verify_body:'Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiviert ist.', verify_button:'E-Mail bestätigen', verify_footer:'Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:',
+    winner_subject:'🎉 Du hast gewonnen! Dein Gratis-Bild-Code (24h gültig)', winner_title:'Herzlichen Glückwunsch!', winner_body:'Du hast bei unserem Lumora-Gewinnspiel ein Gratis-Bild gewonnen!', winner_code_label:'Dein Code:', winner_button:'Jetzt einlösen', winner_warning:'⏰ Dieser Code ist nur 24 Stunden gültig!', winner_hint:'Gib ihn einfach im Feld "Bild-Code einlösen" auf unserer Startseite ein.',
+    loser_subject:'Diesmal leider nicht gewonnen — aber nächstes Mal! 🍀', loser_title:'Schade! 😔', loser_body:'Dieses Mal hast du beim Lumora-Gewinnspiel leider nicht gewonnen.', loser_body2:'Vielleicht klappt\'s beim nächsten Mal!', loser_button:'Nochmal mitmachen',
+    promo_subject:'🎁 Mach mit beim Lumora-Gewinnspiel!', promo_title:'🎁 Gewinnspiel bei Lumora!', promo_body:'Trag dich jetzt ein und gewinne mit etwas Glück ein Gratis-Bild!', promo_button:'Jetzt mitmachen',
+    daily_new:'🆕 Es gibt {count} neue Bilder in der Galerie!', daily_new1:'🆕 Es gibt 1 neues Bild in der Galerie!', daily_generic:'Schau doch mal wieder bei Lumora vorbei — es lohnt sich immer ein Blick in die Galerie. 📸', daily_button:'Zur Galerie',
+    signoff:'LG,<br>dein Lumora-Team' },
+  en: { verify_subject:'Confirm your email address at Lumora', verify_title:'Welcome to Lumora! 📸', verify_body:'Please confirm your email address to fully activate your account.', verify_button:'Confirm email', verify_footer:'If the button doesn\'t work, copy this link into your browser:',
+    winner_subject:'🎉 You won! Your free image code (valid 24h)', winner_title:'Congratulations!', winner_body:'You won a free image in our Lumora giveaway!', winner_code_label:'Your code:', winner_button:'Redeem now', winner_warning:'⏰ This code is only valid for 24 hours!', winner_hint:'Just enter it in the "Redeem image code" field on our homepage.',
+    loser_subject:'Not this time — but maybe next time! 🍀', loser_title:'Too bad! 😔', loser_body:'You didn\'t win this time in the Lumora giveaway.', loser_body2:'Maybe next time!', loser_button:'Join again',
+    promo_subject:'🎁 Join the Lumora giveaway!', promo_title:'🎁 Lumora giveaway!', promo_body:'Sign up now for a chance to win a free image!', promo_button:'Join now',
+    daily_new:'🆕 There are {count} new images in the gallery!', daily_new1:'🆕 There is 1 new image in the gallery!', daily_generic:'Come check out Lumora again — it\'s always worth a look. 📸', daily_button:'Go to gallery',
+    signoff:'Best,<br>the Lumora team' },
+  es: { verify_subject:'Confirma tu correo electrónico en Lumora', verify_title:'¡Bienvenido a Lumora! 📸', verify_body:'Por favor confirma tu correo electrónico para activar tu cuenta por completo.', verify_button:'Confirmar correo', verify_footer:'Si el botón no funciona, copia este enlace en tu navegador:',
+    winner_subject:'🎉 ¡Has ganado! Tu código de imagen gratis (válido 24h)', winner_title:'¡Felicidades!', winner_body:'¡Has ganado una imagen gratis en nuestro sorteo de Lumora!', winner_code_label:'Tu código:', winner_button:'Canjear ahora', winner_warning:'⏰ ¡Este código solo es válido por 24 horas!', winner_hint:'Solo ingrésalo en el campo "Canjear código de imagen" en nuestra página principal.',
+    loser_subject:'Esta vez no, ¡pero la próxima quizás! 🍀', loser_title:'¡Qué pena! 😔', loser_body:'Esta vez no ganaste en el sorteo de Lumora.', loser_body2:'¡Quizás la próxima vez!', loser_button:'Participar de nuevo',
+    promo_subject:'🎁 ¡Participa en el sorteo de Lumora!', promo_title:'🎁 ¡Sorteo en Lumora!', promo_body:'¡Regístrate ahora y gana una imagen gratis con algo de suerte!', promo_button:'Participar ahora',
+    daily_new:'🆕 ¡Hay {count} imágenes nuevas en la galería!', daily_new1:'🆕 ¡Hay 1 imagen nueva en la galería!', daily_generic:'Vuelve a visitar Lumora — siempre vale la pena echar un vistazo. 📸', daily_button:'Ir a la galería',
+    signoff:'Saludos,<br>el equipo de Lumora' },
+  fr: { verify_subject:'Confirmez votre adresse e-mail sur Lumora', verify_title:'Bienvenue chez Lumora ! 📸', verify_body:'Merci de confirmer ton adresse e-mail pour activer entièrement ton compte.', verify_button:'Confirmer l\'e-mail', verify_footer:'Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :',
+    winner_subject:'🎉 Tu as gagné ! Ton code image gratuit (valable 24h)', winner_title:'Félicitations !', winner_body:'Tu as gagné une image gratuite lors de notre tirage Lumora !', winner_code_label:'Ton code :', winner_button:'Utiliser maintenant', winner_warning:'⏰ Ce code n\'est valable que 24 heures !', winner_hint:'Il suffit de l\'entrer dans le champ "Utiliser un code image" sur notre page d\'accueil.',
+    loser_subject:'Pas cette fois — mais peut-être la prochaine ! 🍀', loser_title:'Dommage ! 😔', loser_body:'Tu n\'as pas gagné cette fois au tirage Lumora.', loser_body2:'Peut-être la prochaine fois !', loser_button:'Participer à nouveau',
+    promo_subject:'🎁 Participe au tirage Lumora !', promo_title:'🎁 Tirage au sort Lumora !', promo_body:'Inscris-toi maintenant pour tenter de gagner une image gratuite !', promo_button:'Participer maintenant',
+    daily_new:'🆕 Il y a {count} nouvelles images dans la galerie !', daily_new1:'🆕 Il y a 1 nouvelle image dans la galerie !', daily_generic:'Reviens faire un tour sur Lumora — ça vaut toujours le coup d\'œil. 📸', daily_button:'Voir la galerie',
+    signoff:'Cordialement,<br>l\'équipe Lumora' },
+  it: { verify_subject:'Conferma il tuo indirizzo email su Lumora', verify_title:'Benvenuto su Lumora! 📸', verify_body:'Conferma il tuo indirizzo email per attivare completamente il tuo account.', verify_button:'Conferma email', verify_footer:'Se il pulsante non funziona, copia questo link nel browser:',
+    winner_subject:'🎉 Hai vinto! Il tuo codice immagine gratis (valido 24h)', winner_title:'Congratulazioni!', winner_body:'Hai vinto un\'immagine gratuita nella nostra estrazione Lumora!', winner_code_label:'Il tuo codice:', winner_button:'Riscatta ora', winner_warning:'⏰ Questo codice è valido solo per 24 ore!', winner_hint:'Basta inserirlo nel campo "Riscatta codice immagine" sulla nostra homepage.',
+    loser_subject:'Questa volta no — ma la prossima magari! 🍀', loser_title:'Peccato! 😔', loser_body:'Questa volta non hai vinto all\'estrazione Lumora.', loser_body2:'Magari la prossima volta!', loser_button:'Partecipa di nuovo',
+    promo_subject:'🎁 Partecipa all\'estrazione Lumora!', promo_title:'🎁 Estrazione Lumora!', promo_body:'Iscriviti ora e vinci un\'immagine gratuita con un po\' di fortuna!', promo_button:'Partecipa ora',
+    daily_new:'🆕 Ci sono {count} nuove immagini nella galleria!', daily_new1:'🆕 C\'è 1 nuova immagine nella galleria!', daily_generic:'Torna a dare un\'occhiata a Lumora — vale sempre la pena. 📸', daily_button:'Vai alla galleria',
+    signoff:'Saluti,<br>il team Lumora' },
+  pt: { verify_subject:'Confirme seu e-mail na Lumora', verify_title:'Bem-vindo à Lumora! 📸', verify_body:'Confirme seu endereço de e-mail para ativar totalmente sua conta.', verify_button:'Confirmar e-mail', verify_footer:'Se o botão não funcionar, copie este link no navegador:',
+    winner_subject:'🎉 Você ganhou! Seu código de imagem grátis (válido por 24h)', winner_title:'Parabéns!', winner_body:'Você ganhou uma imagem grátis no nosso sorteio Lumora!', winner_code_label:'Seu código:', winner_button:'Resgatar agora', winner_warning:'⏰ Este código é válido apenas por 24 horas!', winner_hint:'Basta inserir no campo "Resgatar código de imagem" na nossa página inicial.',
+    loser_subject:'Desta vez não — mas talvez na próxima! 🍀', loser_title:'Que pena! 😔', loser_body:'Desta vez você não ganhou no sorteio Lumora.', loser_body2:'Talvez na próxima vez!', loser_button:'Participar novamente',
+    promo_subject:'🎁 Participe do sorteio Lumora!', promo_title:'🎁 Sorteio Lumora!', promo_body:'Cadastre-se agora e ganhe uma imagem grátis com um pouco de sorte!', promo_button:'Participar agora',
+    daily_new:'🆕 Há {count} novas imagens na galeria!', daily_new1:'🆕 Há 1 nova imagem na galeria!', daily_generic:'Volte a dar uma olhada na Lumora — sempre vale a pena. 📸', daily_button:'Ir para a galeria',
+    signoff:'Abraços,<br>equipe Lumora' },
+  nl: { verify_subject:'Bevestig je e-mailadres bij Lumora', verify_title:'Welkom bij Lumora! 📸', verify_body:'Bevestig je e-mailadres om je account volledig te activeren.', verify_button:'E-mail bevestigen', verify_footer:'Werkt de knop niet, kopieer dan deze link in je browser:',
+    winner_subject:'🎉 Je hebt gewonnen! Je gratis afbeeldingscode (24u geldig)', winner_title:'Gefeliciteerd!', winner_body:'Je hebt een gratis afbeelding gewonnen bij onze Lumora-actie!', winner_code_label:'Je code:', winner_button:'Nu inwisselen', winner_warning:'⏰ Deze code is slechts 24 uur geldig!', winner_hint:'Vul hem in bij "Afbeeldingscode inwisselen" op onze startpagina.',
+    loser_subject:'Deze keer niet — maar wie weet volgende keer! 🍀', loser_title:'Jammer! 😔', loser_body:'Deze keer heb je niet gewonnen bij de Lumora-actie.', loser_body2:'Misschien volgende keer!', loser_button:'Opnieuw meedoen',
+    promo_subject:'🎁 Doe mee met de Lumora-actie!', promo_title:'🎁 Lumora-winactie!', promo_body:'Schrijf je nu in en maak kans op een gratis afbeelding!', promo_button:'Nu meedoen',
+    daily_new:'🆕 Er zijn {count} nieuwe afbeeldingen in de galerij!', daily_new1:'🆕 Er is 1 nieuwe afbeelding in de galerij!', daily_generic:'Kom nog eens kijken bij Lumora — altijd de moeite waard. 📸', daily_button:'Naar de galerij',
+    signoff:'Groetjes,<br>het Lumora-team' },
+  pl: { verify_subject:'Potwierdź swój adres e-mail w Lumora', verify_title:'Witaj w Lumora! 📸', verify_body:'Potwierdź swój adres e-mail, aby w pełni aktywować konto.', verify_button:'Potwierdź e-mail', verify_footer:'Jeśli przycisk nie działa, skopiuj ten link do przeglądarki:',
+    winner_subject:'🎉 Wygrałeś! Twój darmowy kod na zdjęcie (ważny 24h)', winner_title:'Gratulacje!', winner_body:'Wygrałeś darmowe zdjęcie w naszym losowaniu Lumora!', winner_code_label:'Twój kod:', winner_button:'Odbierz teraz', winner_warning:'⏰ Ten kod jest ważny tylko 24 godziny!', winner_hint:'Wpisz go w polu "Odbierz kod zdjęcia" na naszej stronie głównej.',
+    loser_subject:'Tym razem nie — ale może następnym razem! 🍀', loser_title:'Szkoda! 😔', loser_body:'Tym razem nie wygrałeś w losowaniu Lumora.', loser_body2:'Może następnym razem!', loser_button:'Weź udział ponownie',
+    promo_subject:'🎁 Weź udział w losowaniu Lumora!', promo_title:'🎁 Losowanie Lumora!', promo_body:'Zapisz się teraz i wygraj darmowe zdjęcie!', promo_button:'Dołącz teraz',
+    daily_new:'🆕 W galerii jest {count} nowych zdjęć!', daily_new1:'🆕 W galerii jest 1 nowe zdjęcie!', daily_generic:'Zajrzyj ponownie do Lumora — zawsze warto. 📸', daily_button:'Przejdź do galerii',
+    signoff:'Pozdrawiamy,<br>zespół Lumora' },
+  sl: { verify_subject:'Potrdi svoj e-poštni naslov na Lumora', verify_title:'Dobrodošli na Lumora! 📸', verify_body:'Prosimo, potrdite svoj e-poštni naslov, da popolnoma aktivirate svoj račun.', verify_button:'Potrdi e-pošto', verify_footer:'Če gumb ne deluje, kopirajte to povezavo v brskalnik:',
+    winner_subject:'🎉 Zmagali ste! Vaša koda za brezplačno sliko (velja 24h)', winner_title:'Čestitke!', winner_body:'Na našem žrebanju Lumora ste zmagali brezplačno sliko!', winner_code_label:'Vaša koda:', winner_button:'Unovči zdaj', winner_warning:'⏰ Ta koda velja samo 24 ur!', winner_hint:'Vnesite jo v polje "Unovči kodo za sliko" na naši domači strani.',
+    loser_subject:'Tokrat ne — ampak morda naslednjič! 🍀', loser_title:'Škoda! 😔', loser_body:'Tokrat niste zmagali na žrebanju Lumora.', loser_body2:'Morda naslednjič!', loser_button:'Sodeluj znova',
+    promo_subject:'🎁 Sodeluj v žrebanju Lumora!', promo_title:'🎁 Žrebanje Lumora!', promo_body:'Prijavite se zdaj in z malo sreče osvojite brezplačno sliko!', promo_button:'Sodeluj zdaj',
+    daily_new:'🆕 V galeriji je {count} novih slik!', daily_new1:'🆕 V galeriji je 1 nova slika!', daily_generic:'Ponovno obiščite Lumora — vedno se splača pogledati. 📸', daily_button:'Na galerijo',
+    signoff:'Lep pozdrav,<br>ekipa Lumora' },
+  tr: { verify_subject:'Lumora\'da e-posta adresini onayla', verify_title:'Lumora\'ya hoş geldin! 📸', verify_body:'Hesabını tamamen etkinleştirmek için lütfen e-posta adresini onayla.', verify_button:'E-postayı onayla', verify_footer:'Buton çalışmazsa bu bağlantıyı tarayıcına kopyala:',
+    winner_subject:'🎉 Kazandın! Ücretsiz resim kodun (24 saat geçerli)', winner_title:'Tebrikler!', winner_body:'Lumora çekilişimizde ücretsiz bir resim kazandın!', winner_code_label:'Kodun:', winner_button:'Şimdi kullan', winner_warning:'⏰ Bu kod sadece 24 saat geçerlidir!', winner_hint:'Ana sayfamızdaki "Resim kodu kullan" alanına girmen yeterli.',
+    loser_subject:'Bu sefer olmadı — ama belki gelecek sefere! 🍀', loser_title:'Ne yazık ki! 😔', loser_body:'Bu sefer Lumora çekilişinde kazanamadın.', loser_body2:'Belki gelecek sefere!', loser_button:'Tekrar katıl',
+    promo_subject:'🎁 Lumora çekilişine katıl!', promo_title:'🎁 Lumora çekilişi!', promo_body:'Şimdi kaydol ve şansını dene, ücretsiz resim kazan!', promo_button:'Şimdi katıl',
+    daily_new:'🆕 Galeride {count} yeni resim var!', daily_new1:'🆕 Galeride 1 yeni resim var!', daily_generic:'Lumora\'ya tekrar göz at — her zaman değer. 📸', daily_button:'Galeriye git',
+    signoff:'Sevgiler,<br>Lumora ekibi' },
+  ru: { verify_subject:'Подтвердите свой email на Lumora', verify_title:'Добро пожаловать в Lumora! 📸', verify_body:'Пожалуйста, подтвердите свой email, чтобы полностью активировать аккаунт.', verify_button:'Подтвердить email', verify_footer:'Если кнопка не работает, скопируйте эту ссылку в браузер:',
+    winner_subject:'🎉 Вы выиграли! Ваш код на бесплатное фото (действует 24ч)', winner_title:'Поздравляем!', winner_body:'Вы выиграли бесплатное фото в нашем розыгрыше Lumora!', winner_code_label:'Ваш код:', winner_button:'Использовать сейчас', winner_warning:'⏰ Этот код действителен только 24 часа!', winner_hint:'Просто введите его в поле "Использовать код фото" на нашей главной странице.',
+    loser_subject:'На этот раз не повезло — может, в следующий раз! 🍀', loser_title:'Жаль! 😔', loser_body:'На этот раз вы не выиграли в розыгрыше Lumora.', loser_body2:'Может, в следующий раз!', loser_button:'Участвовать снова',
+    promo_subject:'🎁 Участвуйте в розыгрыше Lumora!', promo_title:'🎁 Розыгрыш Lumora!', promo_body:'Зарегистрируйтесь сейчас и выиграйте бесплатное фото!', promo_button:'Участвовать сейчас',
+    daily_new:'🆕 В галерее {count} новых фото!', daily_new1:'🆕 В галерее 1 новое фото!', daily_generic:'Загляните снова в Lumora — всегда стоит посмотреть. 📸', daily_button:'В галерею',
+    signoff:'С уважением,<br>команда Lumora' },
+  ar: { verify_subject:'أكّد بريدك الإلكتروني في Lumora', verify_title:'مرحبًا بك في Lumora! 📸', verify_body:'يرجى تأكيد بريدك الإلكتروني لتفعيل حسابك بالكامل.', verify_button:'تأكيد البريد الإلكتروني', verify_footer:'إذا لم يعمل الزر، انسخ هذا الرابط إلى متصفحك:',
+    winner_subject:'🎉 لقد فزت! رمز صورتك المجانية (صالح 24 ساعة)', winner_title:'مبروك!', winner_body:'لقد فزت بصورة مجانية في سحب Lumora!', winner_code_label:'رمزك:', winner_button:'استبدل الآن', winner_warning:'⏰ هذا الرمز صالح لمدة 24 ساعة فقط!', winner_hint:'فقط أدخله في حقل "استبدال رمز الصورة" في صفحتنا الرئيسية.',
+    loser_subject:'ليس هذه المرة — ولكن ربما في المرة القادمة! 🍀', loser_title:'للأسف! 😔', loser_body:'لم تفز هذه المرة في سحب Lumora.', loser_body2:'ربما في المرة القادمة!', loser_button:'شارك مجددًا',
+    promo_subject:'🎁 شارك في سحب Lumora!', promo_title:'🎁 سحب Lumora!', promo_body:'سجّل الآن واربح صورة مجانية بقليل من الحظ!', promo_button:'شارك الآن',
+    daily_new:'🆕 توجد {count} صور جديدة في المعرض!', daily_new1:'🆕 توجد صورة جديدة واحدة في المعرض!', daily_generic:'ألق نظرة على Lumora مجددًا — الأمر يستحق دائمًا. 📸', daily_button:'اذهب إلى المعرض',
+    signoff:'مع تحياتنا،<br>فريق Lumora' },
+  zh: { verify_subject:'请确认您在 Lumora 的邮箱地址', verify_title:'欢迎来到 Lumora！📸', verify_body:'请确认您的邮箱地址以完全激活您的账户。', verify_button:'确认邮箱', verify_footer:'如果按钮无效，请将此链接复制到浏览器中：',
+    winner_subject:'🎉 恭喜中奖！您的免费图片兑换码（24小时内有效）', winner_title:'恭喜您！', winner_body:'您在我们的 Lumora 抽奖活动中赢得了一张免费图片！', winner_code_label:'您的兑换码：', winner_button:'立即兑换', winner_warning:'⏰ 此兑换码仅在24小时内有效！', winner_hint:'只需在我们主页的"兑换图片码"栏目中输入即可。',
+    loser_subject:'这次没有中奖——也许下次会中！🍀', loser_title:'很遗憾！😔', loser_body:'很遗憾，您这次没有在 Lumora 抽奖中获奖。', loser_body2:'也许下次会中奖！', loser_button:'再次参加',
+    promo_subject:'🎁 参加 Lumora 抽奖活动！', promo_title:'🎁 Lumora 抽奖活动！', promo_body:'立即注册，凭运气赢取免费图片！', promo_button:'立即参加',
+    daily_new:'🆕 图库中有 {count} 张新图片！', daily_new1:'🆕 图库中有 1 张新图片！', daily_generic:'快来看看 Lumora 吧——总是值得一看。📸', daily_button:'前往图库',
+    signoff:'此致，<br>Lumora 团队' },
+  ja: { verify_subject:'Lumoraのメールアドレスを確認してください', verify_title:'Lumoraへようこそ！📸', verify_body:'アカウントを完全に有効化するために、メールアドレスを確認してください。', verify_button:'メールを確認', verify_footer:'ボタンが機能しない場合は、このリンクをブラウザにコピーしてください：',
+    winner_subject:'🎉 当選しました！無料画像コード（24時間有効）', winner_title:'おめでとうございます！', winner_body:'Lumoraの抽選で無料画像に当選しました！', winner_code_label:'あなたのコード：', winner_button:'今すぐ引き換える', winner_warning:'⏰ このコードは24時間のみ有効です！', winner_hint:'トップページの「画像コードを引き換える」欄に入力するだけです。',
+    loser_subject:'今回は残念でした——でも次回に期待！🍀', loser_title:'残念！😔', loser_body:'今回はLumoraの抽選に当選しませんでした。', loser_body2:'次回はきっと！', loser_button:'もう一度応募する',
+    promo_subject:'🎁 Lumoraの抽選に応募しよう！', promo_title:'🎁 Lumora抽選会！', promo_body:'今すぐ登録して、運が良ければ無料画像が当たります！', promo_button:'今すぐ応募',
+    daily_new:'🆕 ギャラリーに{count}枚の新しい画像があります！', daily_new1:'🆕 ギャラリーに新しい画像が1枚あります！', daily_generic:'またLumoraをチェックしてみてください——いつも見る価値があります。📸', daily_button:'ギャラリーへ',
+    signoff:'よろしくお願いします、<br>Lumoraチーム' },
+  ko: { verify_subject:'Lumora 이메일 주소를 확인해주세요', verify_title:'Lumora에 오신 것을 환영합니다! 📸', verify_body:'계정을 완전히 활성화하려면 이메일 주소를 확인해주세요.', verify_button:'이메일 확인', verify_footer:'버튼이 작동하지 않으면 이 링크를 브라우저에 복사하세요:',
+    winner_subject:'🎉 당첨되었습니다! 무료 이미지 코드 (24시간 유효)', winner_title:'축하합니다!', winner_body:'Lumora 경품 이벤트에서 무료 이미지에 당첨되었습니다!', winner_code_label:'당신의 코드:', winner_button:'지금 사용하기', winner_warning:'⏰ 이 코드는 24시간 동안만 유효합니다!', winner_hint:'홈페이지의 "이미지 코드 사용" 칸에 입력하시면 됩니다.',
+    loser_subject:'이번엔 아쉽지만 — 다음 기회에! 🍀', loser_title:'아쉽네요! 😔', loser_body:'이번 Lumora 경품 이벤트에는 당첨되지 않았습니다.', loser_body2:'다음 기회에 다시 도전하세요!', loser_button:'다시 참여하기',
+    promo_subject:'🎁 Lumora 경품 이벤트에 참여하세요!', promo_title:'🎁 Lumora 경품 이벤트!', promo_body:'지금 등록하고 운이 좋으면 무료 이미지를 받아보세요!', promo_button:'지금 참여하기',
+    daily_new:'🆕 갤러리에 새 이미지 {count}개가 있습니다!', daily_new1:'🆕 갤러리에 새 이미지 1개가 있습니다!', daily_generic:'Lumora를 다시 확인해보세요 — 항상 볼 가치가 있습니다. 📸', daily_button:'갤러리로 이동',
+    signoff:'감사합니다,<br>Lumora 팀' },
+  hi: { verify_subject:'Lumora पर अपना ईमेल पता सत्यापित करें', verify_title:'Lumora में आपका स्वागत है! 📸', verify_body:'अपने खाते को पूरी तरह सक्रिय करने के लिए कृपया अपना ईमेल पता सत्यापित करें।', verify_button:'ईमेल सत्यापित करें', verify_footer:'यदि बटन काम नहीं करता है, तो इस लिंक को अपने ब्राउज़र में कॉपी करें:',
+    winner_subject:'🎉 आप जीत गए! आपका मुफ्त इमेज कोड (24 घंटे मान्य)', winner_title:'बधाई हो!', winner_body:'आपने हमारे Lumora गिवअवे में एक मुफ्त तस्वीर जीती है!', winner_code_label:'आपका कोड:', winner_button:'अभी रिडीम करें', winner_warning:'⏰ यह कोड केवल 24 घंटे के लिए मान्य है!', winner_hint:'बस इसे हमारी होमपेज पर "इमेज कोड रिडीम करें" फ़ील्ड में डालें।',
+    loser_subject:'इस बार नहीं — लेकिन शायद अगली बार! 🍀', loser_title:'अफ़सोस! 😔', loser_body:'इस बार आप Lumora गिवअवे में नहीं जीते।', loser_body2:'शायद अगली बार!', loser_button:'फिर से भाग लें',
+    promo_subject:'🎁 Lumora गिवअवे में भाग लें!', promo_title:'🎁 Lumora गिवअवे!', promo_body:'अभी साइन अप करें और थोड़ी किस्मत से मुफ्त तस्वीर जीतें!', promo_button:'अभी भाग लें',
+    daily_new:'🆕 गैलरी में {count} नई तस्वीरें हैं!', daily_new1:'🆕 गैलरी में 1 नई तस्वीर है!', daily_generic:'फिर से Lumora देखें — हमेशा देखने लायक। 📸', daily_button:'गैलरी में जाएं',
+    signoff:'सादर,<br>Lumora टीम' }
+};
+function et(lang, key){
+  const dict = EMAIL_I18N[lang] || EMAIL_I18N.de;
+  return dict[key] !== undefined ? dict[key] : (EMAIL_I18N.de[key] || key);
 }
 
-function sendRaffleWinnerEmail(toEmail, code, siteUrl){
+function sendVerificationEmail(toEmail, verifyUrl, lang){
+  lang = lang || 'de';
   const html = `
     <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
-      <h2>🎉 Herzlichen Glückwunsch!</h2>
-      <p>Du hast bei unserem Lumora-Gewinnspiel ein Gratis-Bild gewonnen!</p>
-      <p>Dein Code:</p>
+      <h2>${et(lang,'verify_title')}</h2>
+      <p>${et(lang,'verify_body')}</p>
+      <p><a href="${verifyUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">${et(lang,'verify_button')}</a></p>
+      <p style="color:#888; font-size:13px;">${et(lang,'verify_footer')}<br>${verifyUrl}</p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
+    </div>`;
+  return sendEmail(toEmail, et(lang,'verify_subject'), html);
+}
+
+function sendRaffleWinnerEmail(toEmail, code, siteUrl, lang){
+  lang = lang || 'de';
+  const html = `
+    <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
+      <h2>🎉 ${et(lang,'winner_title')}</h2>
+      <p>${et(lang,'winner_body')}</p>
+      <p>${et(lang,'winner_code_label')}</p>
       <p style="font-size:26px; font-weight:bold; letter-spacing:4px; background:#f0f0f0; padding:14px 18px; border-radius:8px; display:inline-block;">${code}</p>
-      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; margin-top:10px;">Jetzt einlösen</a></p>
-      <p style="color:#d9694f; font-weight:bold; margin-top:16px;">⏰ Dieser Code ist nur 24 Stunden gültig!</p>
-      <p>Gib ihn einfach im Feld "Bild-Code einlösen" auf unserer Startseite ein.</p>
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; margin-top:10px;">${et(lang,'winner_button')}</a></p>
+      <p style="color:#d9694f; font-weight:bold; margin-top:16px;">${et(lang,'winner_warning')}</p>
+      <p>${et(lang,'winner_hint')}</p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
     </div>`;
-  return sendEmail(toEmail, '🎉 Du hast gewonnen! Dein Gratis-Bild-Code (24h gültig)', html);
+  return sendEmail(toEmail, et(lang,'winner_subject'), html);
 }
 
-function sendNewsletterEmail(toEmail, subject, messageText){
+function sendNewsletterEmail(toEmail, subject, messageText, lang){
+  lang = lang || 'de';
   const htmlMessage = messageText.split('\n').filter(l => l.trim()).map(l => `<p style="margin:0 0 12px;">${l}</p>`).join('');
   const html = `
     <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
       <h2>Lumora 📸</h2>
       ${htmlMessage}
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
     </div>`;
   return sendEmail(toEmail, subject, html);
 }
 
-function buildDailyEmailHtml(newImagesCount, note, siteUrl){
+function buildDailyEmailHtml(newImagesCount, note, siteUrl, lang){
+  lang = lang || 'de';
   const intro = newImagesCount > 0
-    ? `<p>🆕 Es gibt <b>${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'}</b> in der Galerie!</p>`
-    : `<p>Schau doch mal wieder bei Lumora vorbei — es lohnt sich immer ein Blick in die Galerie. 📸</p>`;
+    ? `<p>${(newImagesCount === 1 ? et(lang,'daily_new1') : et(lang,'daily_new')).replace('{count}', newImagesCount)}</p>`
+    : `<p>${et(lang,'daily_generic')}</p>`;
   const noteHtml = note ? `<p style="background:#f0f0f0; padding:12px 16px; border-radius:8px;">📢 ${note}</p>` : '';
   return `
     <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
       <h2>Lumora 📸</h2>
       ${intro}
       ${noteHtml}
-      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Zur Galerie</a></p>
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+      <p><a href="${siteUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">${et(lang,'daily_button')}</a></p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
     </div>`;
 }
 
@@ -177,14 +287,15 @@ async function runDailySend(siteUrl, force){
   const since = now - intervalMs;
   const newImagesCount = db.images.filter(img => new Date(img.createdAt).getTime() >= since).length;
   const note = db.dailyEmail.pendingNote || '';
-  const html = buildDailyEmailHtml(newImagesCount, note, siteUrl);
-  const subject = note
-    ? '📢 Neuigkeiten von Lumora'
-    : (newImagesCount > 0 ? `🆕 ${newImagesCount} neue${newImagesCount === 1 ? 's Bild' : ' Bilder'} bei Lumora!` : '📸 Dein Lumora-Update');
 
   let sentCount = 0;
   for(const sub of db.newsletterSubscribers){
-    const ok = await sendEmail(sub.email, subject, html);
+    const lang = sub.language || 'de';
+    const html = buildDailyEmailHtml(newImagesCount, note, siteUrl, lang);
+    const subject = note
+      ? et(lang, 'promo_subject_override') || '📢'
+      : (newImagesCount > 0 ? (newImagesCount === 1 ? et(lang,'daily_new1') : et(lang,'daily_new').replace('{count}', newImagesCount)) : et(lang,'daily_generic'));
+    const ok = await sendEmail(sub.email, note ? ('📢 ' + note.slice(0,60)) : subject, html);
     if(ok) sentCount++;
   }
   db.dailyEmail.lastSentAt = now;
@@ -193,25 +304,27 @@ async function runDailySend(siteUrl, force){
   return { sentCount, total: db.newsletterSubscribers.length, newImagesCount };
 }
 
-function sendRaffleLoserEmail(toEmail, rejoinUrl){
+function sendRaffleLoserEmail(toEmail, rejoinUrl, lang){
+  lang = lang || 'de';
   const html = `
     <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
-      <h2>Schade! 😔</h2>
-      <p>Dieses Mal hast du beim Lumora-Gewinnspiel leider nicht gewonnen.</p>
-      <p>Vielleicht klappt's beim nächsten Mal!</p>
-      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Nochmal mitmachen</a></p>
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+      <h2>${et(lang,'loser_title')}</h2>
+      <p>${et(lang,'loser_body')}</p>
+      <p>${et(lang,'loser_body2')}</p>
+      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">${et(lang,'loser_button')}</a></p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
     </div>`;
-  return sendEmail(toEmail, 'Diesmal leider nicht gewonnen — aber nächstes Mal! 🍀', html);
+  return sendEmail(toEmail, et(lang,'loser_subject'), html);
 }
 
-function buildRafflePromoHtml(rejoinUrl){
+function buildRafflePromoHtml(rejoinUrl, lang){
+  lang = lang || 'de';
   return `
     <div style="font-family:sans-serif; max-width:480px; margin:0 auto;">
-      <h2>🎁 Gewinnspiel bei Lumora!</h2>
-      <p>Trag dich jetzt ein und gewinne mit etwas Glück ein Gratis-Bild!</p>
-      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">Jetzt mitmachen</a></p>
-      <p style="margin-top:24px;">LG,<br>dein Lumora-Team</p>
+      <h2>${et(lang,'promo_title')}</h2>
+      <p>${et(lang,'promo_body')}</p>
+      <p><a href="${rejoinUrl}" style="background:#8f97ff; color:#141220; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block;">${et(lang,'promo_button')}</a></p>
+      <p style="margin-top:24px;">${et(lang,'signoff')}</p>
     </div>`;
 }
 
@@ -228,8 +341,9 @@ async function runRafflePromoSend(siteUrl, force){
   }
   let sentCount = 0;
   for(const sub of db.newsletterSubscribers){
-    const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(sub.email)}`;
-    const ok = await sendEmail(sub.email, '🎁 Mach mit beim Lumora-Gewinnspiel!', buildRafflePromoHtml(rejoinUrl));
+    const lang = sub.language || 'de';
+    const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(sub.email)}&lang=${lang}`;
+    const ok = await sendEmail(sub.email, et(lang,'promo_subject'), buildRafflePromoHtml(rejoinUrl, lang));
     if(ok) sentCount++;
   }
   db.raffleEmail.lastPromoSentAt = now;
@@ -341,7 +455,7 @@ function purgeExpiredGrace(){
 }
 
 function publicUser(u){
-  return { id: u.id, name: u.name, email: u.email, role: u.role, birthday: u.birthday, createdAt: u.createdAt, emailVerified: !!u.emailVerified };
+  return { id: u.id, name: u.name, email: u.email, role: u.role, birthday: u.birthday, createdAt: u.createdAt, emailVerified: !!u.emailVerified, language: u.language || 'de' };
 }
 
 function publicImage(img, user){
@@ -350,6 +464,7 @@ function publicImage(img, user){
   const isOwner = user && user.role === 'employee' && img.uploadedBy === user.id;
   const out = {
     id: img.id,
+    name: img.name || 'Unbenanntes Bild',
     url: '/uploads/' + img.filename,
     type: img.type,
     price: img.price,
@@ -519,6 +634,7 @@ const server = http.createServer(async (req, res) => {
     // ---- Gewinnspiel: Wiedereinstieg per Klick-Link aus der E-Mail ----
     if(pathname === '/api/raffle/rejoin' && method === 'GET'){
       const email = (parsed.searchParams.get('email') || '').trim().toLowerCase();
+      const lang = SUPPORTED_LANGUAGES.includes(parsed.searchParams.get('lang')) ? parsed.searchParams.get('lang') : 'de';
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       if(!isValidEmail(email)){
         return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>Ungültige E-Mail-Adresse.</h2></body></html>');
@@ -527,8 +643,9 @@ const server = http.createServer(async (req, res) => {
         return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>Das Gewinnspiel ist aktuell nicht aktiv.</h2></body></html>');
       }
       const already = db.raffleEntries.some(e => e.email === email);
-      if(!already){ db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString() }); saveDB(db); }
-      return res.end('<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>🎉 Du bist wieder dabei!</h2><p>Viel Glück beim nächsten Gewinnspiel.</p></body></html>');
+      if(!already){ db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString(), language: lang }); saveDB(db); }
+      const REJOIN_OK = { de:'🎉 Du bist wieder dabei!', en:'🎉 You\'re back in!', es:'🎉 ¡Ya estás de vuelta!', fr:'🎉 Tu es de nouveau inscrit !', it:'🎉 Sei di nuovo dentro!', pt:'🎉 Você está de volta!', nl:'🎉 Je doet weer mee!', pl:'🎉 Znów bierzesz udział!', tr:'🎉 Tekrar dahilsin!', ru:'🎉 Вы снова участвуете!', ar:'🎉 أنت مشارك مجددًا!', zh:'🎉 你已再次参加！', ja:'🎉 再参加しました！', ko:'🎉 다시 참여했습니다!', hi:'🎉 आप फिर से शामिल हैं!' };
+      return res.end(`<html><body style="font-family:sans-serif; background:#121119; color:#f1f0f7; padding:60px; text-align:center;"><h2>${REJOIN_OK[lang] || REJOIN_OK.de}</h2></body></html>`);
     }
 
     // API
@@ -558,6 +675,7 @@ async function handleApi(req, res, pathname, method, parsed){
     const birthday = (body.birthday || '').trim();
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
+    const language = SUPPORTED_LANGUAGES.includes(body.language) ? body.language : 'de';
     if(!name || !birthday || !email || !password) return sendJson(res, 400, { error: 'Bitte alle Felder ausfüllen.' });
     if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus. Bitte überprüfen.' });
     if(!isValidBirthday(birthday)) return sendJson(res, 400, { error: 'Dieses Geburtsdatum ist ungültig (z.B. Datum existiert nicht oder liegt in der Zukunft).' });
@@ -570,7 +688,7 @@ async function handleApi(req, res, pathname, method, parsed){
     const verifyToken = crypto.randomBytes(24).toString('hex');
     const newUser = {
       id: genId(), name, email, role: 'customer', salt, hash, birthday,
-      emailVerified: false, verifyToken,
+      emailVerified: false, verifyToken, language,
       createdAt: new Date().toISOString()
     };
     db.users.push(newUser);
@@ -578,7 +696,7 @@ async function handleApi(req, res, pathname, method, parsed){
 
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const verifyUrl = `${proto}://${req.headers.host}/api/verify-email?token=${verifyToken}`;
-    sendVerificationEmail(email, verifyUrl);
+    sendVerificationEmail(email, verifyUrl, language);
 
     const token = genId();
     sessions.set(token, newUser.id);
@@ -625,7 +743,7 @@ async function handleApi(req, res, pathname, method, parsed){
     saveDB(db);
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const verifyUrl = `${proto}://${req.headers.host}/api/verify-email?token=${verifyToken}`;
-    const sent = await sendVerificationEmail(user.email, verifyUrl);
+    const sent = await sendVerificationEmail(user.email, verifyUrl, user.language);
     if(!sent) return sendJson(res, 500, { error: 'E-Mail-Versand ist aktuell nicht eingerichtet oder fehlgeschlagen.' });
     return sendJson(res, 200, { ok: true });
   }
@@ -666,8 +784,12 @@ async function handleApi(req, res, pathname, method, parsed){
     const filename = genId() + '.' + ext;
     fs.writeFileSync(path.join(UPLOADS_DIR, filename), Buffer.from(base64, 'base64'));
 
+    const rawName = (body.name || '').trim();
+    const cleanName = rawName ? rawName.replace(/\.[^/.]+$/, '').slice(0, 80) : ('Bild ' + (db.images.length + 1));
+
     const img = {
       id: genId(), filename, mime, type: isVideo ? 'video' : 'image',
+      name: cleanName,
       price: 4.99, free: false,
       uploadedBy: user.id, uploadedByName: user.name,
       code: genCode(), graceCodes: [],
@@ -694,10 +816,15 @@ async function handleApi(req, res, pathname, method, parsed){
       return sendJson(res, 200, { ok: true });
     }
     if(method === 'PATCH'){
-      if(user.role !== 'admin') return sendJson(res, 403, { error: 'Nur Admin darf Preise ändern.' });
       const body = await readJsonBody(req);
-      if(typeof body.free === 'boolean') img.free = body.free;
-      if(typeof body.price === 'number' && body.price >= 0) img.price = body.price;
+      if(typeof body.name === 'string' && body.name.trim()){
+        img.name = body.name.trim().slice(0, 80); // Name darf Admin ODER der besitzende Mitarbeiter ändern
+      }
+      if(typeof body.free === 'boolean' || typeof body.price === 'number'){
+        if(user.role !== 'admin') return sendJson(res, 403, { error: 'Nur Admin darf Preise ändern.' });
+        if(typeof body.free === 'boolean') img.free = body.free;
+        if(typeof body.price === 'number' && body.price >= 0) img.price = body.price;
+      }
       saveDB(db);
       return sendJson(res, 200, { image: publicImage(img, user) });
     }
@@ -729,7 +856,7 @@ async function handleApi(req, res, pathname, method, parsed){
     saveDB(db);
 
     if(user && !db.purchases.some(p => p.userId === user.id && p.imageId === img.id)){
-      db.purchases.push({ userId: user.id, imageId: img.id, purchasedAt: new Date().toISOString() });
+      db.purchases.push({ userId: user.id, imageId: img.id, purchasedAt: new Date().toISOString(), pricePaid: 0, source: 'code' });
       saveDB(db);
     }
     return sendJson(res, 200, { url: '/uploads/' + img.filename, image: publicImage(img, user) });
@@ -750,10 +877,11 @@ async function handleApi(req, res, pathname, method, parsed){
     if(!db.raffleSettings.enabled) return sendJson(res, 403, { error: 'Das Gewinnspiel ist aktuell nicht aktiv.' });
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
+    const language = SUPPORTED_LANGUAGES.includes(body.language) ? body.language : 'de';
     if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus. Bitte überprüfen.' });
     const already = db.raffleEntries.some(e => e.email === email);
     if(!already){
-      db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString() });
+      db.raffleEntries.push({ id: genId(), email, enteredAt: new Date().toISOString(), language });
       saveDB(db);
     }
     return sendJson(res, 200, { ok: true, alreadyEntered: already });
@@ -782,12 +910,12 @@ async function handleApi(req, res, pathname, method, parsed){
 
     const proto = req.headers['x-forwarded-proto'] || 'http';
     const siteUrl = `${proto}://${req.headers.host}/`;
-    const emailSent = await sendRaffleWinnerEmail(winner.email, wonCode, siteUrl);
+    const emailSent = await sendRaffleWinnerEmail(winner.email, wonCode, siteUrl, winner.language);
 
     let loserEmailsSent = 0;
     for(const loser of losers){
-      const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(loser.email)}`;
-      const ok = await sendRaffleLoserEmail(loser.email, rejoinUrl);
+      const rejoinUrl = `${siteUrl}api/raffle/rejoin?email=${encodeURIComponent(loser.email)}&lang=${loser.language || 'de'}`;
+      const ok = await sendRaffleLoserEmail(loser.email, rejoinUrl, loser.language);
       if(ok) loserEmailsSent++;
     }
 
@@ -839,10 +967,11 @@ async function handleApi(req, res, pathname, method, parsed){
   if(pathname === '/api/newsletter/subscribe' && method === 'POST'){
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
+    const language = SUPPORTED_LANGUAGES.includes(body.language) ? body.language : 'de';
     if(!isValidEmail(email)) return sendJson(res, 400, { error: 'Diese E-Mail-Adresse sieht ungültig aus.' });
     const already = db.newsletterSubscribers.some(s => s.email === email);
     if(!already){
-      db.newsletterSubscribers.push({ id: genId(), email, subscribedAt: new Date().toISOString() });
+      db.newsletterSubscribers.push({ id: genId(), email, subscribedAt: new Date().toISOString(), language });
       saveDB(db);
     }
     return sendJson(res, 200, { ok: true, alreadySubscribed: already });
@@ -867,7 +996,7 @@ async function handleApi(req, res, pathname, method, parsed){
     if(db.newsletterSubscribers.length === 0) return sendJson(res, 400, { error: 'Es gibt noch keine Abonnenten.' });
     let sentCount = 0;
     for(const sub of db.newsletterSubscribers){
-      const ok = await sendNewsletterEmail(sub.email, subject, message);
+      const ok = await sendNewsletterEmail(sub.email, subject, message, sub.language);
       if(ok) sentCount++;
     }
     return sendJson(res, 200, { ok: true, sentCount, total: db.newsletterSubscribers.length });
@@ -951,6 +1080,42 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { users: db.users.filter(u => u.banned).map(publicUser) });
   }
 
+  // ---- Verkaufsstatistik (Admin: alles, Mitarbeiter: nur eigene hochgeladene Bilder) ----
+  if(pathname === '/api/sales' && method === 'GET'){
+    if(!user || (user.role !== 'admin' && user.role !== 'employee')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    let relevant = db.purchases.filter(p => (p.pricePaid || 0) > 0);
+    if(user.role === 'employee'){
+      const myImageIds = db.images.filter(img => img.uploadedBy === user.id).map(img => img.id);
+      relevant = relevant.filter(p => myImageIds.includes(p.imageId));
+    }
+    const rows = relevant.map(p => {
+      const img = db.images.find(i => i.id === p.imageId);
+      const buyer = db.users.find(u => u.id === p.userId);
+      return {
+        buyerName: buyer ? buyer.name : 'Unbekannt',
+        buyerEmail: buyer ? buyer.email : '',
+        imageName: img ? img.name : 'Gelöschtes Bild',
+        imageId: p.imageId,
+        uploadedByName: img ? img.uploadedByName : '',
+        pricePaid: p.pricePaid || 0,
+        purchasedAt: p.purchasedAt
+      };
+    }).sort((a, b) => new Date(b.purchasedAt) - new Date(a.purchasedAt));
+    const totalRevenue = Math.round(rows.reduce((s, r) => s + r.pricePaid, 0) * 100) / 100;
+    return sendJson(res, 200, { rows, totalRevenue, count: rows.length });
+  }
+
+  // ---- Sprache ändern ----
+  if(pathname === '/api/change-language' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const body = await readJsonBody(req);
+    const lang = (body.language || '').trim();
+    if(!SUPPORTED_LANGUAGES.includes(lang)) return sendJson(res, 400, { error: 'Sprache nicht unterstützt.' });
+    user.language = lang;
+    saveDB(db);
+    return sendJson(res, 200, { ok: true, language: lang });
+  }
+
   // ---- Mitarbeiter ----
   if(pathname === '/api/employees' && method === 'GET'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
@@ -1011,7 +1176,7 @@ async function handleApi(req, res, pathname, method, parsed){
       // Gesamtbetrag ist 0 (z.B. komplett durch Aktionen abgedeckt) — direkt ohne Stripe abschließen
       if(!db.purchases) db.purchases = [];
       totals.itemIds.forEach(id => {
-        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)) db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString() });
+        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)) db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString(), pricePaid: 0, source: 'checkout-free' });
       });
       if(totals.usesFirstFree) db.firstFreeUsed[user.id] = true;
       saveDB(db);
@@ -1033,7 +1198,12 @@ async function handleApi(req, res, pathname, method, parsed){
           }
         }]
       });
-      db.pendingCheckouts[session.id] = { userId: user.id, itemIds: totals.itemIds, usesFirstFree: totals.usesFirstFree, createdAt: new Date().toISOString() };
+      db.pendingCheckouts[session.id] = {
+        userId: user.id, itemIds: totals.itemIds, usesFirstFree: totals.usesFirstFree,
+        itemPrices: totals.itemIds.map(id => { const im = db.images.find(x => x.id === id); return { id, price: im ? im.price : 0 }; }),
+        rawSubtotal: totals.rawSubtotal, actualTotal: totals.total,
+        createdAt: new Date().toISOString()
+      };
       saveDB(db);
       return sendJson(res, 200, { url: session.url });
     } catch(e){
@@ -1051,8 +1221,13 @@ async function handleApi(req, res, pathname, method, parsed){
       const session = await stripeGet(`/v1/checkout/sessions/${sessionId}`);
       if(session.payment_status !== 'paid') return sendJson(res, 400, { error: 'Die Zahlung ist noch nicht abgeschlossen.' });
       if(!db.purchases) db.purchases = [];
+      const ratio = (pending.rawSubtotal && pending.rawSubtotal > 0) ? (pending.actualTotal / pending.rawSubtotal) : 1;
       pending.itemIds.forEach(id => {
-        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)) db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString() });
+        if(!db.purchases.some(p => p.userId === user.id && p.imageId === id)){
+          const entry = pending.itemPrices && pending.itemPrices.find(x => x.id === id);
+          const pricePaid = entry ? Math.round(entry.price * ratio * 100) / 100 : 0;
+          db.purchases.push({ userId: user.id, imageId: id, purchasedAt: new Date().toISOString(), pricePaid, source: 'stripe' });
+        }
       });
       if(pending.usesFirstFree) db.firstFreeUsed[user.id] = true;
       delete db.pendingCheckouts[sessionId];
