@@ -68,6 +68,10 @@ if(typeof db.dailyEmail.intervalHours !== 'number') db.dailyEmail.intervalHours 
 if(!db.raffleEmail) db.raffleEmail = { lastPromoSentAt: null, intervalHours: 3 };
 if(typeof db.raffleEmail.intervalHours !== 'number') db.raffleEmail.intervalHours = 3;
 if(!db.pendingCheckouts) db.pendingCheckouts = {};
+if(!Array.isArray(db.reviews)) db.reviews = []; // {id, userId, userName, imageId, rating, comment, createdAt}
+db.users.forEach(u => { if(!Array.isArray(u.favorites)) u.favorites = []; });
+db.images.forEach(img => { if(typeof img.views !== 'number') img.views = 0; if(!Array.isArray(img.tags)) img.tags = []; });
+if(!Array.isArray(db.flags)) db.flags = []; // {id, imageId, imageName, userId, userName, reason, createdAt}
 if(!db.employeePermissions) db.employeePermissions = { prices:false, promotions:false, team:false, ban:false, raffle:false, support:false, newsletter:false, update:false, deleteOthers:false, viewAllSales:false };
 function canEmployee(user, perm){
   return user && (user.role === 'admin' || (user.role === 'employee' && db.employeePermissions[perm]));
@@ -467,11 +471,22 @@ function publicUser(u){
   return { id: u.id, name: u.name, email: u.email, role: u.role, birthday: u.birthday, createdAt: u.createdAt, emailVerified: !!u.emailVerified, language: u.language || 'de' };
 }
 
+function computeBestsellerId(){
+  const counts = {};
+  db.purchases.forEach(p => { if((p.pricePaid||0) > 0) counts[p.imageId] = (counts[p.imageId]||0) + 1; });
+  let best = null, bestCount = 0;
+  Object.keys(counts).forEach(id => { if(counts[id] > bestCount){ bestCount = counts[id]; best = id; } });
+  return bestCount > 0 ? best : null;
+}
+
 function publicImage(img, user){
   const purchased = user ? db.purchases.some(p => p.userId === user.id && p.imageId === img.id) : false;
   const isAdmin = user && user.role === 'admin';
   const isOwner = user && user.role === 'employee' && img.uploadedBy === user.id;
   const isBroadEmployee = user && user.role === 'employee' && (db.employeePermissions.deleteOthers || db.employeePermissions.prices);
+  const imgReviews = db.reviews.filter(r => r.imageId === img.id);
+  const avgRating = imgReviews.length > 0 ? Math.round((imgReviews.reduce((s,r) => s + r.rating, 0) / imgReviews.length) * 10) / 10 : null;
+  const isNew = (Date.now() - new Date(img.createdAt).getTime()) < 3 * 24 * 60 * 60 * 1000;
   const out = {
     id: img.id,
     name: img.name || 'Unbenanntes Bild',
@@ -482,7 +497,14 @@ function publicImage(img, user){
     purchased,
     canDownload: img.free || purchased,
     uploadedByName: img.uploadedByName,
-    createdAt: img.createdAt
+    createdAt: img.createdAt,
+    isFavorite: user ? (user.favorites || []).includes(img.id) : false,
+    avgRating,
+    reviewCount: imgReviews.length,
+    views: img.views || 0,
+    tags: img.tags || [],
+    isNew,
+    isBestseller: computeBestsellerId() === img.id
   };
   if(isAdmin || isOwner || isBroadEmployee){
     out.code = img.code;
@@ -832,6 +854,9 @@ async function handleApi(req, res, pathname, method, parsed){
       if(typeof body.name === 'string' && body.name.trim()){
         img.name = body.name.trim().slice(0, 80); // Name darf Admin ODER der besitzende Mitarbeiter ändern
       }
+      if(Array.isArray(body.tags)){
+        img.tags = body.tags.map(t => String(t).trim().toLowerCase().slice(0, 20)).filter(Boolean).slice(0, 8);
+      }
       if(typeof body.free === 'boolean' || typeof body.price === 'number'){
         if(!canEmployee(user, 'prices')) return sendJson(res, 403, { error: 'Keine Berechtigung, Preise zu ändern.' });
         if(typeof body.free === 'boolean') img.free = body.free;
@@ -1061,6 +1086,96 @@ async function handleApi(req, res, pathname, method, parsed){
     const siteUrl = process.env.SITE_URL || `${proto}://${req.headers.host}/`;
     const result = await runRafflePromoSend(siteUrl, true);
     return sendJson(res, 200, result);
+  }
+
+  // ---- Ansichtszähler ----
+  const viewMatch = pathname.match(/^\/api\/images\/([a-f0-9]+)\/view$/);
+  if(viewMatch && method === 'POST'){
+    const img = db.images.find(i => i.id === viewMatch[1]);
+    if(!img) return sendJson(res, 404, { error: 'Nicht gefunden.' });
+    img.views = (img.views || 0) + 1;
+    saveDB(db);
+    return sendJson(res, 200, { views: img.views });
+  }
+
+  // ---- Bild melden ----
+  if(pathname === '/api/flags' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const body = await readJsonBody(req);
+    const img = db.images.find(i => i.id === body.imageId);
+    if(!img) return sendJson(res, 404, { error: 'Bild nicht gefunden.' });
+    const reason = (body.reason || '').trim().slice(0, 200) || 'Kein Grund angegeben';
+    db.flags.push({ id: genId(), imageId: img.id, imageName: img.name, userId: user.id, userName: user.name, reason, createdAt: new Date().toISOString() });
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+  if(pathname === '/api/flags' && method === 'GET'){
+    if(!canEmployee(user, 'support')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    return sendJson(res, 200, { flags: db.flags.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)) });
+  }
+  const flagMatch = pathname.match(/^\/api\/flags\/([a-f0-9]+)$/);
+  if(flagMatch && method === 'DELETE'){
+    if(!canEmployee(user, 'support')) return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    db.flags = db.flags.filter(f => f.id !== flagMatch[1]);
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ---- Favoriten ----
+  if(pathname === '/api/favorites/toggle' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const body = await readJsonBody(req);
+    const imageId = body.imageId;
+    if(!db.images.some(i => i.id === imageId)) return sendJson(res, 404, { error: 'Bild nicht gefunden.' });
+    if(!Array.isArray(user.favorites)) user.favorites = [];
+    const idx = user.favorites.indexOf(imageId);
+    if(idx === -1) user.favorites.push(imageId); else user.favorites.splice(idx, 1);
+    saveDB(db);
+    return sendJson(res, 200, { isFavorite: idx === -1 });
+  }
+  if(pathname === '/api/favorites' && method === 'GET'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const favImages = db.images.filter(img => (user.favorites || []).includes(img.id)).map(img => publicImage(img, user));
+    return sendJson(res, 200, { images: favImages });
+  }
+
+  // ---- Bewertungen ----
+  if(pathname === '/api/reviews' && method === 'POST'){
+    if(!user) return sendJson(res, 401, { error: 'Bitte anmelden.' });
+    const body = await readJsonBody(req);
+    const img = db.images.find(i => i.id === body.imageId);
+    if(!img) return sendJson(res, 404, { error: 'Bild nicht gefunden.' });
+    const purchased = img.free || db.purchases.some(p => p.userId === user.id && p.imageId === img.id);
+    if(!purchased) return sendJson(res, 403, { error: 'Du kannst nur Bilder bewerten, die du besitzt.' });
+    const rating = Math.max(1, Math.min(5, Math.round(Number(body.rating) || 0)));
+    if(!rating) return sendJson(res, 400, { error: 'Bitte eine Bewertung von 1-5 Sternen angeben.' });
+    const comment = (body.comment || '').trim().slice(0, 300);
+    const existing = db.reviews.find(r => r.userId === user.id && r.imageId === img.id);
+    if(existing){ existing.rating = rating; existing.comment = comment; existing.createdAt = new Date().toISOString(); }
+    else { db.reviews.push({ id: genId(), userId: user.id, userName: user.name, imageId: img.id, rating, comment, createdAt: new Date().toISOString() }); }
+    saveDB(db);
+    return sendJson(res, 200, { ok: true });
+  }
+  const reviewMatch = pathname.match(/^\/api\/reviews\/([a-f0-9]+)$/);
+  if(reviewMatch && method === 'GET'){
+    const list = db.reviews.filter(r => r.imageId === reviewMatch[1]).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return sendJson(res, 200, { reviews: list.map(r => ({ userName: r.userName, rating: r.rating, comment: r.comment, createdAt: r.createdAt })) });
+  }
+
+  // ---- Admin-Übersicht (Dashboard) ----
+  if(pathname === '/api/dashboard-stats' && method === 'GET'){
+    if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
+    const totalRevenue = Math.round(db.purchases.reduce((s,p) => s + (p.pricePaid || 0), 0) * 100) / 100;
+    return sendJson(res, 200, {
+      totalImages: db.images.length,
+      totalCustomers: db.users.filter(u => u.role === 'customer').length,
+      totalEmployees: db.users.filter(u => u.role === 'employee').length,
+      totalRevenue,
+      totalPurchases: db.purchases.filter(p => (p.pricePaid||0) > 0).length,
+      raffleParticipants: db.raffleEntries.length,
+      newsletterSubscribers: db.newsletterSubscribers.length,
+      bannedAccounts: db.users.filter(u => u.banned).length
+    });
   }
 
   // ---- Konten sperren/entsperren ----
