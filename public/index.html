@@ -15,6 +15,13 @@
     --green: #7fc29a; --green-soft: rgba(127,194,154,0.14);
     --radius: 12px; --radius-sm: 7px;
   }
+  html[data-theme="light"]{
+    --bg: #f6f5fa; --panel: #ffffff; --panel-2: #eeecf5;
+    --amber: #6a6fd8; --amber-soft: rgba(106,111,216,0.10); --amber-dim: #b6b8ea; --accent2: #9855c9;
+    --ink: #1c1a25; --muted: #6b6779; --line: #e2e0eb;
+    --danger: #c74a3a; --danger-soft: rgba(199,74,58,0.10);
+    --green: #3d8a63; --green-soft: rgba(61,138,99,0.10);
+  }
   *{ box-sizing: border-box; }
   html{ scroll-behavior: smooth; }
   body{
@@ -102,6 +109,27 @@
   .frame{ background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; position:relative; transition: transform .18s ease, box-shadow .18s ease; }
   .frame:hover{ transform: translateY(-4px); box-shadow: 0 16px 34px rgba(143,151,255,0.16), 0 6px 14px rgba(0,0,0,0.35); }
   .frame .imgwrap{ position:relative; cursor:pointer; overflow:hidden; }
+  .gallery-toolbar{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
+  .gallery-toolbar input{ flex:1; min-width:180px; background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:11px 14px; border-radius: var(--radius-sm); font-family:'Inter',sans-serif; font-size:13.5px; }
+  .gallery-toolbar select{ background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:11px 14px; border-radius: var(--radius-sm); font-family:'Space Mono',monospace; font-size:12.5px; }
+  .gallery-toolbar input:focus, .gallery-toolbar select:focus{ outline:none; border-color:var(--amber); }
+  .fav-heart{ position:absolute; bottom:10px; right:10px; width:28px; height:28px; border-radius:50%; background:rgba(20,18,15,0.6); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; z-index:5; transition: transform .15s ease; }
+  .fav-heart:hover{ transform: scale(1.15); }
+  .tag-chips{ display:flex; gap:8px; flex-wrap:wrap; margin:-10px 0 20px; }
+  .tag-chip{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); border:1px solid var(--line); padding:5px 12px; border-radius:999px; cursor:pointer; transition:all .15s ease; }
+  .tag-chip:hover{ color:var(--ink); }
+  .tag-chip.active{ background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; border-color:transparent; font-weight:700; }
+  .badge-row{ position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:5px; z-index:4; }
+  .badge-pill{ font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 9px; border-radius:999px; backdrop-filter:blur(3px); }
+  .badge-pill.bestseller{ background:rgba(217,105,79,0.85); color:#fff; }
+  .badge-pill.new{ background:rgba(143,151,255,0.85); color:#141220; }
+  .lightbox-reviews{ margin-top:16px; width:100%; max-height:220px; overflow-y:auto; background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:16px 20px; }
+  .star-picker{ display:flex; gap:4px; margin:8px 0 10px; }
+  .star-picker span{ font-size:22px; cursor:pointer; color:var(--line); transition: color .1s ease; }
+  .star-picker span.active{ color:var(--amber); }
+  .review-item{ padding:10px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .review-item:last-child{ border-bottom:none; }
+  .review-item .stars{ color:var(--amber); font-size:12px; letter-spacing:1px; }
   .frame img, .frame video{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#000; }
   .protect{ position:absolute; inset:0; z-index:2; }
   .watermark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
@@ -232,6 +260,7 @@
     <button data-view="admin" id="navAdminTab" class="hidden" onclick="switchView('admin')">Verwaltung</button>
   </nav>
   <div class="header-actions">
+    <button id="themeToggleBtn" onclick="toggleTheme()" title="Hell/Dunkel umschalten" style="background:var(--panel); border:1px solid var(--line); color:var(--ink); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:15px;">🌙</button>
     <select id="langSelect" onchange="setLanguage(this.value)" class="lang-select">
       <option value="de">🇩🇪 Deutsch</option>
       <option value="en">🇬🇧 English</option>
@@ -263,7 +292,7 @@
       <div class="hero-glow g1"></div>
       <div class="hero-glow g2"></div>
       <span class="hero-badge" data-i18n="hero_badge">✦ Läuft auf einem echten Server</span>
-      <h2 data-i18n-html="hero_title">Fotografie, die etwas <span class="accent-word">hermacht</span>.</h2>
+      <h2 data-i18n-html="hero_title_html">Fotografie, die etwas <span class="accent-word">hermacht</span>.</h2>
       <p data-i18n="hero_sub">Kuratierte Bilder und Videos zum Kauf oder kostenlosen Download — für alle Besucher gemeinsam sichtbar.</p>
       <div class="cta-row">
         <button class="btn solid" onclick="document.getElementById('shopGrid').scrollIntoView({behavior:'smooth'})" data-i18n="hero_cta1">Galerie durchsuchen</button>
@@ -271,6 +300,16 @@
       </div>
       <p class="hero-note" data-i18n="hero_note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
     </div>
+    <div class="gallery-toolbar">
+      <input type="text" id="gallerySearchInput" placeholder="🔍 Bilder suchen..." oninput="onGallerySearchChange(this.value)">
+      <select id="gallerySortSelect" onchange="onGallerySortChange(this.value)">
+        <option value="newest">Neueste zuerst</option>
+        <option value="price_asc">Preis aufsteigend</option>
+        <option value="price_desc">Preis absteigend</option>
+        <option value="name">Nach Name</option>
+      </select>
+    </div>
+    <div class="tag-chips" id="tagChips"></div>
     <div class="grid" id="shopGrid"></div>
     <div class="empty" id="shopEmpty" style="display:none;" data-i18n="shop_empty">Noch keine Bilder vorhanden.</div>
 
@@ -386,6 +425,16 @@
         <div class="grid" id="purchasesGrid"></div>
         <div class="empty" id="purchasesEmpty" style="display:none;" data-i18n="no_purchases">Noch keine Bilder gekauft.</div>
       </div>
+      <div id="favoritesSection" style="margin-top:36px;">
+        <p class="eyebrow">❤️ Meine Favoriten</p>
+        <div class="grid" id="favoritesGrid"></div>
+        <div class="empty" id="favoritesEmpty" style="display:none;">Noch keine Favoriten — klick auf das Herz bei einem Bild in der Galerie.</div>
+      </div>
+      <div id="recentSection" style="margin-top:36px;">
+        <p class="eyebrow">🕓 Zuletzt angesehen</p>
+        <div class="grid" id="recentGrid"></div>
+        <div class="empty" id="recentEmpty" style="display:none;">Noch nichts angesehen.</div>
+      </div>
     </div>
   </section>
 
@@ -409,6 +458,8 @@
     <div class="admin-tabs">
       <button class="active" data-atab="content" onclick="switchAdminTab('content')">🖼️ Bilder</button>
       <button data-atab="sales" onclick="switchAdminTab('sales')">📊 Verkäufe</button>
+      <button id="atab-dashboard" data-atab="dashboard" onclick="switchAdminTab('dashboard')">📈 Übersicht</button>
+      <button id="atab-flags" data-atab="flags" onclick="switchAdminTab('flags')">🚩 Meldungen</button>
       <button id="atab-promo" data-atab="promo" onclick="switchAdminTab('promo')">💸 Aktionen</button>
       <button id="atab-team" data-atab="team" onclick="switchAdminTab('team')">👥 Team</button>
       <button id="atab-ban" data-atab="ban" onclick="switchAdminTab('ban')">🚫 Sperren</button>
@@ -433,6 +484,7 @@
           <div class="stat-tile"><div class="num" id="salesCount">0</div><div class="label">Verkäufe</div></div>
           <div class="stat-tile"><div class="num" id="salesRevenue">0,00 €</div><div class="label">Umsatz gesamt</div></div>
         </div>
+        <button class="btn muted" style="margin-bottom:16px;" onclick="exportSalesCsv()">📥 Als CSV exportieren</button>
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:13px;">
             <thead>
@@ -448,6 +500,21 @@
           </table>
           <div class="empty" id="salesEmpty" style="display:none; margin-top:14px;">Noch keine Verkäufe.</div>
         </div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-dashboard">
+      <div class="panel-card" id="dashboardPanel" style="max-width:100%;">
+        <h3>📈 Übersicht</h3>
+        <div class="stat-row" id="dashboardStats" style="margin-top:16px; flex-wrap:wrap;"></div>
+      </div>
+    </div>
+
+    <div class="admin-subview" id="admintab-flags">
+      <div class="panel-card" id="flagsPanel" style="max-width:600px;">
+        <h3>🚩 Gemeldete Bilder</h3>
+        <p style="color:var(--muted); font-size:12px; margin:-8px 0 14px;">Kunden können problematische Bilder melden — hier siehst du alle Meldungen.</p>
+        <div class="team-list" id="flagsList"></div>
       </div>
     </div>
 
@@ -603,6 +670,7 @@
       <div id="lightboxAction"></div>
     </div>
     <div class="lightbox-counter" id="lightboxCounter"></div>
+    <div class="lightbox-reviews" id="lightboxReviews"></div>
   </div>
 </div>
 
@@ -635,7 +703,8 @@
       cart_add:"+ In den Warenkorb", cart_in_cart:"✓ Im Warenkorb", download_btn:"Herunterladen", free_tag:"GRATIS", remove_btn:"Entfernen",
       role_admin:"Admin", role_employee:"Mitarbeiter", role_customer:"Kunde",
       stat_purchased:"Gekaufte Bilder", stat_member_since:"Mitglied seit", greeting_hello:"Hallo, {name} 👋",
-      err_invalid_email:"Diese E-Mail-Adresse sieht ungültig aus.", redeem_success:"Code gültig! Dein Bild wird heruntergeladen.", raffle_already:"Du nimmst bereits teil — viel Glück!", raffle_success:"Danke! Du nimmst jetzt an der Verlosung teil.", newsletter_already:"Du bist schon angemeldet!", newsletter_success:"Danke für dein Abo!"
+      err_invalid_email:"Diese E-Mail-Adresse sieht ungültig aus.", redeem_success:"Code gültig! Dein Bild wird heruntergeladen.", raffle_already:"Du nimmst bereits teil — viel Glück!", raffle_success:"Danke! Du nimmst jetzt an der Verlosung teil.", newsletter_already:"Du bist schon angemeldet!", newsletter_success:"Danke für dein Abo!",
+      chat_fallback:"Das weiß ich leider nicht genau. Schreib uns gerne über <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Support</a> — wir melden uns!"
     },
     en: {
       nav_gallery:"Gallery", nav_cart:"Cart", nav_account:"My Account", nav_support:"Support",
@@ -663,7 +732,8 @@
       cart_add:"+ Add to cart", cart_in_cart:"✓ In cart", download_btn:"Download", free_tag:"FREE", remove_btn:"Remove",
       role_admin:"Admin", role_employee:"Staff", role_customer:"Customer",
       stat_purchased:"Purchased images", stat_member_since:"Member since", greeting_hello:"Hi, {name} 👋",
-      err_invalid_email:"This email address looks invalid.", redeem_success:"Code valid! Your image is downloading.", raffle_already:"You're already entered — good luck!", raffle_success:"Thanks! You're now entered in the giveaway.", newsletter_already:"You're already subscribed!", newsletter_success:"Thanks for subscribing!"
+      err_invalid_email:"This email address looks invalid.", redeem_success:"Code valid! Your image is downloading.", raffle_already:"You're already entered — good luck!", raffle_success:"Thanks! You're now entered in the giveaway.", newsletter_already:"You're already subscribed!", newsletter_success:"Thanks for subscribing!",
+      chat_fallback:"I'm not quite sure about that. Feel free to message us via <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Support</a> — we'll get back to you!"
     },
     fr: {
       nav_gallery:"Galerie", nav_cart:"Panier", nav_account:"Mon compte", nav_support:"Support",
@@ -691,7 +761,8 @@
       cart_add:"+ Ajouter au panier", cart_in_cart:"✓ Dans le panier", download_btn:"Télécharger", free_tag:"GRATUIT", remove_btn:"Retirer",
       role_admin:"Admin", role_employee:"Employé", role_customer:"Client",
       stat_purchased:"Images achetées", stat_member_since:"Membre depuis", greeting_hello:"Bonjour, {name} 👋",
-      err_invalid_email:"Cette adresse e-mail semble invalide.", redeem_success:"Code valide ! Ton image est en cours de téléchargement.", raffle_already:"Tu participes déjà — bonne chance !", raffle_success:"Merci ! Tu participes maintenant au tirage.", newsletter_already:"Tu es déjà abonné !", newsletter_success:"Merci pour ton abonnement !"
+      err_invalid_email:"Cette adresse e-mail semble invalide.", redeem_success:"Code valide ! Ton image est en cours de téléchargement.", raffle_already:"Tu participes déjà — bonne chance !", raffle_success:"Merci ! Tu participes maintenant au tirage.", newsletter_already:"Tu es déjà abonné !", newsletter_success:"Merci pour ton abonnement !",
+      chat_fallback:"Je ne suis pas sûr de la réponse. N'hésite pas à nous écrire via <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Support</a> — on te répondra !"
     },
     it: {
       nav_gallery:"Galleria", nav_cart:"Carrello", nav_account:"Il mio account", nav_support:"Assistenza",
@@ -719,7 +790,8 @@
       cart_add:"+ Aggiungi al carrello", cart_in_cart:"✓ Nel carrello", download_btn:"Scarica", free_tag:"GRATIS", remove_btn:"Rimuovi",
       role_admin:"Admin", role_employee:"Collaboratore", role_customer:"Cliente",
       stat_purchased:"Immagini acquistate", stat_member_since:"Membro da", greeting_hello:"Ciao, {name} 👋",
-      err_invalid_email:"Questo indirizzo email non sembra valido.", redeem_success:"Codice valido! La tua immagine si sta scaricando.", raffle_already:"Partecipi già — buona fortuna!", raffle_success:"Grazie! Ora partecipi all'estrazione.", newsletter_already:"Sei già iscritto!", newsletter_success:"Grazie per l'iscrizione!"
+      err_invalid_email:"Questo indirizzo email non sembra valido.", redeem_success:"Codice valido! La tua immagine si sta scaricando.", raffle_already:"Partecipi già — buona fortuna!", raffle_success:"Grazie! Ora partecipi all'estrazione.", newsletter_already:"Sei già iscritto!", newsletter_success:"Grazie per l'iscrizione!",
+      chat_fallback:"Non ne sono del tutto sicuro. Scrivici tramite <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Supporto</a> — ti risponderemo!"
     },
     sl: {
       nav_gallery:"Galerija", nav_cart:"Košarica", nav_account:"Moj račun", nav_support:"Podpora",
@@ -747,7 +819,8 @@
       cart_add:"+ V košarico", cart_in_cart:"✓ V košarici", download_btn:"Prenesi", free_tag:"BREZPLAČNO", remove_btn:"Odstrani",
       role_admin:"Skrbnik", role_employee:"Zaposleni", role_customer:"Stranka",
       stat_purchased:"Kupljene slike", stat_member_since:"Član od", greeting_hello:"Živjo, {name} 👋",
-      err_invalid_email:"Ta e-poštni naslov ni videti veljaven.", redeem_success:"Koda veljavna! Vaša slika se prenaša.", raffle_already:"Že sodelujete — srečno!", raffle_success:"Hvala! Zdaj sodelujete v žrebanju.", newsletter_already:"Že ste naročeni!", newsletter_success:"Hvala za naročnino!"
+      err_invalid_email:"Ta e-poštni naslov ni videti veljaven.", redeem_success:"Koda veljavna! Vaša slika se prenaša.", raffle_already:"Že sodelujete — srečno!", raffle_success:"Hvala! Zdaj sodelujete v žrebanju.", newsletter_already:"Že ste naročeni!", newsletter_success:"Hvala za naročnino!",
+      chat_fallback:"Tega žal ne vem natančno. Piši nam preko <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Podpora</a> — se ti oglasimo!"
     },
     es: {
       nav_gallery:"Galería", nav_cart:"Carrito", nav_account:"Mi cuenta", nav_support:"Soporte",
@@ -775,7 +848,8 @@
       cart_add:"+ Añadir al carrito", cart_in_cart:"✓ En el carrito", download_btn:"Descargar", free_tag:"GRATIS", remove_btn:"Quitar",
       role_admin:"Admin", role_employee:"Empleado", role_customer:"Cliente",
       stat_purchased:"Imágenes compradas", stat_member_since:"Miembro desde", greeting_hello:"Hola, {name} 👋",
-      err_invalid_email:"Esta dirección de correo no parece válida.", redeem_success:"¡Código válido! Tu imagen se está descargando.", raffle_already:"Ya estás participando — ¡buena suerte!", raffle_success:"¡Gracias! Ahora participas en el sorteo.", newsletter_already:"¡Ya estás suscrito!", newsletter_success:"¡Gracias por suscribirte!"
+      err_invalid_email:"Esta dirección de correo no parece válida.", redeem_success:"¡Código válido! Tu imagen se está descargando.", raffle_already:"Ya estás participando — ¡buena suerte!", raffle_success:"¡Gracias! Ahora participas en el sorteo.", newsletter_already:"¡Ya estás suscrito!", newsletter_success:"¡Gracias por suscribirte!",
+      chat_fallback:"No estoy muy seguro de eso. Escríbenos a través de <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Soporte</a> — ¡te responderemos!"
     },
     pt: {
       nav_gallery:"Galeria", nav_cart:"Carrinho", nav_account:"Minha conta", nav_support:"Suporte",
@@ -803,7 +877,8 @@
       cart_add:"+ Adicionar ao carrinho", cart_in_cart:"✓ No carrinho", download_btn:"Baixar", free_tag:"GRÁTIS", remove_btn:"Remover",
       role_admin:"Admin", role_employee:"Funcionário", role_customer:"Cliente",
       stat_purchased:"Imagens compradas", stat_member_since:"Membro desde", greeting_hello:"Olá, {name} 👋",
-      err_invalid_email:"Este endereço de e-mail parece inválido.", redeem_success:"Código válido! Sua imagem está sendo baixada.", raffle_already:"Você já está participando — boa sorte!", raffle_success:"Obrigado! Agora você participa do sorteio.", newsletter_already:"Você já está inscrito!", newsletter_success:"Obrigado por se inscrever!"
+      err_invalid_email:"Este endereço de e-mail parece inválido.", redeem_success:"Código válido! Sua imagem está sendo baixada.", raffle_already:"Você já está participando — boa sorte!", raffle_success:"Obrigado! Agora você participa do sorteio.", newsletter_already:"Você já está inscrito!", newsletter_success:"Obrigado por se inscrever!",
+      chat_fallback:"Não tenho certeza sobre isso. Escreva para nós via <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Suporte</a> — responderemos!"
     },
     nl: {
       nav_gallery:"Galerij", nav_cart:"Winkelwagen", nav_account:"Mijn account", nav_support:"Support",
@@ -831,7 +906,8 @@
       cart_add:"+ In winkelwagen", cart_in_cart:"✓ In winkelwagen", download_btn:"Downloaden", free_tag:"GRATIS", remove_btn:"Verwijderen",
       role_admin:"Beheerder", role_employee:"Medewerker", role_customer:"Klant",
       stat_purchased:"Gekochte afbeeldingen", stat_member_since:"Lid sinds", greeting_hello:"Hoi, {name} 👋",
-      err_invalid_email:"Dit e-mailadres lijkt ongeldig.", redeem_success:"Code geldig! Je afbeelding wordt gedownload.", raffle_already:"Je doet al mee — veel succes!", raffle_success:"Bedankt! Je doet nu mee aan de actie.", newsletter_already:"Je bent al aangemeld!", newsletter_success:"Bedankt voor je aanmelding!"
+      err_invalid_email:"Dit e-mailadres lijkt ongeldig.", redeem_success:"Code geldig! Je afbeelding wordt gedownload.", raffle_already:"Je doet al mee — veel succes!", raffle_success:"Bedankt! Je doet nu mee aan de actie.", newsletter_already:"Je bent al aangemeld!", newsletter_success:"Bedankt voor je aanmelding!",
+      chat_fallback:"Dat weet ik niet precies. Stuur ons gerust een bericht via <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Support</a> — we reageren snel!"
     },
     pl: {
       nav_gallery:"Galeria", nav_cart:"Koszyk", nav_account:"Moje konto", nav_support:"Wsparcie",
@@ -859,7 +935,8 @@
       cart_add:"+ Do koszyka", cart_in_cart:"✓ W koszyku", download_btn:"Pobierz", free_tag:"DARMOWE", remove_btn:"Usuń",
       role_admin:"Admin", role_employee:"Pracownik", role_customer:"Klient",
       stat_purchased:"Kupione zdjęcia", stat_member_since:"Członek od", greeting_hello:"Cześć, {name} 👋",
-      err_invalid_email:"Ten adres e-mail wygląda na nieprawidłowy.", redeem_success:"Kod prawidłowy! Twoje zdjęcie jest pobierane.", raffle_already:"Już bierzesz udział — powodzenia!", raffle_success:"Dzięki! Teraz bierzesz udział w losowaniu.", newsletter_already:"Jesteś już zapisany!", newsletter_success:"Dzięki za zapisanie się!"
+      err_invalid_email:"Ten adres e-mail wygląda na nieprawidłowy.", redeem_success:"Kod prawidłowy! Twoje zdjęcie jest pobierane.", raffle_already:"Już bierzesz udział — powodzenia!", raffle_success:"Dzięki! Teraz bierzesz udział w losowaniu.", newsletter_already:"Jesteś już zapisany!", newsletter_success:"Dzięki za zapisanie się!",
+      chat_fallback:"Nie jestem tego pewien. Napisz do nas przez <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Wsparcie</a> — odpowiemy!"
     },
     tr: {
       nav_gallery:"Galeri", nav_cart:"Sepet", nav_account:"Hesabım", nav_support:"Destek",
@@ -887,7 +964,8 @@
       cart_add:"+ Sepete ekle", cart_in_cart:"✓ Sepette", download_btn:"İndir", free_tag:"ÜCRETSİZ", remove_btn:"Kaldır",
       role_admin:"Yönetici", role_employee:"Çalışan", role_customer:"Müşteri",
       stat_purchased:"Satın alınan resimler", stat_member_since:"Üyelik tarihi", greeting_hello:"Merhaba, {name} 👋",
-      err_invalid_email:"Bu e-posta adresi geçersiz görünüyor.", redeem_success:"Kod geçerli! Resmin indiriliyor.", raffle_already:"Zaten katılıyorsun — bol şans!", raffle_success:"Teşekkürler! Artık çekilişe katılıyorsun.", newsletter_already:"Zaten abonesin!", newsletter_success:"Abone olduğun için teşekkürler!"
+      err_invalid_email:"Bu e-posta adresi geçersiz görünüyor.", redeem_success:"Kod geçerli! Resmin indiriliyor.", raffle_already:"Zaten katılıyorsun — bol şans!", raffle_success:"Teşekkürler! Artık çekilişe katılıyorsun.", newsletter_already:"Zaten abonesin!", newsletter_success:"Abone olduğun için teşekkürler!",
+      chat_fallback:"Bundan tam olarak emin değilim. <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Destek</a> üzerinden bize yazabilirsin — sana döneriz!"
     },
     ru: {
       nav_gallery:"Галерея", nav_cart:"Корзина", nav_account:"Мой аккаунт", nav_support:"Поддержка",
@@ -915,7 +993,8 @@
       cart_add:"+ В корзину", cart_in_cart:"✓ В корзине", download_btn:"Скачать", free_tag:"БЕСПЛАТНО", remove_btn:"Удалить",
       role_admin:"Админ", role_employee:"Сотрудник", role_customer:"Клиент",
       stat_purchased:"Купленные фото", stat_member_since:"Участник с", greeting_hello:"Привет, {name} 👋",
-      err_invalid_email:"Этот email выглядит недействительным.", redeem_success:"Код действителен! Ваше фото загружается.", raffle_already:"Вы уже участвуете — удачи!", raffle_success:"Спасибо! Теперь вы участвуете в розыгрыше.", newsletter_already:"Вы уже подписаны!", newsletter_success:"Спасибо за подписку!"
+      err_invalid_email:"Этот email выглядит недействительным.", redeem_success:"Код действителен! Ваше фото загружается.", raffle_already:"Вы уже участвуете — удачи!", raffle_success:"Спасибо! Теперь вы участвуете в розыгрыше.", newsletter_already:"Вы уже подписаны!", newsletter_success:"Спасибо за подписку!",
+      chat_fallback:"Точно не знаю. Напишите нам через <a onclick='toggleChat(); switchView(&quot;support&quot;);'>Поддержка</a> — мы ответим!"
     },
     ar: {
       nav_gallery:"المعرض", nav_cart:"السلة", nav_account:"حسابي", nav_support:"الدعم",
@@ -943,7 +1022,8 @@
       cart_add:"+ أضف إلى السلة", cart_in_cart:"✓ في السلة", download_btn:"تنزيل", free_tag:"مجاني", remove_btn:"إزالة",
       role_admin:"مدير", role_employee:"موظف", role_customer:"عميل",
       stat_purchased:"الصور المشتراة", stat_member_since:"عضو منذ", greeting_hello:"مرحبًا، {name} 👋",
-      err_invalid_email:"يبدو أن هذا البريد الإلكتروني غير صالح.", redeem_success:"الرمز صالح! جارٍ تنزيل صورتك.", raffle_already:"أنت مشارك بالفعل — بالتوفيق!", raffle_success:"شكرًا! أنت الآن مشارك في السحب.", newsletter_already:"أنت مشترك بالفعل!", newsletter_success:"شكرًا لاشتراكك!"
+      err_invalid_email:"يبدو أن هذا البريد الإلكتروني غير صالح.", redeem_success:"الرمز صالح! جارٍ تنزيل صورتك.", raffle_already:"أنت مشارك بالفعل — بالتوفيق!", raffle_success:"شكرًا! أنت الآن مشارك في السحب.", newsletter_already:"أنت مشترك بالفعل!", newsletter_success:"شكرًا لاشتراكك!",
+      chat_fallback:"لست متأكدًا تمامًا من ذلك. راسلنا عبر <a onclick='toggleChat(); switchView(&quot;support&quot;);'>الدعم</a> — سنرد عليك!"
     },
     zh: {
       nav_gallery:"图库", nav_cart:"购物车", nav_account:"我的账户", nav_support:"支持",
@@ -971,7 +1051,8 @@
       cart_add:"+ 加入购物车", cart_in_cart:"✓ 已在购物车", download_btn:"下载", free_tag:"免费", remove_btn:"移除",
       role_admin:"管理员", role_employee:"员工", role_customer:"顾客",
       stat_purchased:"已购买图片", stat_member_since:"注册于", greeting_hello:"你好，{name} 👋",
-      err_invalid_email:"此邮箱地址似乎无效。", redeem_success:"代码有效！您的图片正在下载。", raffle_already:"您已经参加了——祝好运！", raffle_success:"谢谢！您现在已参加抽奖。", newsletter_already:"您已经订阅了！", newsletter_success:"感谢订阅！"
+      err_invalid_email:"此邮箱地址似乎无效。", redeem_success:"代码有效！您的图片正在下载。", raffle_already:"您已经参加了——祝好运！", raffle_success:"谢谢！您现在已参加抽奖。", newsletter_already:"您已经订阅了！", newsletter_success:"感谢订阅！",
+      chat_fallback:"这个我不太确定。欢迎通过<a onclick='toggleChat(); switchView(&quot;support&quot;);'>支持</a>给我们留言——我们会回复你！"
     },
     ja: {
       nav_gallery:"ギャラリー", nav_cart:"カート", nav_account:"マイアカウント", nav_support:"サポート",
@@ -999,7 +1080,8 @@
       cart_add:"+ カートに追加", cart_in_cart:"✓ カートに追加済み", download_btn:"ダウンロード", free_tag:"無料", remove_btn:"削除",
       role_admin:"管理者", role_employee:"スタッフ", role_customer:"顧客",
       stat_purchased:"購入した画像", stat_member_since:"登録日", greeting_hello:"こんにちは、{name} 👋",
-      err_invalid_email:"このメールアドレスは無効のようです。", redeem_success:"コードが有効です！画像をダウンロード中です。", raffle_already:"すでに参加しています——頑張ってください！", raffle_success:"ありがとうございます！抽選に参加しました。", newsletter_already:"すでに登録済みです！", newsletter_success:"ご登録ありがとうございます！"
+      err_invalid_email:"このメールアドレスは無効のようです。", redeem_success:"コードが有効です！画像をダウンロード中です。", raffle_already:"すでに参加しています——頑張ってください！", raffle_success:"ありがとうございます！抽選に参加しました。", newsletter_already:"すでに登録済みです！", newsletter_success:"ご登録ありがとうございます！",
+      chat_fallback:"それについてはよく分かりません。<a onclick='toggleChat(); switchView(&quot;support&quot;);'>サポート</a>からメッセージをお送りください——ご返信します！"
     },
     ko: {
       nav_gallery:"갤러리", nav_cart:"장바구니", nav_account:"내 계정", nav_support:"지원",
@@ -1027,7 +1109,8 @@
       cart_add:"+ 장바구니에 추가", cart_in_cart:"✓ 장바구니에 있음", download_btn:"다운로드", free_tag:"무료", remove_btn:"제거",
       role_admin:"관리자", role_employee:"직원", role_customer:"고객",
       stat_purchased:"구매한 이미지", stat_member_since:"가입일", greeting_hello:"안녕하세요, {name} 👋",
-      err_invalid_email:"이 이메일 주소는 유효하지 않은 것 같습니다.", redeem_success:"코드가 유효합니다! 이미지를 다운로드 중입니다.", raffle_already:"이미 참여 중입니다 — 행운을 빕니다!", raffle_success:"감사합니다! 이제 경품 이벤트에 참여합니다.", newsletter_already:"이미 구독 중입니다!", newsletter_success:"구독해 주셔서 감사합니다!"
+      err_invalid_email:"이 이메일 주소는 유효하지 않은 것 같습니다.", redeem_success:"코드가 유효합니다! 이미지를 다운로드 중입니다.", raffle_already:"이미 참여 중입니다 — 행운을 빕니다!", raffle_success:"감사합니다! 이제 경품 이벤트에 참여합니다.", newsletter_already:"이미 구독 중입니다!", newsletter_success:"구독해 주셔서 감사합니다!",
+      chat_fallback:"그건 잘 모르겠어요. <a onclick='toggleChat(); switchView(&quot;support&quot;);'>지원</a>를 통해 메시지를 보내주세요 — 답변드리겠습니다!"
     },
     hi: {
       nav_gallery:"गैलरी", nav_cart:"कार्ट", nav_account:"मेरा खाता", nav_support:"सहायता",
@@ -1055,7 +1138,8 @@
       cart_add:"+ कार्ट में जोड़ें", cart_in_cart:"✓ कार्ट में है", download_btn:"डाउनलोड करें", free_tag:"मुफ़्त", remove_btn:"हटाएं",
       role_admin:"एडमिन", role_employee:"कर्मचारी", role_customer:"ग्राहक",
       stat_purchased:"खरीदी गई तस्वीरें", stat_member_since:"सदस्य बने", greeting_hello:"नमस्ते, {name} 👋",
-      err_invalid_email:"यह ईमेल पता अमान्य लगता है।", redeem_success:"कोड मान्य है! आपकी तस्वीर डाउनलोड हो रही है।", raffle_already:"आप पहले से भाग ले रहे हैं — शुभकामनाएं!", raffle_success:"धन्यवाद! अब आप गिवअवे में भाग ले रहे हैं।", newsletter_already:"आप पहले से सदस्यता ले चुके हैं!", newsletter_success:"सदस्यता लेने के लिए धन्यवाद!"
+      err_invalid_email:"यह ईमेल पता अमान्य लगता है।", redeem_success:"कोड मान्य है! आपकी तस्वीर डाउनलोड हो रही है।", raffle_already:"आप पहले से भाग ले रहे हैं — शुभकामनाएं!", raffle_success:"धन्यवाद! अब आप गिवअवे में भाग ले रहे हैं।", newsletter_already:"आप पहले से सदस्यता ले चुके हैं!", newsletter_success:"सदस्यता लेने के लिए धन्यवाद!",
+      chat_fallback:"इसके बारे में मुझे पूरा यकीन नहीं है। <a onclick='toggleChat(); switchView(&quot;support&quot;);'>सहायता</a> के जरिए हमें संदेश भेजें — हम जवाब देंगे!"
     }
   };
 
@@ -1080,6 +1164,18 @@
     if(document.getElementById('view-cart') && document.getElementById('view-cart').classList.contains('active')) renderCartView();
     if(document.getElementById('view-account') && document.getElementById('view-account').classList.contains('active')) renderAccountView();
   }
+  function toggleTheme(){
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next === 'light' ? 'light' : '');
+    document.getElementById('themeToggleBtn').textContent = next === 'light' ? '☀️' : '🌙';
+    localStorage.setItem('lumora_theme', next);
+  }
+  function applyStoredTheme(){
+    const stored = localStorage.getItem('lumora_theme') || 'dark';
+    if(stored === 'light'){ document.documentElement.setAttribute('data-theme', 'light'); document.getElementById('themeToggleBtn').textContent = '☀️'; }
+  }
+
   function setLanguage(lang){
     applyLanguage(lang);
     if(currentUserData){
@@ -1135,11 +1231,15 @@
     document.getElementById('admintab-' + name).classList.add('active');
     document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.toggle('active', b.dataset.atab === name));
     if(name === 'sales') loadSalesData();
+    if(name === 'dashboard') loadDashboardStats();
+    if(name === 'flags') loadFlagsList();
   }
 
+  let lastSalesRows = [];
   async function loadSalesData(){
     try {
       const r = await api('/api/sales');
+      lastSalesRows = r.rows;
       document.getElementById('salesCount').textContent = r.count;
       document.getElementById('salesRevenue').textContent = fmt(r.totalRevenue);
       document.getElementById('salesTitle').textContent = role() === 'admin' ? '📊 Alle Verkäufe' : '📊 Meine Verkäufe';
@@ -1163,6 +1263,19 @@
     }
   }
 
+  function exportSalesCsv(){
+    if(lastSalesRows.length === 0){ alert('Keine Verkäufe zum Exportieren.'); return; }
+    const header = ['Käufer','E-Mail','Bild','Hochgeladen von','Preis','Datum'];
+    const rows = lastSalesRows.map(r => [r.buyerName, r.buyerEmail, r.imageName, r.uploadedByName, r.pricePaid.toFixed(2), new Date(r.purchasedAt).toLocaleDateString('de-DE')]);
+    const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'lumora-verkaeufe.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // ---------- Laden ----------
   async function loadMe(){
     const r = await api('/api/me');
@@ -1179,14 +1292,84 @@
     populateRaffleImageSelect();
   }
 
+  let gallerySearch = '';
+  let gallerySort = 'newest';
+  let galleryTagFilter = null;
+
+  function getAllTags(){
+    const set = new Set();
+    images.forEach(img => (img.tags||[]).forEach(t => set.add(t)));
+    return [...set];
+  }
+
+  function getFilteredSortedImages(){
+    let list = images.slice();
+    if(gallerySearch.trim()){
+      const q = gallerySearch.trim().toLowerCase();
+      list = list.filter(img => (img.name || '').toLowerCase().includes(q));
+    }
+    if(galleryTagFilter){
+      list = list.filter(img => (img.tags||[]).includes(galleryTagFilter));
+    }
+    if(gallerySort === 'price_asc') list.sort((a,b) => a.price - b.price);
+    else if(gallerySort === 'price_desc') list.sort((a,b) => b.price - a.price);
+    else if(gallerySort === 'name') list.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    else list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); // newest
+    return list;
+  }
+
+  function onGallerySearchChange(val){ gallerySearch = val; renderShopGrid(); }
+  function onGallerySortChange(val){ gallerySort = val; renderShopGrid(); }
+  function setTagFilter(tag){ galleryTagFilter = (galleryTagFilter === tag) ? null : tag; renderShopGrid(); }
+
+  function renderTagChips(){
+    const tags = getAllTags();
+    const el = document.getElementById('tagChips');
+    if(!el) return;
+    if(tags.length === 0){ el.innerHTML = ''; return; }
+    el.innerHTML = tags.map(tag => `<span class="tag-chip ${galleryTagFilter===tag?'active':''}" onclick="setTagFilter('${tag}')">#${tag}</span>`).join('');
+  }
+
+  async function toggleFavorite(id){
+    if(role() === 'guest'){ switchView('account'); return; }
+    try {
+      await api('/api/favorites/toggle', { method:'POST', body:{ imageId: id } });
+      await loadImages();
+    } catch(e){ alert(e.message); }
+  }
+
+  function starsHtml(avgRating, count){
+    if(avgRating === null || avgRating === undefined) return '';
+    const full = Math.round(avgRating);
+    let stars = '';
+    for(let i=1;i<=5;i++) stars += i<=full ? '★' : '☆';
+    return `<span style="color:var(--amber); font-size:11px; letter-spacing:1px;">${stars}</span> <span style="color:var(--muted); font-size:11px;">(${count})</span>`;
+  }
+
+  function trackRecentlyViewed(id){
+    try {
+      let list = JSON.parse(localStorage.getItem('lumora_recent') || '[]');
+      list = list.filter(x => x !== id);
+      list.unshift(id);
+      list = list.slice(0, 8);
+      localStorage.setItem('lumora_recent', JSON.stringify(list));
+    } catch(e){}
+  }
+
   function renderShopGrid(){
     const grid = document.getElementById('shopGrid');
-    document.getElementById('shopEmpty').style.display = images.length === 0 ? 'block' : 'none';
-    grid.innerHTML = images.map(img => {
+    const list = getFilteredSortedImages();
+    document.getElementById('shopEmpty').style.display = list.length === 0 ? 'block' : 'none';
+    renderTagChips();
+    grid.innerHTML = list.map(img => {
       const inCart = cart.has(img.id);
       const actionHtml = img.canDownload
         ? `<button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button>`
         : `<button class="cart-btn wide ${inCart?'in-cart':''}" onclick="event.stopPropagation(); toggleCart('${img.id}')">${inCart?t('cart_in_cart'):t('cart_add')}</button>`;
+      const badges = [
+        img.isBestseller ? '<span class="badge-pill bestseller">🔥 Bestseller</span>' : '',
+        (img.isNew && !img.isBestseller) ? '<span class="badge-pill new">✨ Neu</span>' : ''
+      ].join('');
       return `
         <div class="frame">
           <div class="imgwrap" onclick="openLightbox('${img.id}')">
@@ -1194,8 +1377,11 @@
             <div class="protect" oncontextmenu="return false"></div>
             ${img.canDownload ? '' : `<div class="watermark">${watermarkSpans()}</div>`}
             <div class="tag ${img.free?'free':'paid'}">${img.free?t('free_tag'):fmt(img.price)}</div>
+            ${badges ? `<div class="badge-row">${badges}</div>` : ''}
+            <div class="fav-heart ${img.isFavorite?'active':''}" onclick="event.stopPropagation(); toggleFavorite('${img.id}')">${img.isFavorite?'❤️':'🤍'}</div>
           </div>
           <div style="padding:10px 14px 0; font-size:12.5px; color:var(--muted); font-family:'Fraunces',serif;">${img.name || ''}</div>
+          ${img.avgRating !== null ? `<div style="padding:2px 14px 0;">${starsHtml(img.avgRating, img.reviewCount)}</div>` : ''}
           <div class="frame-foot">${actionHtml}</div>
         </div>`;
     }).join('');
@@ -1644,7 +1830,8 @@
     raffle: { perm:'raffle', panel:'rafflePanel', loaders:[loadRaffleList, loadRaffleSettings, loadRafflePromoStatus] },
     support: { perm:'support', panel:'supportPanel', loaders:[loadSupportMessages] },
     newsletter: { perm:'newsletter', panel:'newsletterPanel', loaders:[loadNewsletterList, loadDailyStatus] },
-    update: { perm:'update', panel:'updatePanel', loaders:[] }
+    update: { perm:'update', panel:'updatePanel', loaders:[] },
+    flags: { perm:'support', panel:'flagsPanel', loaders:[loadFlagsList] }
   };
 
   async function applyStaffTabVisibility(isAdmin){
@@ -1664,6 +1851,11 @@
     });
     const permTabEl = document.getElementById('atab-permissions');
     if(permTabEl) permTabEl.classList.toggle('hidden', !isAdmin);
+    const dashTabEl = document.getElementById('atab-dashboard');
+    if(dashTabEl) dashTabEl.classList.toggle('hidden', !isAdmin);
+    const dashPanelEl = document.getElementById('dashboardPanel');
+    if(dashPanelEl) dashPanelEl.classList.toggle('show', isAdmin);
+    if(isAdmin) loadDashboardStats();
   }
 
   let currentPermissions = {};
@@ -1679,6 +1871,44 @@
     deleteOthers: ['🗑️ Bilder anderer löschen', 'Nicht nur eigene, sondern alle Bilder löschen'],
     viewAllSales: ['📊 Alle Verkäufe sehen', 'Nicht nur eigene, sondern alle Verkäufe im Überblick']
   };
+
+  async function loadDashboardStats(){
+    try {
+      const r = await api('/api/dashboard-stats');
+      const el = document.getElementById('dashboardStats');
+      if(!el) return;
+      const tiles = [
+        [r.totalRevenue !== undefined ? fmt(r.totalRevenue) : '–', 'Umsatz gesamt'],
+        [r.totalPurchases, 'Verkäufe'],
+        [r.totalImages, 'Bilder'],
+        [r.totalCustomers, 'Kunden'],
+        [r.totalEmployees, 'Mitarbeiter'],
+        [r.raffleParticipants, 'Gewinnspiel-Teilnehmer'],
+        [r.newsletterSubscribers, 'Newsletter-Abonnenten'],
+        [r.bannedAccounts, 'Gesperrte Konten']
+      ];
+      el.innerHTML = tiles.map(([num,label]) => `<div class="stat-tile"><div class="num">${num}</div><div class="label">${label}</div></div>`).join('');
+    } catch(e){}
+  }
+
+  async function loadFlagsList(){
+    try {
+      const r = await api('/api/flags');
+      const list = document.getElementById('flagsList');
+      if(!list) return;
+      if(r.flags.length === 0){ list.innerHTML = '<div class="team-empty">Keine Meldungen — alles sauber!</div>'; return; }
+      list.innerHTML = r.flags.map(f => `
+        <div class="team-row" style="align-items:flex-start;">
+          <span><b>${f.imageName}</b><br><span style="color:var(--muted); font-size:11.5px;">von ${f.userName} · "${f.reason}"</span></span>
+          <button class="btn muted" style="padding:4px 10px; font-size:10.5px;" onclick="dismissFlag('${f.id}')">Erledigt</button>
+        </div>`).join('');
+    } catch(e){}
+  }
+
+  async function dismissFlag(id){
+    await api('/api/flags/' + id, { method:'DELETE' });
+    loadFlagsList();
+  }
 
   function loadPermissionsPanel(){
     api('/api/permissions').then(r => {
@@ -1884,16 +2114,60 @@
       const grid = document.getElementById('purchasesGrid'), empty = document.getElementById('purchasesEmpty');
       if(r.images.length === 0){ grid.innerHTML=''; empty.style.display='block'; }
       else { empty.style.display='none'; grid.innerHTML = r.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div class="frame-foot" style="flex-direction:column; align-items:stretch; gap:8px;"><div style="font-size:12.5px; font-weight:500;">${img.name||''}</div><button class="dl-btn wide" onclick="event.stopPropagation(); downloadImage('${img.id}')">${t('download_btn')}</button></div></div>`).join(''); }
+
+      document.getElementById('favoritesSection').style.display = 'block';
+      const favR = await api('/api/favorites');
+      const favGrid = document.getElementById('favoritesGrid'), favEmpty = document.getElementById('favoritesEmpty');
+      if(favR.images.length === 0){ favGrid.innerHTML=''; favEmpty.style.display='block'; }
+      else { favEmpty.style.display='none'; favGrid.innerHTML = favR.images.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}<div class="fav-heart active" onclick="event.stopPropagation(); toggleFavorite('${img.id}').then(()=>renderAccountView())">❤️</div></div><div style="padding:8px 14px; font-size:12.5px; font-family:'Fraunces',serif;">${img.name||''}</div></div>`).join(''); }
+
+      renderRecentlyViewed();
     } else {
       detailsEl.innerHTML = `<div class="detail">Zugang über "Verwaltung"</div>`;
       statRow.innerHTML = '';
       document.getElementById('purchasesSection').style.display = 'none';
+      document.getElementById('favoritesSection').style.display = 'none';
     }
   }
 
+  function renderRecentlyViewed(){
+    let ids = [];
+    try { ids = JSON.parse(localStorage.getItem('lumora_recent') || '[]'); } catch(e){}
+    const recentImgs = ids.map(id => images.find(img => img.id === id)).filter(Boolean);
+    const grid = document.getElementById('recentGrid'), empty = document.getElementById('recentEmpty');
+    if(recentImgs.length === 0){ grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    grid.innerHTML = recentImgs.map(img => `<div class="frame"><div class="imgwrap" onclick="openLightbox('${img.id}')">${mediaTagHtml(img)}</div><div style="padding:8px 14px; font-size:12.5px; font-family:'Fraunces',serif;">${img.name||''}</div></div>`).join('');
+  }
+
   // ---------- Lightbox ----------
-  function openLightbox(id){ lightboxId = id; document.getElementById('lightbox').classList.add('show'); renderLightboxInfo(); document.addEventListener('keydown', lbKey); }
-  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.removeEventListener('keydown', lbKey); }
+  function openLightbox(id){
+    lightboxId = id;
+    document.getElementById('lightbox').classList.add('show');
+    renderLightboxInfo();
+    document.addEventListener('keydown', lbKey);
+    trackRecentlyViewed(id);
+    api('/api/images/' + id + '/view', { method:'POST' }).catch(()=>{});
+    window.history.replaceState({}, '', '#img=' + id);
+  }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.removeEventListener('keydown', lbKey); window.history.replaceState({}, '', window.location.pathname + window.location.search); }
+
+  async function reportImage(id){
+    const reason = prompt('Was stimmt mit diesem Bild nicht? (kurze Beschreibung)');
+    if(reason === null) return;
+    try {
+      await api('/api/flags', { method:'POST', body:{ imageId: id, reason } });
+      alert('Danke, wir schauen uns das an!');
+    } catch(e){ alert(e.message); }
+  }
+
+  function copyShareLink(id){
+    const url = window.location.origin + window.location.pathname + '#img=' + id;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('shareLinkBtn');
+      if(btn){ const old = btn.textContent; btn.textContent = '✓ Kopiert!'; setTimeout(()=>{ btn.textContent = old; }, 1500); }
+    }).catch(()=>{});
+  }
   function lbKey(e){ if(e.key==='Escape') closeLightbox(); if(e.key==='ArrowRight') lightboxStep(1); if(e.key==='ArrowLeft') lightboxStep(-1); }
   function lightboxStep(dir){ const idx = images.findIndex(x=>x.id===lightboxId); if(idx===-1) return; lightboxId = images[(idx+dir+images.length)%images.length].id; renderLightboxInfo(); }
   function renderLightboxInfo(){
@@ -1909,10 +2183,62 @@
     priceEl.textContent = img.free ? 'Gratis' : img.purchased ? 'Gekauft' : fmt(img.price);
     priceEl.className = 'lb-price' + ((img.free||img.purchased)?' free':'');
     const inCart = cart.has(img.id);
-    document.getElementById('lightboxAction').innerHTML = img.canDownload
+    document.getElementById('lightboxAction').innerHTML = (img.canDownload
       ? `<button class="dl-btn" onclick="downloadImage('${img.id}')">${t('download_btn')}</button>`
-      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?t('cart_in_cart'):t('cart_add')}</button>`;
+      : `<button class="cart-btn ${inCart?'in-cart':''}" onclick="toggleCart('${img.id}')">${inCart?t('cart_in_cart'):t('cart_add')}</button>`)
+      + ` <button class="btn muted" id="shareLinkBtn" style="padding:8px 12px; font-size:12px;" onclick="copyShareLink('${img.id}')">🔗 Teilen</button>`
+      + (role() !== 'guest' ? ` <button class="btn muted" style="padding:8px 12px; font-size:12px;" onclick="reportImage('${img.id}')">🚩 Melden</button>` : '');
     document.getElementById('lightboxCounter').textContent = (idx+1)+' / '+images.length;
+    renderLightboxReviews(img);
+  }
+
+  let selectedStarRating = 0;
+  async function renderLightboxReviews(img){
+    const box = document.getElementById('lightboxReviews');
+    let formHtml = '';
+    if(img.canDownload && role() !== 'guest'){
+      formHtml = `
+        <p style="font-size:12px; color:var(--muted); margin:0 0 4px;">Wie findest du dieses Bild?</p>
+        <div class="star-picker" id="starPicker">${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="setStarRating(${n})">★</span>`).join('')}</div>
+        <textarea id="reviewComment" placeholder="Kurze Rezension (optional)" style="width:100%; background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:9px 11px; border-radius:var(--radius-sm); font-size:12.5px; font-family:'Inter',sans-serif; margin-bottom:8px; resize:vertical; min-height:50px;"></textarea>
+        <button class="btn solid" style="padding:8px 16px; font-size:12px;" onclick="submitReview('${img.id}')">Bewertung abschicken</button>
+        <div class="redeem-msg" id="reviewMsg" style="margin-top:8px;"></div>
+        <div style="border-top:1px solid var(--line); margin:14px 0 10px;"></div>`;
+    }
+    box.innerHTML = formHtml + `<div id="reviewsList" style="font-size:12px; color:var(--muted);">Lade Bewertungen...</div>`;
+    selectedStarRating = 0;
+    try {
+      const r = await api('/api/reviews/' + img.id);
+      const listEl = document.getElementById('reviewsList');
+      if(!listEl) return;
+      if(r.reviews.length === 0){ listEl.textContent = 'Noch keine Bewertungen.'; return; }
+      listEl.innerHTML = r.reviews.map(rv => `
+        <div class="review-item">
+          <div class="stars">${'★'.repeat(rv.rating)}${'☆'.repeat(5-rv.rating)}</div>
+          <div style="color:var(--ink); margin:2px 0;">${rv.userName}</div>
+          ${rv.comment ? `<div>${rv.comment}</div>` : ''}
+        </div>`).join('');
+    } catch(e){}
+  }
+
+  function setStarRating(n){
+    selectedStarRating = n;
+    document.querySelectorAll('#starPicker span').forEach(s => {
+      s.classList.toggle('active', Number(s.dataset.n) <= n);
+    });
+  }
+
+  async function submitReview(imageId){
+    const msgEl = document.getElementById('reviewMsg');
+    if(selectedStarRating === 0){ msgEl.textContent = 'Bitte Sterne auswählen.'; msgEl.className = 'redeem-msg err'; return; }
+    try {
+      await api('/api/reviews', { method:'POST', body:{ imageId, rating: selectedStarRating, comment: document.getElementById('reviewComment').value.trim() } });
+      msgEl.textContent = 'Danke für deine Bewertung!';
+      msgEl.className = 'redeem-msg ok';
+      await loadImages();
+      const img = images.find(x => x.id === imageId);
+      if(img) renderLightboxReviews(img);
+    } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
   }
 
   // ---------- Upload ----------
@@ -1939,31 +2265,352 @@
 
   // ---------- Start ----------
   // ---------- Chat-Bot (rein regelbasiert, ohne externen KI-Dienst) ----------
-  const FAQ_KB = [
-    { keywords: ['konto','erstell','registrier','account'], answer: 'Kostenlos: Geh zu "Mein Konto" → "Konto erstellen" und trag Name, Geburtstag, E-Mail und Passwort ein.' },
-    { keywords: ['anmelden','einloggen','login'], answer: 'Unter "Mein Konto" kannst du dich mit deiner E-Mail (oder deinem Namen) und Passwort anmelden.' },
-    { keywords: ['kauf','bezahl','kasse'], answer: 'Klick bei einem Bild auf "In den Warenkorb", geh dann zu "Warenkorb". Aktuell bekommst du dein Bild über einen Code, den wir dir nach der Zahlung zuschicken.' },
-    { keywords: ['code','einlös','eingeb','7-stellig'], answer: 'In der Galerie findest du die Box "Bild-Code einlösen" — dort den 7-stelligen Code eingeben, den du von uns bekommen hast, und das Bild lädt direkt herunter.' },
-    { keywords: ['gültig','24 stunden','abgelaufen','ablauf'], answer: 'Ein Code bleibt gültig, bis er benutzt wird. Wird er erneuert, bleibt der alte Code noch 24 Stunden zusätzlich gültig.' },
-    { keywords: ['passwort'], answer: 'Unter "Mein Konto" gibt es den Bereich "Passwort ändern" — dort aktuelles und neues Passwort eintragen.' },
-    { keywords: ['gratis','kostenlos','umsonst'], answer: 'Bilder, die mit "GRATIS" markiert sind, kannst du direkt ohne Kauf herunterladen.' },
-    { keywords: ['rabatt','aktion','prozent'], answer: 'Manchmal laufen Aktionen wie "2 für 1" oder Prozent-Rabatte — die siehst du automatisch im Warenkorb, wenn sie aktiv sind.' },
-    { keywords: ['newsletter','abonnier'], answer: 'In der Galerie kannst du dich mit deiner E-Mail für den Newsletter eintragen und bekommst Neuigkeiten über neue Bilder und Aktionen.' },
-    { keywords: ['gewinnspiel','gewinn','verlosung'], answer: 'Falls aktiv, findest du in der Galerie eine Box zum Mitmachen — bei Gewinn bekommst du automatisch eine E-Mail mit einem 24h gültigen Gratis-Code.' },
-    { keywords: ['support','kontakt','hilfe','problem'], answer: 'Über den "Support"-Tab oben kannst du uns direkt eine Nachricht schreiben, oder per E-Mail an lumora.fotos.lumora@gmail.com.' },
-    { keywords: ['mitarbeiter','job','arbeiten'], answer: 'Mitarbeiter-Zugänge werden ausschließlich vom Admin angelegt, das geht nicht selbst über die Seite.' },
-    { keywords: ['gekauft','wo finde','meine bilder'], answer: 'Unter "Mein Konto" im Bereich "Meine gekauften Bilder" findest du alles, was du je gekauft oder per Code erhalten hast.' },
-    { keywords: ['bestätig'], answer: 'Nach der Registrierung bekommst du eine Bestätigungsmail. Kommt sie nicht an, kannst du sie unter "Mein Konto" erneut anfordern.' },
-    { keywords: ['video'], answer: 'Ja, neben Bildern gibt es bei uns auch Videos — die funktionieren genauso (kaufen, gratis, oder per Code).' },
-    { keywords: ['datenschutz','sicher','privat'], answer: 'Deine Zugangsdaten werden sicher verschlüsselt gespeichert und nicht an Dritte weitergegeben.' },
-  ];
+  const FAQ_I18N = {
+    de: [
+      { keywords: ['konto','erstell','registrier','account'], answer: 'Kostenlos: Geh zu "Mein Konto" → "Konto erstellen" und trag Name, Geburtstag, E-Mail und Passwort ein.' },
+      { keywords: ['anmelden','einloggen','login'], answer: 'Unter "Mein Konto" kannst du dich mit deiner E-Mail (oder deinem Namen) und Passwort anmelden.' },
+      { keywords: ['kauf','bezahl','kasse'], answer: 'Klick bei einem Bild auf "In den Warenkorb", geh dann zu "Warenkorb" und bezahle sicher per Karte.' },
+      { keywords: ['code','einlös','eingeb','7-stellig'], answer: 'In der Galerie findest du die Box "Code einlösen" — dort den 7-stelligen Code eingeben, den du von uns bekommen hast.' },
+      { keywords: ['gültig','24 stunden','abgelaufen','ablauf'], answer: 'Ein Code bleibt gültig, bis er benutzt wird. Wird er erneuert, bleibt der alte Code noch 24 Stunden zusätzlich gültig.' },
+      { keywords: ['passwort'], answer: 'Unter "Mein Konto" gibt es den Bereich "Passwort ändern".' },
+      { keywords: ['gratis','kostenlos','umsonst'], answer: 'Bilder, die mit "GRATIS" markiert sind, kannst du direkt ohne Kauf herunterladen.' },
+      { keywords: ['rabatt','aktion','prozent'], answer: 'Manchmal laufen Aktionen wie "2 für 1" oder Prozent-Rabatte — die siehst du automatisch im Warenkorb.' },
+      { keywords: ['newsletter','abonnier'], answer: 'In der Galerie kannst du dich mit deiner E-Mail für den Newsletter eintragen.' },
+      { keywords: ['gewinnspiel','gewinn','verlosung'], answer: 'Falls aktiv, findest du in der Galerie eine Box zum Mitmachen.' },
+      { keywords: ['support','kontakt','hilfe','problem'], answer: 'Über den "Support"-Tab oben kannst du uns direkt eine Nachricht schreiben.' },
+      { keywords: ['mitarbeiter','job','arbeiten'], answer: 'Mitarbeiter-Zugänge werden ausschließlich vom Admin angelegt.' },
+      { keywords: ['gekauft','wo finde','meine bilder'], answer: 'Unter "Mein Konto" im Bereich "Meine gekauften Bilder".' },
+      { keywords: ['bestätig'], answer: 'Nach der Registrierung bekommst du eine Bestätigungsmail.' },
+      { keywords: ['video'], answer: 'Ja, neben Bildern gibt es bei uns auch Videos.' },
+      { keywords: ['datenschutz','sicher','privat'], answer: 'Deine Zugangsdaten werden sicher verschlüsselt gespeichert.' },
+      { keywords: ['favorit','herz','merken'], answer: 'Mit dem Herz-Symbol bei jedem Bild kannst du es zu deinen Favoriten hinzufügen — sichtbar unter "Mein Konto".' },
+      { keywords: ['bewert','sterne','rezension'], answer: 'Nach einem Kauf kannst du ein Bild mit Sternen bewerten und eine kurze Rezension hinterlassen.' },
+      { keywords: ['suche','sortier','filter'], answer: 'Oben in der Galerie kannst du Bilder nach Namen suchen und nach Preis oder Datum sortieren.' },
+    ],
+    en: [
+      { keywords: ['account','create','register','sign up'], answer: 'Free: Go to "My Account" → "Create account" and enter name, birthday, email and password.' },
+      { keywords: ['login','log in','sign in'], answer: 'Under "My Account" you can log in with your email (or name) and password.' },
+      { keywords: ['buy','purchase','checkout'], answer: 'Click "Add to cart" on an image, then go to "Cart" and pay securely by card.' },
+      { keywords: ['code','redeem','7-digit'], answer: 'In the gallery you\'ll find the "Redeem code" box — enter the 7-digit code you received from us.' },
+      { keywords: ['valid','24 hours','expired'], answer: 'A code stays valid until used. If renewed, the old code stays valid for another 24 hours.' },
+      { keywords: ['password'], answer: 'Under "My Account" there\'s a "Change password" section.' },
+      { keywords: ['free','no cost'], answer: 'Images marked "FREE" can be downloaded directly without purchase.' },
+      { keywords: ['discount','deal','percent'], answer: 'Sometimes we run deals like "2 for 1" or percent discounts — visible automatically in your cart.' },
+      { keywords: ['newsletter','subscribe'], answer: 'In the gallery you can sign up with your email for our newsletter.' },
+      { keywords: ['giveaway','win','raffle'], answer: 'If active, you\'ll find a box in the gallery to join.' },
+      { keywords: ['support','contact','help','problem'], answer: 'Via the "Support" tab above you can send us a message directly.' },
+      { keywords: ['employee','job','work'], answer: 'Employee accounts are only created by the admin.' },
+      { keywords: ['purchased','where find','my images'], answer: 'Under "My Account" in the "My purchased images" section.' },
+      { keywords: ['confirm','verify'], answer: 'After registering you\'ll get a confirmation email.' },
+      { keywords: ['video'], answer: 'Yes, besides images we also offer videos.' },
+      { keywords: ['privacy','secure','data'], answer: 'Your login data is stored securely and encrypted.' },
+      { keywords: ['favorite','heart','save'], answer: 'Use the heart icon on any image to add it to your favorites — visible under "My Account".' },
+      { keywords: ['review','rating','stars'], answer: 'After a purchase you can rate an image with stars and leave a short review.' },
+      { keywords: ['search','sort','filter'], answer: 'At the top of the gallery you can search images by name and sort by price or date.' },
+    ],
+    es: [
+      { keywords: ['cuenta','crear','registrar'], answer: 'Gratis: Ve a "Mi cuenta" → "Crear cuenta" e ingresa nombre, cumpleaños, correo y contraseña.' },
+      { keywords: ['iniciar sesión','entrar','login'], answer: 'En "Mi cuenta" puedes iniciar sesión con tu correo (o nombre) y contraseña.' },
+      { keywords: ['comprar','pagar','carrito'], answer: 'Haz clic en "Añadir al carrito", luego ve a "Carrito" y paga de forma segura con tarjeta.' },
+      { keywords: ['código','canjear','7 dígitos'], answer: 'En la galería encontrarás la caja "Canjear código" — ingresa el código de 7 dígitos que recibiste.' },
+      { keywords: ['válido','24 horas','expirado'], answer: 'Un código sigue siendo válido hasta que se use. Si se renueva, el anterior sigue válido 24 horas más.' },
+      { keywords: ['contraseña'], answer: 'En "Mi cuenta" hay una sección "Cambiar contraseña".' },
+      { keywords: ['gratis','sin costo'], answer: 'Las imágenes marcadas como "GRATIS" se pueden descargar directamente sin comprar.' },
+      { keywords: ['descuento','oferta','porcentaje'], answer: 'A veces hay ofertas como "2 por 1" o descuentos porcentuales — visibles en tu carrito.' },
+      { keywords: ['boletín','suscrib'], answer: 'En la galería puedes suscribirte con tu correo a nuestro boletín.' },
+      { keywords: ['sorteo','ganar','rifa'], answer: 'Si está activo, encontrarás una caja en la galería para participar.' },
+      { keywords: ['soporte','contacto','ayuda','problema'], answer: 'A través de la pestaña "Soporte" arriba puedes enviarnos un mensaje directo.' },
+      { keywords: ['empleado','trabajo'], answer: 'Las cuentas de empleado solo las crea el administrador.' },
+      { keywords: ['comprado','dónde','mis imágenes'], answer: 'En "Mi cuenta", en la sección "Mis imágenes compradas".' },
+      { keywords: ['confirmar','verificar'], answer: 'Después de registrarte recibirás un correo de confirmación.' },
+      { keywords: ['video'], answer: 'Sí, además de imágenes también ofrecemos videos.' },
+      { keywords: ['privacidad','seguro','datos'], answer: 'Tus datos de acceso se almacenan de forma segura y cifrada.' },
+      { keywords: ['favorito','corazón','guardar'], answer: 'Usa el ícono de corazón en cualquier imagen para añadirla a tus favoritos — visible en "Mi cuenta".' },
+      { keywords: ['reseña','calificación','estrellas'], answer: 'Después de comprar puedes calificar una imagen con estrellas y dejar una breve reseña.' },
+      { keywords: ['buscar','ordenar','filtro'], answer: 'Arriba en la galería puedes buscar imágenes por nombre y ordenarlas por precio o fecha.' },
+    ],
+    fr: [
+      { keywords: ['compte','créer','inscrire'], answer: 'Gratuit : Va dans "Mon compte" → "Créer un compte" et entre nom, date de naissance, e-mail et mot de passe.' },
+      { keywords: ['connexion','se connecter','login'], answer: 'Dans "Mon compte" tu peux te connecter avec ton e-mail (ou nom) et mot de passe.' },
+      { keywords: ['acheter','payer','panier'], answer: 'Clique sur "Ajouter au panier", puis va dans "Panier" et paie en toute sécurité par carte.' },
+      { keywords: ['code','utiliser','7 chiffres'], answer: 'Dans la galerie, trouve la case "Utiliser un code" — entre le code à 7 chiffres reçu.' },
+      { keywords: ['valable','24 heures','expiré'], answer: 'Un code reste valable jusqu\'à utilisation. S\'il est renouvelé, l\'ancien reste valable 24h de plus.' },
+      { keywords: ['mot de passe'], answer: 'Dans "Mon compte" il y a une section "Changer le mot de passe".' },
+      { keywords: ['gratuit'], answer: 'Les images marquées "GRATUIT" peuvent être téléchargées directement sans achat.' },
+      { keywords: ['réduction','promo','pourcentage'], answer: 'Parfois il y a des promos comme "2 pour 1" ou des réductions en pourcentage — visibles dans ton panier.' },
+      { keywords: ['newsletter','abonn'], answer: 'Dans la galerie tu peux t\'inscrire avec ton e-mail à notre newsletter.' },
+      { keywords: ['tirage','gagner','concours'], answer: 'Si actif, tu trouveras une case dans la galerie pour participer.' },
+      { keywords: ['support','contact','aide','problème'], answer: 'Via l\'onglet "Support" en haut tu peux nous écrire directement.' },
+      { keywords: ['employé','travailler'], answer: 'Les comptes employés ne sont créés que par l\'admin.' },
+      { keywords: ['acheté','où trouver','mes images'], answer: 'Dans "Mon compte", section "Mes images achetées".' },
+      { keywords: ['confirmer','vérifier'], answer: 'Après inscription tu reçois un e-mail de confirmation.' },
+      { keywords: ['vidéo'], answer: 'Oui, en plus des images nous proposons aussi des vidéos.' },
+      { keywords: ['confidentialité','sécurisé','données'], answer: 'Tes données de connexion sont stockées de façon sécurisée et chiffrée.' },
+      { keywords: ['favori','coeur','enregistrer'], answer: 'Utilise l\'icône cœur sur une image pour l\'ajouter à tes favoris — visible dans "Mon compte".' },
+      { keywords: ['avis','note','étoiles'], answer: 'Après un achat tu peux noter une image avec des étoiles et laisser un avis.' },
+      { keywords: ['recherch','trier','filtre'], answer: 'En haut de la galerie tu peux rechercher des images par nom et trier par prix ou date.' },
+    ],
+    it: [
+      { keywords: ['account','creare','registrar'], answer: 'Gratis: Vai su "Il mio account" → "Crea account" e inserisci nome, data di nascita, email e password.' },
+      { keywords: ['accedi','login'], answer: 'In "Il mio account" puoi accedere con la tua email (o nome) e password.' },
+      { keywords: ['acquist','pagare','carrello'], answer: 'Clicca "Aggiungi al carrello", poi vai su "Carrello" e paga in sicurezza con carta.' },
+      { keywords: ['codice','riscatt','7 cifre'], answer: 'Nella galleria trovi la casella "Riscatta codice" — inserisci il codice a 7 cifre ricevuto.' },
+      { keywords: ['valido','24 ore','scaduto'], answer: 'Un codice resta valido finché non viene usato. Se rinnovato, il vecchio resta valido altre 24 ore.' },
+      { keywords: ['password'], answer: 'In "Il mio account" c\'è la sezione "Cambia password".' },
+      { keywords: ['gratis','gratuito'], answer: 'Le immagini contrassegnate "GRATIS" si possono scaricare direttamente senza acquisto.' },
+      { keywords: ['sconto','offerta','percentuale'], answer: 'A volte ci sono offerte come "2 per 1" o sconti percentuali — visibili nel carrello.' },
+      { keywords: ['newsletter','iscriv'], answer: 'Nella galleria puoi iscriverti con la tua email alla newsletter.' },
+      { keywords: ['estrazione','vincere','sorteggio'], answer: 'Se attiva, trovi una casella nella galleria per partecipare.' },
+      { keywords: ['supporto','contatto','aiuto','problema'], answer: 'Tramite la scheda "Supporto" in alto puoi scriverci direttamente.' },
+      { keywords: ['dipendente','lavoro'], answer: 'Gli account dipendenti vengono creati solo dall\'admin.' },
+      { keywords: ['acquistat','dove trovo','mie immagini'], answer: 'In "Il mio account", sezione "Le mie immagini acquistate".' },
+      { keywords: ['conferma','verifica'], answer: 'Dopo la registrazione ricevi un\'email di conferma.' },
+      { keywords: ['video'], answer: 'Sì, oltre alle immagini offriamo anche video.' },
+      { keywords: ['privacy','sicuro','dati'], answer: 'I tuoi dati di accesso sono memorizzati in modo sicuro e crittografato.' },
+      { keywords: ['preferit','cuore','salva'], answer: 'Usa l\'icona a cuore su un\'immagine per aggiungerla ai preferiti — visibile in "Il mio account".' },
+      { keywords: ['recensione','valutazione','stelle'], answer: 'Dopo un acquisto puoi valutare un\'immagine con le stelle e lasciare una recensione.' },
+      { keywords: ['cerca','ordina','filtro'], answer: 'In cima alla galleria puoi cercare immagini per nome e ordinarle per prezzo o data.' },
+    ],
+    sl: [
+      { keywords: ['račun','ustvari','registr'], answer: 'Brezplačno: Pojdi na "Moj račun" → "Ustvari račun" in vnesi ime, rojstni dan, e-pošto in geslo.' },
+      { keywords: ['prijava','vpiši'], answer: 'V "Moj račun" se lahko prijaviš z e-pošto (ali imenom) in geslom.' },
+      { keywords: ['kupi','plačaj','košarica'], answer: 'Klikni "Dodaj v košarico", nato pojdi na "Košarica" in varno plačaj s kartico.' },
+      { keywords: ['koda','unovči','7-mestn'], answer: 'V galeriji najdeš polje "Unovči kodo" — vnesi 7-mestno kodo, ki si jo prejel.' },
+      { keywords: ['veljaven','24 ur','potekel'], answer: 'Koda je veljavna do uporabe. Če je obnovljena, stara ostane veljavna še 24 ur.' },
+      { keywords: ['geslo'], answer: 'V "Moj račun" je razdelek "Spremeni geslo".' },
+      { keywords: ['brezplačn'], answer: 'Slike, označene z "BREZPLAČNO", lahko prenesete brez nakupa.' },
+      { keywords: ['popust','akcija','odstotek'], answer: 'Včasih so akcije kot "2 za 1" ali odstotni popusti — vidni v košarici.' },
+      { keywords: ['novice','naroč'], answer: 'V galeriji se lahko z e-pošto naročiš na novice.' },
+      { keywords: ['žrebanje','zmag','nagrada'], answer: 'Če je aktivno, najdeš polje v galeriji za sodelovanje.' },
+      { keywords: ['podpora','kontakt','pomoč','težav'], answer: 'Preko zavihka "Podpora" zgoraj nam lahko pišeš neposredno.' },
+      { keywords: ['zaposlen','delo'], answer: 'Račune zaposlenih ustvarja samo administrator.' },
+      { keywords: ['kupljen','kje najdem','moje slike'], answer: 'V "Moj račun", razdelek "Moje kupljene slike".' },
+      { keywords: ['potrdi','preveri'], answer: 'Po registraciji prejmeš potrditveno e-pošto.' },
+      { keywords: ['video'], answer: 'Da, poleg slik ponujamo tudi videe.' },
+      { keywords: ['zasebnost','varno','podatki'], answer: 'Tvoji podatki so shranjeni varno in šifrirano.' },
+      { keywords: ['priljubljen','srce','shrani'], answer: 'Uporabi ikono srca pri sliki, da jo dodaš med priljubljene — vidno v "Moj račun".' },
+      { keywords: ['ocena','zvezdice','mnenje'], answer: 'Po nakupu lahko sliko oceniš z zvezdicami in pustiš kratko mnenje.' },
+      { keywords: ['iskanje','razvrsti','filter'], answer: 'Na vrhu galerije lahko iščeš slike po imenu in jih razvrstiš po ceni ali datumu.' },
+    ],
+    pt: [
+      { keywords: ['conta','criar','registr'], answer: 'Grátis: Vá em "Minha conta" → "Criar conta" e insira nome, data de nascimento, e-mail e senha.' },
+      { keywords: ['entrar','login'], answer: 'Em "Minha conta" você pode entrar com seu e-mail (ou nome) e senha.' },
+      { keywords: ['comprar','pagar','carrinho'], answer: 'Clique em "Adicionar ao carrinho", depois vá em "Carrinho" e pague com segurança pelo cartão.' },
+      { keywords: ['código','resgat','7 dígitos'], answer: 'Na galeria você encontra a caixa "Resgatar código" — insira o código de 7 dígitos recebido.' },
+      { keywords: ['válido','24 horas','expirado'], answer: 'Um código continua válido até ser usado. Se renovado, o antigo continua válido por mais 24h.' },
+      { keywords: ['senha'], answer: 'Em "Minha conta" há uma seção "Alterar senha".' },
+      { keywords: ['grátis','gratuito'], answer: 'Imagens marcadas como "GRÁTIS" podem ser baixadas diretamente sem compra.' },
+      { keywords: ['desconto','oferta','porcentagem'], answer: 'Às vezes há ofertas como "2 por 1" ou descontos percentuais — visíveis no carrinho.' },
+      { keywords: ['newsletter','inscrev'], answer: 'Na galeria você pode se inscrever com seu e-mail na newsletter.' },
+      { keywords: ['sorteio','ganhar'], answer: 'Se ativo, você encontra uma caixa na galeria para participar.' },
+      { keywords: ['suporte','contato','ajuda','problema'], answer: 'Pela aba "Suporte" acima você pode nos enviar uma mensagem direta.' },
+      { keywords: ['funcionário','trabalho'], answer: 'Contas de funcionário só são criadas pelo admin.' },
+      { keywords: ['comprado','onde encontro','minhas imagens'], answer: 'Em "Minha conta", seção "Minhas imagens compradas".' },
+      { keywords: ['confirmar','verificar'], answer: 'Após o registro você recebe um e-mail de confirmação.' },
+      { keywords: ['vídeo'], answer: 'Sim, além de imagens também oferecemos vídeos.' },
+      { keywords: ['privacidade','seguro','dados'], answer: 'Seus dados de acesso são armazenados de forma segura e criptografada.' },
+      { keywords: ['favorito','coração','salvar'], answer: 'Use o ícone de coração em qualquer imagem para adicioná-la aos favoritos — visível em "Minha conta".' },
+      { keywords: ['avaliação','estrelas','resenha'], answer: 'Após uma compra você pode avaliar uma imagem com estrelas e deixar uma breve resenha.' },
+      { keywords: ['buscar','ordenar','filtro'], answer: 'No topo da galeria você pode buscar imagens por nome e ordenar por preço ou data.' },
+    ],
+    nl: [
+      { keywords: ['account','maken','registrer'], answer: 'Gratis: Ga naar "Mijn account" → "Account aanmaken" en vul naam, geboortedatum, e-mail en wachtwoord in.' },
+      { keywords: ['inloggen','login'], answer: 'Bij "Mijn account" kun je inloggen met je e-mail (of naam) en wachtwoord.' },
+      { keywords: ['kopen','betalen','winkelwagen'], answer: 'Klik op "In winkelwagen", ga dan naar "Winkelwagen" en betaal veilig met kaart.' },
+      { keywords: ['code','inwissel','7-cijferig'], answer: 'In de galerij vind je het vak "Code inwisselen" — vul de 7-cijferige code in die je ontving.' },
+      { keywords: ['geldig','24 uur','verlopen'], answer: 'Een code blijft geldig tot gebruik. Bij vernieuwing blijft de oude nog 24 uur geldig.' },
+      { keywords: ['wachtwoord'], answer: 'Bij "Mijn account" is er een sectie "Wachtwoord wijzigen".' },
+      { keywords: ['gratis'], answer: 'Afbeeldingen met "GRATIS" kun je direct zonder aankoop downloaden.' },
+      { keywords: ['korting','actie','procent'], answer: 'Soms lopen acties zoals "2 voor 1" of procentuele kortingen — zichtbaar in je winkelwagen.' },
+      { keywords: ['nieuwsbrief','aanmeld'], answer: 'In de galerij kun je je met je e-mail aanmelden voor de nieuwsbrief.' },
+      { keywords: ['actie','win','loting'], answer: 'Indien actief, vind je een vak in de galerij om mee te doen.' },
+      { keywords: ['support','contact','hulp','probleem'], answer: 'Via het tabblad "Support" bovenaan kun je ons direct berichten.' },
+      { keywords: ['medewerker','werk'], answer: 'Medewerkersaccounts worden alleen door de admin aangemaakt.' },
+      { keywords: ['gekocht','waar vind','mijn afbeeldingen'], answer: 'Bij "Mijn account", sectie "Mijn gekochte afbeeldingen".' },
+      { keywords: ['bevestig','verifiëer'], answer: 'Na registratie krijg je een bevestigingsmail.' },
+      { keywords: ['video'], answer: 'Ja, naast afbeeldingen bieden we ook video\'s aan.' },
+      { keywords: ['privacy','veilig','gegevens'], answer: 'Je inloggegevens worden veilig en versleuteld opgeslagen.' },
+      { keywords: ['favoriet','hart','opslaan'], answer: 'Gebruik het hartje bij een afbeelding om toe te voegen aan favorieten — zichtbaar bij "Mijn account".' },
+      { keywords: ['recensie','beoordel','sterren'], answer: 'Na aankoop kun je een afbeelding met sterren beoordelen en een korte recensie achterlaten.' },
+      { keywords: ['zoek','sorteer','filter'], answer: 'Bovenaan de galerij kun je afbeeldingen zoeken op naam en sorteren op prijs of datum.' },
+    ],
+    pl: [
+      { keywords: ['konto','załóż','zarejestr'], answer: 'Za darmo: Idź do "Moje konto" → "Załóż konto" i wpisz imię, datę urodzenia, e-mail i hasło.' },
+      { keywords: ['zaloguj','login'], answer: 'W "Moje konto" możesz się zalogować e-mailem (lub imieniem) i hasłem.' },
+      { keywords: ['kup','zapłać','koszyk'], answer: 'Kliknij "Dodaj do koszyka", potem przejdź do "Koszyk" i zapłać bezpiecznie kartą.' },
+      { keywords: ['kod','odbierz','7-cyfrow'], answer: 'W galerii znajdziesz pole "Odbierz kod" — wpisz otrzymany 7-cyfrowy kod.' },
+      { keywords: ['ważny','24 godziny','wygasł'], answer: 'Kod jest ważny do użycia. Po odnowieniu stary pozostaje ważny jeszcze 24h.' },
+      { keywords: ['hasło'], answer: 'W "Moje konto" jest sekcja "Zmień hasło".' },
+      { keywords: ['darmow','za darmo'], answer: 'Zdjęcia oznaczone "DARMOWE" można pobrać bez zakupu.' },
+      { keywords: ['rabat','promocja','procent'], answer: 'Czasem są promocje jak "2 za 1" lub rabaty procentowe — widoczne w koszyku.' },
+      { keywords: ['newsletter','zapisz'], answer: 'W galerii możesz zapisać się e-mailem na newsletter.' },
+      { keywords: ['losowanie','wygraj'], answer: 'Jeśli aktywne, znajdziesz pole w galerii, aby dołączyć.' },
+      { keywords: ['wsparcie','kontakt','pomoc','problem'], answer: 'Przez zakładkę "Wsparcie" u góry możesz nam napisać bezpośrednio.' },
+      { keywords: ['pracownik','praca'], answer: 'Konta pracowników tworzy tylko administrator.' },
+      { keywords: ['kupion','gdzie znajdę','moje zdjęcia'], answer: 'W "Moje konto", sekcja "Moje kupione zdjęcia".' },
+      { keywords: ['potwierdź','zweryfik'], answer: 'Po rejestracji otrzymasz e-mail potwierdzający.' },
+      { keywords: ['wideo'], answer: 'Tak, oprócz zdjęć oferujemy też wideo.' },
+      { keywords: ['prywatność','bezpieczn','dane'], answer: 'Twoje dane logowania są przechowywane bezpiecznie i zaszyfrowane.' },
+      { keywords: ['ulubion','serce','zapisz'], answer: 'Użyj ikony serca przy zdjęciu, aby dodać do ulubionych — widoczne w "Moje konto".' },
+      { keywords: ['recenzja','ocena','gwiazdki'], answer: 'Po zakupie możesz ocenić zdjęcie gwiazdkami i zostawić krótką recenzję.' },
+      { keywords: ['szukaj','sortuj','filtr'], answer: 'Na górze galerii możesz szukać zdjęć po nazwie i sortować wg ceny lub daty.' },
+    ],
+    tr: [
+      { keywords: ['hesap','oluştur','kayıt'], answer: 'Ücretsiz: "Hesabım" → "Hesap oluştur"a git ve ad, doğum tarihi, e-posta, şifre gir.' },
+      { keywords: ['giriş','login'], answer: '"Hesabım" altında e-posta (veya ad) ve şifreyle giriş yapabilirsin.' },
+      { keywords: ['satın al','öde','sepet'], answer: '"Sepete ekle"ye tıkla, sonra "Sepet"e git ve kartla güvenle öde.' },
+      { keywords: ['kod','kullan','7 haneli'], answer: 'Galeride "Kod kullan" kutusunu bulacaksın — aldığın 7 haneli kodu gir.' },
+      { keywords: ['geçerli','24 saat','süresi doldu'], answer: 'Bir kod kullanılana kadar geçerlidir. Yenilenirse eski kod 24 saat daha geçerli kalır.' },
+      { keywords: ['şifre'], answer: '"Hesabım" altında "Şifre değiştir" bölümü var.' },
+      { keywords: ['ücretsiz','bedava'], answer: '"ÜCRETSİZ" işaretli resimler satın almadan indirilebilir.' },
+      { keywords: ['indirim','kampanya','yüzde'], answer: 'Bazen "2 al 1 öde" veya yüzde indirimler olur — sepette görünür.' },
+      { keywords: ['bülten','abone'], answer: 'Galeride e-postanla bültene abone olabilirsin.' },
+      { keywords: ['çekiliş','kazan'], answer: 'Aktifse, galeride katılmak için bir kutu bulacaksın.' },
+      { keywords: ['destek','iletişim','yardım','sorun'], answer: 'Yukarıdaki "Destek" sekmesinden bize doğrudan yazabilirsin.' },
+      { keywords: ['çalışan','iş'], answer: 'Çalışan hesapları sadece admin tarafından oluşturulur.' },
+      { keywords: ['satın alınan','nerede','resimlerim'], answer: '"Hesabım" içinde "Satın aldığım resimler" bölümü.' },
+      { keywords: ['onayla','doğrula'], answer: 'Kayıttan sonra bir onay e-postası alırsın.' },
+      { keywords: ['video'], answer: 'Evet, resimlerin yanı sıra video da sunuyoruz.' },
+      { keywords: ['gizlilik','güvenli','veri'], answer: 'Giriş bilgilerin güvenli ve şifreli saklanır.' },
+      { keywords: ['favori','kalp','kaydet'], answer: 'Bir resimdeki kalp simgesini kullanarak favorilere ekleyebilirsin — "Hesabım"da görünür.' },
+      { keywords: ['değerlendirme','yıldız','yorum'], answer: 'Satın aldıktan sonra bir resmi yıldızlarla değerlendirip kısa yorum bırakabilirsin.' },
+      { keywords: ['ara','sırala','filtre'], answer: 'Galerinin üstünde isimle arama yapabilir, fiyat veya tarihe göre sıralayabilirsin.' },
+    ],
+    ru: [
+      { keywords: ['аккаунт','создать','регистрац'], answer: 'Бесплатно: перейдите в "Мой аккаунт" → "Создать аккаунт" и введите имя, дату рождения, email и пароль.' },
+      { keywords: ['вход','войти','логин'], answer: 'В "Мой аккаунт" вы можете войти с email (или именем) и паролем.' },
+      { keywords: ['купить','оплатить','корзина'], answer: 'Нажмите "В корзину", затем перейдите в "Корзина" и оплатите картой.' },
+      { keywords: ['код','использовать','7 цифр'], answer: 'В галерее есть поле "Использовать код" — введите полученный 7-значный код.' },
+      { keywords: ['действителен','24 часа','истек'], answer: 'Код действителен до использования. При обновлении старый действует ещё 24 часа.' },
+      { keywords: ['пароль'], answer: 'В "Мой аккаунт" есть раздел "Изменить пароль".' },
+      { keywords: ['бесплатно'], answer: 'Фото с пометкой "БЕСПЛАТНО" можно скачать без покупки.' },
+      { keywords: ['скидка','акция','процент'], answer: 'Иногда бывают акции вроде "2 по цене 1" или процентные скидки — видны в корзине.' },
+      { keywords: ['рассылка','подпис'], answer: 'В галерее можно подписаться на рассылку по email.' },
+      { keywords: ['розыгрыш','выиграть'], answer: 'Если активен, в галерее есть поле для участия.' },
+      { keywords: ['поддержка','контакт','помощь','проблема'], answer: 'Через вкладку "Поддержка" вверху можно написать нам напрямую.' },
+      { keywords: ['сотрудник','работа'], answer: 'Аккаунты сотрудников создаёт только админ.' },
+      { keywords: ['куплен','где найти','мои фото'], answer: 'В "Мой аккаунт", раздел "Мои купленные фото".' },
+      { keywords: ['подтверд','верифи'], answer: 'После регистрации вы получите письмо с подтверждением.' },
+      { keywords: ['видео'], answer: 'Да, помимо фото у нас есть и видео.' },
+      { keywords: ['конфиденциальность','безопасно','данные'], answer: 'Ваши данные хранятся безопасно и зашифрованно.' },
+      { keywords: ['избранное','сердце','сохранить'], answer: 'Нажмите на сердце у фото, чтобы добавить в избранное — видно в "Мой аккаунт".' },
+      { keywords: ['отзыв','оценка','звезды'], answer: 'После покупки вы можете оценить фото звёздами и оставить отзыв.' },
+      { keywords: ['поиск','сортировка','фильтр'], answer: 'Вверху галереи можно искать фото по имени и сортировать по цене или дате.' },
+    ],
+    ar: [
+      { keywords: ['حساب','إنشاء','تسجيل'], answer: 'مجانًا: اذهب إلى "حسابي" ← "إنشاء حساب" وأدخل الاسم وتاريخ الميلاد والبريد وكلمة المرور.' },
+      { keywords: ['تسجيل الدخول'], answer: 'في "حسابي" يمكنك تسجيل الدخول بالبريد (أو الاسم) وكلمة المرور.' },
+      { keywords: ['شراء','دفع','سلة'], answer: 'اضغط "أضف إلى السلة"، ثم اذهب إلى "السلة" وادفع بأمان بالبطاقة.' },
+      { keywords: ['رمز','استخدام','7 أرقام'], answer: 'ستجد في المعرض مربع "استخدام الرمز" — أدخل الرمز المكوّن من 7 أرقام الذي تلقيته.' },
+      { keywords: ['صالح','24 ساعة','منتهي'], answer: 'يبقى الرمز صالحًا حتى استخدامه. عند تجديده يبقى القديم صالحًا 24 ساعة إضافية.' },
+      { keywords: ['كلمة المرور'], answer: 'في "حسابي" يوجد قسم "تغيير كلمة المرور".' },
+      { keywords: ['مجاني'], answer: 'يمكن تنزيل الصور المميزة بـ "مجاني" مباشرة دون شراء.' },
+      { keywords: ['خصم','عرض','نسبة'], answer: 'أحيانًا توجد عروض مثل "اثنان بواحد" أو خصومات بالنسبة المئوية — تظهر تلقائيًا في السلة.' },
+      { keywords: ['نشرة','اشتراك'], answer: 'يمكنك الاشتراك ببريدك في النشرة من المعرض.' },
+      { keywords: ['سحب','فوز'], answer: 'إذا كان نشطًا، ستجد مربعًا في المعرض للمشاركة.' },
+      { keywords: ['دعم','تواصل','مساعدة','مشكلة'], answer: 'عبر تبويب "الدعم" أعلاه يمكنك مراسلتنا مباشرة.' },
+      { keywords: ['موظف','عمل'], answer: 'حسابات الموظفين ينشئها المدير فقط.' },
+      { keywords: ['تم شراؤها','أين أجد','صوري'], answer: 'في "حسابي"، قسم "صوري المشتراة".' },
+      { keywords: ['تأكيد','تحقق'], answer: 'بعد التسجيل ستصلك رسالة تأكيد.' },
+      { keywords: ['فيديو'], answer: 'نعم، إلى جانب الصور نقدم أيضًا فيديوهات.' },
+      { keywords: ['خصوصية','آمن','بيانات'], answer: 'بيانات دخولك محفوظة بأمان ومشفّرة.' },
+      { keywords: ['مفضلة','قلب','حفظ'], answer: 'استخدم أيقونة القلب على أي صورة لإضافتها للمفضلة — تظهر في "حسابي".' },
+      { keywords: ['تقييم','نجوم','مراجعة'], answer: 'بعد الشراء يمكنك تقييم الصورة بالنجوم وترك مراجعة قصيرة.' },
+      { keywords: ['بحث','ترتيب','تصفية'], answer: 'أعلى المعرض يمكنك البحث بالاسم والترتيب حسب السعر أو التاريخ.' },
+    ],
+    zh: [
+      { keywords: ['账户','创建','注册'], answer: '免费：前往"我的账户"→"创建账户"，填写姓名、生日、邮箱和密码。' },
+      { keywords: ['登录'], answer: '在"我的账户"中可用邮箱（或姓名）和密码登录。' },
+      { keywords: ['购买','付款','购物车'], answer: '点击"加入购物车"，然后前往"购物车"用银行卡安全付款。' },
+      { keywords: ['代码','兑换','7位'], answer: '在图库中找到"兑换代码"框——输入你收到的7位代码。' },
+      { keywords: ['有效','24小时','过期'], answer: '代码在使用前一直有效。更新后，旧代码再保持24小时有效。' },
+      { keywords: ['密码'], answer: '"我的账户"中有"修改密码"部分。' },
+      { keywords: ['免费'], answer: '标有"免费"的图片可直接下载，无需购买。' },
+      { keywords: ['折扣','优惠','百分比'], answer: '有时会有"买一送一"或百分比折扣活动——会自动显示在购物车中。' },
+      { keywords: ['订阅','新闻'], answer: '在图库中可用邮箱订阅我们的新闻通讯。' },
+      { keywords: ['抽奖','中奖'], answer: '如果活动开启，图库中会有参与框。' },
+      { keywords: ['支持','联系','帮助','问题'], answer: '通过上方的"支持"标签可以直接给我们留言。' },
+      { keywords: ['员工','工作'], answer: '员工账户只能由管理员创建。' },
+      { keywords: ['已购买','在哪里','我的图片'], answer: '在"我的账户"的"我购买的图片"部分。' },
+      { keywords: ['确认','验证'], answer: '注册后你会收到一封确认邮件。' },
+      { keywords: ['视频'], answer: '是的，除了图片我们也提供视频。' },
+      { keywords: ['隐私','安全','数据'], answer: '你的登录信息会安全加密存储。' },
+      { keywords: ['收藏','心形','保存'], answer: '点击图片上的心形图标即可加入收藏——在"我的账户"中可见。' },
+      { keywords: ['评价','评分','星级'], answer: '购买后你可以为图片评星并留下简短评价。' },
+      { keywords: ['搜索','排序','筛选'], answer: '在图库顶部可按名称搜索图片，并按价格或日期排序。' },
+    ],
+    ja: [
+      { keywords: ['アカウント','作成','登録'], answer: '無料：「マイアカウント」→「アカウント作成」で名前、生年月日、メール、パスワードを入力。' },
+      { keywords: ['ログイン'], answer: '「マイアカウント」でメール（または名前）とパスワードでログインできます。' },
+      { keywords: ['購入','支払い','カート'], answer: '「カートに追加」をクリックし、「カート」に進んでカードで安全に支払います。' },
+      { keywords: ['コード','使用','7桁'], answer: 'ギャラリーの「コードを使う」欄で受け取った7桁のコードを入力します。' },
+      { keywords: ['有効','24時間','期限切れ'], answer: 'コードは使用されるまで有効です。更新されると古いコードもさらに24時間有効です。' },
+      { keywords: ['パスワード'], answer: '「マイアカウント」に「パスワード変更」セクションがあります。' },
+      { keywords: ['無料'], answer: '「無料」と表示された画像は購入なしで直接ダウンロードできます。' },
+      { keywords: ['割引','キャンペーン','パーセント'], answer: '「2個で1個分」やパーセント割引のキャンペーンがあり、カートに自動表示されます。' },
+      { keywords: ['ニュースレター','登録'], answer: 'ギャラリーでメールアドレスを登録してニュースレターを購読できます。' },
+      { keywords: ['抽選','当選'], answer: '有効な場合、ギャラリーに参加用の欄があります。' },
+      { keywords: ['サポート','連絡','ヘルプ','問題'], answer: '上部の「サポート」タブから直接メッセージを送れます。' },
+      { keywords: ['スタッフ','仕事'], answer: 'スタッフアカウントは管理者のみが作成できます。' },
+      { keywords: ['購入済み','どこ','私の画像'], answer: '「マイアカウント」の「購入した画像」セクションにあります。' },
+      { keywords: ['確認','認証'], answer: '登録後、確認メールが届きます。' },
+      { keywords: ['動画'], answer: 'はい、画像に加えて動画も提供しています。' },
+      { keywords: ['プライバシー','安全','データ'], answer: 'ログイン情報は安全に暗号化して保存されます。' },
+      { keywords: ['お気に入り','ハート','保存'], answer: '画像のハートアイコンをクリックしてお気に入りに追加——「マイアカウント」に表示されます。' },
+      { keywords: ['レビュー','評価','星'], answer: '購入後、画像に星で評価し短いレビューを残せます。' },
+      { keywords: ['検索','並び替え','フィルター'], answer: 'ギャラリー上部で名前検索、価格や日付で並び替えができます。' },
+    ],
+    ko: [
+      { keywords: ['계정','만들기','가입'], answer: '무료: "내 계정" → "계정 만들기"에서 이름, 생년월일, 이메일, 비밀번호를 입력하세요.' },
+      { keywords: ['로그인'], answer: '"내 계정"에서 이메일(또는 이름)과 비밀번호로 로그인할 수 있습니다.' },
+      { keywords: ['구매','결제','장바구니'], answer: '"장바구니에 추가"를 클릭한 후 "장바구니"로 이동해 카드로 안전하게 결제하세요.' },
+      { keywords: ['코드','사용','7자리'], answer: '갤러리에서 "코드 사용" 칸을 찾아 받은 7자리 코드를 입력하세요.' },
+      { keywords: ['유효','24시간','만료'], answer: '코드는 사용될 때까지 유효합니다. 갱신되면 이전 코드도 24시간 더 유효합니다.' },
+      { keywords: ['비밀번호'], answer: '"내 계정"에 "비밀번호 변경" 섹션이 있습니다.' },
+      { keywords: ['무료'], answer: '"무료"로 표시된 이미지는 구매 없이 바로 다운로드할 수 있습니다.' },
+      { keywords: ['할인','이벤트','퍼센트'], answer: '가끔 "2개 1개 가격"이나 퍼센트 할인 이벤트가 있으며 장바구니에 자동 표시됩니다.' },
+      { keywords: ['뉴스레터','구독'], answer: '갤러리에서 이메일로 뉴스레터를 구독할 수 있습니다.' },
+      { keywords: ['경품','당첨'], answer: '활성화된 경우 갤러리에 참여 칸이 있습니다.' },
+      { keywords: ['지원','연락','도움','문제'], answer: '상단의 "지원" 탭을 통해 직접 메시지를 보낼 수 있습니다.' },
+      { keywords: ['직원','일'], answer: '직원 계정은 관리자만 생성할 수 있습니다.' },
+      { keywords: ['구매한','어디','내 이미지'], answer: '"내 계정"의 "내가 구매한 이미지" 섹션에 있습니다.' },
+      { keywords: ['확인','인증'], answer: '가입 후 확인 이메일을 받게 됩니다.' },
+      { keywords: ['동영상'], answer: '네, 이미지 외에 동영상도 제공합니다.' },
+      { keywords: ['개인정보','안전','데이터'], answer: '로그인 정보는 안전하게 암호화되어 저장됩니다.' },
+      { keywords: ['즐겨찾기','하트','저장'], answer: '이미지의 하트 아이콘을 눌러 즐겨찾기에 추가하세요 — "내 계정"에서 확인 가능합니다.' },
+      { keywords: ['리뷰','평점','별점'], answer: '구매 후 이미지를 별점으로 평가하고 짧은 리뷰를 남길 수 있습니다.' },
+      { keywords: ['검색','정렬','필터'], answer: '갤러리 상단에서 이름으로 검색하고 가격이나 날짜로 정렬할 수 있습니다.' },
+    ],
+    hi: [
+      { keywords: ['खाता','बनाएं','पंजीकरण'], answer: 'मुफ़्त: "मेरा खाता" → "खाता बनाएं" पर जाएं और नाम, जन्मदिन, ईमेल और पासवर्ड डालें।' },
+      { keywords: ['लॉगिन','साइन इन'], answer: '"मेरा खाता" में आप ईमेल (या नाम) और पासवर्ड से लॉगिन कर सकते हैं।' },
+      { keywords: ['खरीद','भुगतान','कार्ट'], answer: '"कार्ट में जोड़ें" पर क्लिक करें, फिर "कार्ट" पर जाकर कार्ड से सुरक्षित भुगतान करें।' },
+      { keywords: ['कोड','रिडीम','7 अंक'], answer: 'गैलरी में "कोड रिडीम करें" बॉक्स मिलेगा — मिला हुआ 7 अंकों का कोड डालें।' },
+      { keywords: ['मान्य','24 घंटे','समाप्त'], answer: 'कोड उपयोग होने तक मान्य रहता है। नवीनीकरण पर पुराना कोड 24 घंटे और मान्य रहता है।' },
+      { keywords: ['पासवर्ड'], answer: '"मेरा खाता" में "पासवर्ड बदलें" सेक्शन है।' },
+      { keywords: ['मुफ़्त'], answer: '"मुफ़्त" चिह्नित तस्वीरें बिना खरीदे सीधे डाउनलोड की जा सकती हैं।' },
+      { keywords: ['छूट','ऑफ़र','प्रतिशत'], answer: 'कभी-कभी "2 के लिए 1" या प्रतिशत छूट ऑफ़र होते हैं — कार्ट में अपने आप दिखते हैं।' },
+      { keywords: ['न्यूज़लेटर','सदस्यता'], answer: 'गैलरी में आप अपने ईमेल से न्यूज़लेटर की सदस्यता ले सकते हैं।' },
+      { keywords: ['गिवअवे','जीतें'], answer: 'सक्रिय होने पर, गैलरी में भाग लेने के लिए एक बॉक्स मिलेगा।' },
+      { keywords: ['सहायता','संपर्क','मदद','समस्या'], answer: 'ऊपर "सहायता" टैब से आप हमें सीधे संदेश भेज सकते हैं।' },
+      { keywords: ['कर्मचारी','नौकरी'], answer: 'कर्मचारी खाते केवल एडमिन द्वारा बनाए जाते हैं।' },
+      { keywords: ['खरीदी','कहां मिलेगा','मेरी तस्वीरें'], answer: '"मेरा खाता" में "मेरी खरीदी गई तस्वीरें" सेक्शन में।' },
+      { keywords: ['पुष्टि','सत्यापन'], answer: 'पंजीकरण के बाद आपको एक पुष्टिकरण ईमेल मिलेगा।' },
+      { keywords: ['वीडियो'], answer: 'हां, तस्वीरों के अलावा हम वीडियो भी प्रदान करते हैं।' },
+      { keywords: ['गोपनीयता','सुरक्षित','डेटा'], answer: 'आपका लॉगिन डेटा सुरक्षित और एन्क्रिप्टेड रखा जाता है।' },
+      { keywords: ['पसंदीदा','दिल','सहेजें'], answer: 'किसी तस्वीर पर दिल आइकन से उसे पसंदीदा में जोड़ें — "मेरा खाता" में दिखता है।' },
+      { keywords: ['समीक्षा','रेटिंग','सितारे'], answer: 'खरीदने के बाद आप तस्वीर को सितारों से रेट कर सकते हैं और संक्षिप्त समीक्षा दे सकते हैं।' },
+      { keywords: ['खोज','क्रमबद्ध','फ़िल्टर'], answer: 'गैलरी के ऊपर आप नाम से खोज सकते हैं और कीमत या तारीख से क्रमबद्ध कर सकते हैं।' },
+    ],
+  };
 
   function matchFaq(question){
     const q = question.toLowerCase();
+    const kb = FAQ_I18N[currentLang] || FAQ_I18N.de;
     let best = null, bestScore = 0;
-    FAQ_KB.forEach(entry => {
+    kb.forEach(entry => {
       let score = 0;
-      entry.keywords.forEach(kw => { if(q.includes(kw)) score++; });
+      entry.keywords.forEach(kw => { if(q.includes(kw.toLowerCase())) score++; });
       if(score > bestScore){ bestScore = score; best = entry; }
     });
     return best ? best.answer : null;
@@ -1993,12 +2640,13 @@
       if(answer){
         addChatMsg(answer, 'bot');
       } else {
-        addChatMsg('Das weiß ich leider nicht genau. Schreib uns gerne über <a onclick="toggleChat(); switchView(\'support\');">Support</a> — wir melden uns!', 'bot');
+        addChatMsg(t('chat_fallback'), 'bot');
       }
     }, 400);
   }
 
   (async () => {
+    applyStoredTheme();
     applyLanguage(currentLang);
     await loadMe();
     await loadImages();
@@ -2006,6 +2654,8 @@
     const raffleStatus = await api('/api/raffle/settings');
     updateRaffleCardVisibility(raffleStatus.settings.enabled);
     await checkCheckoutReturn();
+    const hashMatch = window.location.hash.match(/#img=([a-f0-9]+)/);
+    if(hashMatch && images.some(img => img.id === hashMatch[1])){ openLightbox(hashMatch[1]); }
   })();
 </script>
 <button class="chat-bubble" onclick="toggleChat()" title="Fragen zur Website?">💬</button>
