@@ -1162,6 +1162,25 @@ async function handleApi(req, res, pathname, method, parsed){
     return sendJson(res, 200, { reviews: list.map(r => ({ userName: r.userName, rating: r.rating, comment: r.comment, createdAt: r.createdAt })) });
   }
 
+  // ---- Öffentliche Vertrauens-Statistiken (für die Startseite) ----
+  if(pathname === '/api/public-stats' && method === 'GET'){
+    const allRatings = db.reviews.map(r => r.rating);
+    const avgRating = allRatings.length > 0 ? Math.round((allRatings.reduce((s,r) => s+r, 0) / allRatings.length) * 10) / 10 : null;
+    return sendJson(res, 200, {
+      totalImages: db.images.length,
+      totalCustomers: db.users.filter(u => u.role === 'customer').length,
+      avgRating,
+      reviewCount: db.reviews.length
+    });
+  }
+
+  // ---- Kundenstimmen (beste echte Bewertungen mit Text) ----
+  if(pathname === '/api/testimonials' && method === 'GET'){
+    const withText = db.reviews.filter(r => r.comment && r.comment.trim().length > 0 && r.rating >= 4);
+    const sorted = withText.sort((a,b) => b.rating - a.rating || new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+    return sendJson(res, 200, { testimonials: sorted.map(r => ({ userName: r.userName, rating: r.rating, comment: r.comment })) });
+  }
+
   // ---- Admin-Übersicht (Dashboard) ----
   if(pathname === '/api/dashboard-stats' && method === 'GET'){
     if(!user || user.role !== 'admin') return sendJson(res, 403, { error: 'Keine Berechtigung.' });
