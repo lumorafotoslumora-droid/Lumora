@@ -81,7 +81,8 @@
   .eyebrow{ font-family:'Space Mono',monospace; font-size:11.5px; color:var(--amber); text-transform:uppercase; letter-spacing:2px; margin:0 0 10px; }
   .section-title{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin:0 0 12px; }
   .admin-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:28px; border-bottom:1px solid var(--line); padding-bottom:14px; }
-  .admin-tabs button{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.3px; background:transparent; border:1px solid var(--line); color:var(--muted); padding:9px 16px; border-radius:999px; cursor:pointer; transition:all .15s ease; }
+  .admin-tabs button{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.3px; background:transparent; border:1px solid var(--line); color:var(--muted); padding:9px 16px; border-radius:999px; cursor:pointer; transition:all .15s ease; position:relative; }
+  .tab-badge{ position:absolute; top:-6px; right:-6px; background:var(--danger); color:#fff; font-size:9.5px; font-weight:700; min-width:16px; height:16px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
   .admin-tabs button:hover{ color:var(--ink); border-color:var(--amber-dim); }
   .admin-tabs button.active{ background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; font-weight:700; border-color:transparent; }
   .admin-tabs button.hidden{ display:none; }
@@ -123,6 +124,54 @@
   .badge-pill{ font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 9px; border-radius:999px; backdrop-filter:blur(3px); }
   .badge-pill.bestseller{ background:rgba(217,105,79,0.85); color:#fff; }
   .badge-pill.new{ background:rgba(143,151,255,0.85); color:#141220; }
+
+  .trust-strip{ display:flex; gap:24px; flex-wrap:wrap; margin-top:18px; font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); }
+  .trust-strip b{ color:var(--ink); font-size:15px; }
+
+  .section-title{ font-family:'Fraunces',serif; font-size:26px; margin:4px 0 32px; max-width:520px; }
+
+  .spotlight-section, .steps-section, .features-section, .testimonials-section, .faq-section{ margin:64px 0; }
+  .spotlight-card{ display:grid; grid-template-columns: 260px 1fr; gap:28px; background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:24px; align-items:center; position:relative; overflow:hidden; }
+  .spotlight-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--accent2)); }
+  .spotlight-card .spot-media{ border-radius: var(--radius-sm); overflow:hidden; aspect-ratio:1; }
+  .spotlight-card .spot-media img, .spotlight-card .spot-media video{ width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width:640px){ .spotlight-card{ grid-template-columns:1fr; } }
+
+  .steps-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+  @media (max-width:860px){ .steps-grid{ grid-template-columns:1fr; } }
+  .step-item{ position:relative; padding-left:2px; }
+  .step-num{ width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--accent2)); color:#141220; font-weight:800; font-family:'Space Mono',monospace; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+  .step-item h3{ font-family:'Fraunces',serif; font-size:16px; margin:0 0 6px; }
+  .step-item p{ color:var(--muted); font-size:13px; line-height:1.5; margin:0; }
+
+  .features-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+  @media (max-width:860px){ .features-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:480px){ .features-grid{ grid-template-columns:1fr; } }
+  .feature-item{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:22px 20px; transition:transform .2s ease; }
+  .feature-item:hover{ transform:translateY(-3px); }
+  .feature-icon{ font-size:22px; margin-bottom:10px; }
+  .feature-item h3{ font-family:'Fraunces',serif; font-size:15px; margin:0 0 6px; }
+  .feature-item p{ color:var(--muted); font-size:12.5px; line-height:1.5; margin:0; }
+
+  .testimonials-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  @media (max-width:860px){ .testimonials-grid{ grid-template-columns:1fr; } }
+  .testimonial-card{ background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:20px; }
+  .testimonial-card .t-stars{ color:var(--amber); font-size:13px; margin-bottom:8px; }
+  .testimonial-card p{ font-size:13px; color:var(--ink); line-height:1.5; margin:0 0 10px; font-style:italic; }
+  .testimonial-card .t-name{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
+
+  .faq-item{ border-bottom:1px solid var(--line); }
+  .faq-q{ padding:16px 4px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:500; }
+  .faq-q .plus{ font-family:'Space Mono',monospace; color:var(--amber); font-size:18px; transition:transform .2s ease; flex-shrink:0; margin-left:12px; }
+  .faq-item.open .faq-q .plus{ transform:rotate(45deg); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .25s ease; color:var(--muted); font-size:13px; line-height:1.6; }
+  .faq-item.open .faq-a{ max-height:200px; padding-bottom:16px; }
+
+  .back-to-top{ position:fixed; bottom:96px; right:24px; width:44px; height:44px; border-radius:50%; background:var(--panel); border:1px solid var(--line); color:var(--ink); font-size:18px; cursor:pointer; display:none; align-items:center; justify-content:center; z-index:80; box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+  .back-to-top.show{ display:flex; }
+  .promo-banner{ display:flex; align-items:center; justify-content:space-between; gap:14px; background:linear-gradient(90deg,var(--amber),var(--accent2)); color:#141220; font-weight:600; font-size:13.5px; padding:12px 20px; border-radius: var(--radius-sm); margin-bottom:24px; animation: fadeInUp .3s ease; }
+  .promo-banner button{ background:rgba(20,18,32,0.15); border:none; color:#141220; width:22px; height:22px; border-radius:50%; cursor:pointer; font-size:12px; flex-shrink:0; }
+  .promo-banner a{ color:#141220; text-decoration:underline; cursor:pointer; }
   .lightbox-reviews{ margin-top:16px; width:100%; max-height:220px; overflow-y:auto; background: var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding:16px 20px; }
   .star-picker{ display:flex; gap:4px; margin:8px 0 10px; }
   .star-picker span{ font-size:22px; cursor:pointer; color:var(--line); transition: color .1s ease; }
@@ -288,6 +337,10 @@
 
 <main>
   <section class="view active" id="view-gallery">
+    <div class="promo-banner" id="promoBanner" style="display:none;">
+      <span id="promoBannerText"></span>
+      <button onclick="dismissPromoBanner()">✕</button>
+    </div>
     <div class="hero">
       <div class="hero-glow g1"></div>
       <div class="hero-glow g2"></div>
@@ -299,9 +352,12 @@
         <button class="btn muted" onclick="switchView('account')" data-i18n="hero_cta2">Konto erstellen</button>
       </div>
       <p class="hero-note" data-i18n="hero_note">Kostenlos ansehen · Kein Abo nötig · Sofort startklar</p>
+      <div class="trust-strip" id="trustStrip" style="display:none;"></div>
     </div>
     <div class="gallery-toolbar">
       <input type="text" id="gallerySearchInput" placeholder="🔍 Bilder suchen..." oninput="onGallerySearchChange(this.value)">
+      <input type="number" id="galleryMinPrice" placeholder="Min €" min="0" style="width:80px;" oninput="onGalleryPriceRangeChange()">
+      <input type="number" id="galleryMaxPrice" placeholder="Max €" min="0" style="width:80px;" oninput="onGalleryPriceRangeChange()">
       <select id="gallerySortSelect" onchange="onGallerySortChange(this.value)">
         <option value="newest">Neueste zuerst</option>
         <option value="price_asc">Preis aufsteigend</option>
@@ -346,6 +402,42 @@
         </div>
         <div class="redeem-msg" id="newsletterSubMsg"></div>
       </div>
+    </div>
+
+    <div class="spotlight-section" id="spotlightSection" style="display:none;">
+      <p class="eyebrow">✨ Bild des Monats</p>
+      <div class="spotlight-card" id="spotlightCard"></div>
+    </div>
+
+    <div class="steps-section">
+      <p class="eyebrow">So funktioniert's</p>
+      <h2 class="section-title">In drei Schritten zu deinem Bild</h2>
+      <div class="steps-grid">
+        <div class="step-item"><div class="step-num">1</div><h3>Konto erstellen</h3><p>Kostenlos registriert in unter einer Minute — nur für Kunden.</p></div>
+        <div class="step-item"><div class="step-num">2</div><h3>Bild aussuchen</h3><p>Durchstöbere die Galerie, filtere nach Preis oder Tags, oder lade Gratisbilder direkt herunter.</p></div>
+        <div class="step-item"><div class="step-num">3</div><h3>Sicher bezahlen</h3><p>Zahlung über Stripe — dein Bild ist sofort in deinem Konto verfügbar.</p></div>
+      </div>
+    </div>
+
+    <div class="features-section">
+      <p class="eyebrow">Warum Lumora?</p>
+      <div class="features-grid">
+        <div class="feature-item"><div class="feature-icon">🔒</div><h3>Sichere Zahlung</h3><p>Abwicklung über Stripe — deine Zahlungsdaten laufen nie über unseren Server.</p></div>
+        <div class="feature-item"><div class="feature-icon">🌍</div><h3>16 Sprachen</h3><p>Die ganze Seite und alle E-Mails in deiner Sprache.</p></div>
+        <div class="feature-item"><div class="feature-icon">⭐</div><h3>Echte Bewertungen</h3><p>Nur von Kunden, die das Bild wirklich besitzen.</p></div>
+        <div class="feature-item"><div class="feature-icon">🎁</div><h3>Regelmäßige Gewinnspiele</h3><p>Immer wieder die Chance auf ein Gratisbild.</p></div>
+      </div>
+    </div>
+
+    <div class="testimonials-section" id="testimonialsSection" style="display:none;">
+      <p class="eyebrow">Kundenstimmen</p>
+      <div class="testimonials-grid" id="testimonialsGrid"></div>
+    </div>
+
+    <div class="faq-section">
+      <p class="eyebrow">FAQ</p>
+      <h2 class="section-title">Häufige Fragen</h2>
+      <div id="faqAccordion"></div>
     </div>
   </section>
 
@@ -422,6 +514,7 @@
       </div>
       <div id="purchasesSection">
         <p class="eyebrow" data-i18n="my_purchases">Meine gekauften Bilder</p>
+        <button class="btn muted" style="margin-bottom:14px; font-size:11.5px; padding:6px 12px;" onclick="exportMyPurchasesCsv()">📥 Als Liste exportieren</button>
         <div class="grid" id="purchasesGrid"></div>
         <div class="empty" id="purchasesEmpty" style="display:none;" data-i18n="no_purchases">Noch keine Bilder gekauft.</div>
       </div>
@@ -1163,6 +1256,7 @@
     renderCartBar();
     if(document.getElementById('view-cart') && document.getElementById('view-cart').classList.contains('active')) renderCartView();
     if(document.getElementById('view-account') && document.getElementById('view-account').classList.contains('active')) renderAccountView();
+    if(document.getElementById('faqAccordion')) renderFaqAccordion();
   }
   function toggleTheme(){
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -1302,6 +1396,8 @@
     return [...set];
   }
 
+  let galleryMinPrice = null, galleryMaxPrice = null;
+
   function getFilteredSortedImages(){
     let list = images.slice();
     if(gallerySearch.trim()){
@@ -1311,6 +1407,8 @@
     if(galleryTagFilter){
       list = list.filter(img => (img.tags||[]).includes(galleryTagFilter));
     }
+    if(galleryMinPrice !== null){ list = list.filter(img => img.free || img.price >= galleryMinPrice); }
+    if(galleryMaxPrice !== null){ list = list.filter(img => img.free || img.price <= galleryMaxPrice); }
     if(gallerySort === 'price_asc') list.sort((a,b) => a.price - b.price);
     else if(gallerySort === 'price_desc') list.sort((a,b) => b.price - a.price);
     else if(gallerySort === 'name') list.sort((a,b) => (a.name||'').localeCompare(b.name||''));
@@ -1321,6 +1419,13 @@
   function onGallerySearchChange(val){ gallerySearch = val; renderShopGrid(); }
   function onGallerySortChange(val){ gallerySort = val; renderShopGrid(); }
   function setTagFilter(tag){ galleryTagFilter = (galleryTagFilter === tag) ? null : tag; renderShopGrid(); }
+  function onGalleryPriceRangeChange(){
+    const minVal = document.getElementById('galleryMinPrice').value;
+    const maxVal = document.getElementById('galleryMaxPrice').value;
+    galleryMinPrice = minVal === '' ? null : parseFloat(minVal);
+    galleryMaxPrice = maxVal === '' ? null : parseFloat(maxVal);
+    renderShopGrid();
+  }
 
   function renderTagChips(){
     const tags = getAllTags();
@@ -1425,7 +1530,7 @@
           </div>
           <div class="uploader-tag">hochgeladen von ${img.uploadedByName}</div>
           <div class="code-row">
-            <div><span class="code-label">Code für Käufer</span><span class="code-val">${img.code}</span></div>
+            <div><span class="code-label">Code für Käufer</span><span class="code-val">${img.code}</span> <span style="cursor:pointer;" onclick="event.stopPropagation(); copyCode('${img.code}', this)" title="Code kopieren">📋</span></div>
             <button class="sent-btn" onclick="event.stopPropagation(); markSent('${img.id}')">Gesendet ✓</button>
           </div>
           ${graceNote}
@@ -1451,7 +1556,9 @@
     await loadImages();
   }
   async function setPrice(id, val){
-    await api('/api/images/' + id, { method:'PATCH', body:{ price: Math.max(0, parseFloat(val)||0) } });
+    const num = parseFloat(val);
+    if(isNaN(num) || num < 0){ alert('Bitte einen gültigen Preis von 0 oder mehr eingeben.'); await loadImages(); return; }
+    await api('/api/images/' + id, { method:'PATCH', body:{ price: num } });
     await loadImages();
   }
   async function deleteImage(id){
@@ -1516,6 +1623,7 @@
   async function loadSupportMessages(){
     try {
       const r = await api('/api/support/messages');
+      updateTabBadge('atab-support', r.messages.length);
       const list = document.getElementById('supportMessagesList');
       if(r.messages.length === 0){ list.innerHTML = '<div class="team-empty">Noch keine Nachrichten.</div>'; return; }
       list.innerHTML = r.messages.map(m => `
@@ -1528,6 +1636,16 @@
           <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">${new Date(m.createdAt).toLocaleString('de-DE')}</div>
         </div>`).join('');
     } catch(e){}
+  }
+
+  function updateTabBadge(tabId, count){
+    const btn = document.getElementById(tabId);
+    if(!btn) return;
+    let badge = btn.querySelector('.tab-badge');
+    if(count > 0){
+      if(!badge){ badge = document.createElement('span'); badge.className = 'tab-badge'; btn.appendChild(badge); }
+      badge.textContent = count > 99 ? '99+' : count;
+    } else if(badge){ badge.remove(); }
   }
   async function removeSupportMessage(id){
     await api('/api/support/messages/' + id, { method:'DELETE' });
@@ -1894,6 +2012,7 @@
   async function loadFlagsList(){
     try {
       const r = await api('/api/flags');
+      updateTabBadge('atab-flags', r.flags.length);
       const list = document.getElementById('flagsList');
       if(!list) return;
       if(r.flags.length === 0){ list.innerHTML = '<div class="team-empty">Keine Meldungen — alles sauber!</div>'; return; }
@@ -1959,7 +2078,7 @@
       const r = await api('/api/admin/banned-users');
       const list = document.getElementById('bannedList');
       if(r.users.length === 0){ list.innerHTML = '<div class="team-empty">Keine gesperrten Konten.</div>'; return; }
-      list.innerHTML = r.users.map(u => `<div class="team-row"><span>${u.name}${u.email ? ' · ' + u.email : ''}</span><button class="btn solid" style="padding:4px 10px; font-size:10.5px;" onclick="unbanUser('${(u.email || u.name).replace(/'/g,"\\'")}')">Entsperren</button></div>`).join('');
+      list.innerHTML = r.users.map(u => `<div class="team-row"><span>${u.name}${u.email ? ' · ' + u.email : ''}</span><button class="btn solid" style="padding:4px 10px; font-size:10.5px;" onclick="unbanUser('${(u.email || u.name).replace(/'/g,"\'")}')">Entsperren</button></div>`).join('');
     } catch(e){}
   }
 
@@ -1997,7 +2116,135 @@
     document.getElementById('promoTwoForOne').checked = r.promos.twoForOne;
     document.getElementById('promoPercent').checked = r.promos.percent;
     document.getElementById('promoPercentValue').value = r.promos.percentValue;
+    return r.promos;
   }
+
+  function dismissPromoBanner(){
+    document.getElementById('promoBanner').style.display = 'none';
+    sessionStorage.setItem('lumora_banner_dismissed', '1');
+  }
+
+  async function updatePromoBanner(raffleEnabled, promos){
+    if(sessionStorage.getItem('lumora_banner_dismissed')) return;
+    const banner = document.getElementById('promoBanner');
+    const textEl = document.getElementById('promoBannerText');
+    let msg = null;
+    if(raffleEnabled){
+      msg = `🎁 Gewinnspiel läuft gerade! <a onclick="document.getElementById('raffleInput').scrollIntoView({behavior:'smooth', block:'center'})">Jetzt kostenlos mitmachen →</a>`;
+    } else if(promos && promos.percent && promos.percentValue > 0){
+      msg = `🔥 Gerade ${promos.percentValue}% Rabatt auf alles im Warenkorb!`;
+    } else if(promos && promos.twoForOne){
+      msg = `🛍️ Aktion: 2 Bilder kaufen, das günstigere gibt's gratis dazu!`;
+    } else if(promos && promos.firstFree){
+      msg = `✨ Neu hier? Dein erstes Bild ist gratis!`;
+    } else {
+      msg = `📰 Verpass keine neuen Bilder — <a onclick="document.getElementById('newsletterInput').scrollIntoView({behavior:'smooth', block:'center'})">jetzt Newsletter abonnieren →</a>`;
+    }
+    textEl.innerHTML = msg;
+    banner.style.display = 'flex';
+  }
+
+  async function loadTrustStrip(){
+    try {
+      const r = await api('/api/public-stats');
+      if(r.totalImages === 0) return;
+      const el = document.getElementById('trustStrip');
+      const parts = [`<span><b>${r.totalImages}</b> Bilder</span>`];
+      if(r.totalCustomers > 0) parts.push(`<span><b>${r.totalCustomers}</b> Kunden</span>`);
+      if(r.avgRating !== null) parts.push(`<span><b>${r.avgRating}★</b> Ø-Bewertung (${r.reviewCount})</span>`);
+      el.innerHTML = parts.join('');
+      el.style.display = 'flex';
+    } catch(e){}
+  }
+
+  function renderSpotlight(){
+    const best = images.find(img => img.isBestseller) || images.slice().sort((a,b) => (b.avgRating||0) - (a.avgRating||0))[0];
+    const section = document.getElementById('spotlightSection');
+    if(!best || images.length === 0){ section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    document.getElementById('spotlightCard').innerHTML = `
+      <div class="spot-media" onclick="openLightbox('${best.id}')" style="cursor:pointer;">${mediaTagHtml(best)}</div>
+      <div>
+        <h3 style="font-family:'Fraunces',serif; font-size:22px; margin:0 0 8px;">${best.name}</h3>
+        ${best.avgRating !== null ? `<div style="margin-bottom:10px;">${starsHtml(best.avgRating, best.reviewCount)}</div>` : ''}
+        <p style="color:var(--muted); font-size:13.5px; margin:0 0 16px;">${best.isBestseller ? 'Unser meistgekauftes Bild — schau es dir an!' : 'Eines unserer beliebtesten Bilder.'}</p>
+        <button class="btn solid" onclick="openLightbox('${best.id}')">Ansehen</button>
+      </div>`;
+  }
+
+  async function loadTestimonials(){
+    try {
+      const r = await api('/api/testimonials');
+      const section = document.getElementById('testimonialsSection');
+      if(r.testimonials.length === 0){ section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      document.getElementById('testimonialsGrid').innerHTML = r.testimonials.map(tm => `
+        <div class="testimonial-card">
+          <div class="t-stars">${'★'.repeat(tm.rating)}${'☆'.repeat(5-tm.rating)}</div>
+          <p>"${tm.comment}"</p>
+          <div class="t-name">— ${tm.userName}</div>
+        </div>`).join('');
+    } catch(e){}
+  }
+
+  const FAQ_DISPLAY = {
+    de: [
+      ['Wie erstelle ich ein Konto?', 'Kostenlos: Geh zu "Mein Konto" → "Konto erstellen" und trag Name, Geburtstag, E-Mail und Passwort ein.'],
+      ['Wie bezahle ich?', 'Bild in den Warenkorb legen, zur Kasse gehen und sicher per Karte über Stripe bezahlen. Deine Zahlungsdaten laufen nie über unseren Server.'],
+      ['Was ist ein Bild-Code?', 'Ein 7-stelliger Code, den du z.B. beim Gewinnspiel gewinnst — einfach im Feld "Code einlösen" eintragen, um dein Bild direkt zu bekommen.'],
+      ['Kann ich Bilder bewerten?', 'Ja — sobald du ein Bild besitzt (gekauft oder gratis), kannst du es in der Großansicht mit Sternen bewerten und eine Rezension schreiben.'],
+      ['Gibt es Rabatte?', 'Manchmal laufen Aktionen wie "2 für 1" oder Prozent-Rabatte — die siehst du automatisch im Warenkorb, wenn sie aktiv sind.'],
+      ['Gibt es die Seite in meiner Sprache?', 'Ja, oben rechts kannst du aus 16 Sprachen wählen — die Auswahl wird gespeichert und gilt auch für unsere E-Mails an dich.'],
+    ],
+    en: [
+      ['How do I create an account?', 'Free: Go to "My Account" → "Create account" and enter name, birthday, email and password.'],
+      ['How do I pay?', 'Add an image to your cart, go to checkout, and pay securely by card via Stripe. Your payment data never touches our server.'],
+      ['What is an image code?', 'A 7-digit code you might win, e.g. through our giveaway — just enter it in the "Redeem code" field to get your image directly.'],
+      ['Can I rate images?', 'Yes — once you own an image (purchased or free), you can rate it with stars and write a review in the full-size view.'],
+      ['Are there discounts?', 'Sometimes we run deals like "2 for 1" or percent discounts — automatically shown in your cart when active.'],
+      ['Is the site available in my language?', 'Yes, choose from 16 languages at the top right — your choice is saved and also used for our emails to you.'],
+    ],
+    es: [
+      ['¿Cómo creo una cuenta?', 'Gratis: Ve a "Mi cuenta" → "Crear cuenta" e ingresa nombre, cumpleaños, correo y contraseña.'],
+      ['¿Cómo pago?', 'Añade una imagen al carrito, ve a pagar y paga de forma segura con tarjeta vía Stripe. Tus datos de pago nunca pasan por nuestro servidor.'],
+      ['¿Qué es un código de imagen?', 'Un código de 7 dígitos que puedes ganar, por ejemplo en nuestro sorteo — solo ingrésalo en "Canjear código" para obtener tu imagen directamente.'],
+      ['¿Puedo calificar imágenes?', 'Sí — una vez que tengas una imagen (comprada o gratis), puedes calificarla con estrellas y dejar una reseña en la vista ampliada.'],
+      ['¿Hay descuentos?', 'A veces hay ofertas como "2 por 1" o descuentos porcentuales — se muestran automáticamente en tu carrito cuando están activos.'],
+      ['¿Está la página en mi idioma?', 'Sí, elige entre 16 idiomas arriba a la derecha — tu elección se guarda y también se usa para nuestros correos.'],
+    ],
+    fr: [
+      ['Comment créer un compte ?', 'Gratuit : Va dans "Mon compte" → "Créer un compte" et entre nom, date de naissance, e-mail et mot de passe.'],
+      ['Comment payer ?', 'Ajoute une image au panier, passe à la caisse et paie en toute sécurité par carte via Stripe. Tes données de paiement ne passent jamais par notre serveur.'],
+      ['Qu\'est-ce qu\'un code image ?', 'Un code à 7 chiffres que tu peux gagner, par exemple lors de notre tirage — entre-le simplement dans "Utiliser un code" pour obtenir ton image directement.'],
+      ['Puis-je noter les images ?', 'Oui — dès que tu possèdes une image (achetée ou gratuite), tu peux la noter avec des étoiles et laisser un avis dans la vue agrandie.'],
+      ['Y a-t-il des réductions ?', 'Il y a parfois des promos comme "2 pour 1" ou des réductions en pourcentage — visibles automatiquement dans ton panier.'],
+      ['Le site est-il dans ma langue ?', 'Oui, choisis parmi 16 langues en haut à droite — ton choix est sauvegardé et utilisé aussi pour nos e-mails.'],
+    ],
+    it: [
+      ['Come creo un account?', 'Gratis: Vai su "Il mio account" → "Crea account" e inserisci nome, data di nascita, email e password.'],
+      ['Come pago?', 'Aggiungi un\'immagine al carrello, vai alla cassa e paga in sicurezza con carta tramite Stripe. I tuoi dati di pagamento non passano mai dal nostro server.'],
+      ['Cos\'è un codice immagine?', 'Un codice a 7 cifre che puoi vincere, ad esempio nella nostra estrazione — inseriscilo in "Riscatta codice" per ottenere subito la tua immagine.'],
+      ['Posso valutare le immagini?', 'Sì — una volta che possiedi un\'immagine (acquistata o gratuita), puoi valutarla con le stelle e lasciare una recensione nella vista ingrandita.'],
+      ['Ci sono sconti?', 'A volte ci sono offerte come "2 per 1" o sconti percentuali — visibili automaticamente nel carrello quando attivi.'],
+      ['Il sito è nella mia lingua?', 'Sì, scegli tra 16 lingue in alto a destra — la scelta viene salvata e usata anche per le nostre email.'],
+    ],
+  };
+
+  function renderFaqAccordion(){
+    const items = FAQ_DISPLAY[currentLang] || FAQ_DISPLAY.de;
+    document.getElementById('faqAccordion').innerHTML = items.map((item, i) => `
+      <div class="faq-item" id="faqItem${i}">
+        <div class="faq-q" onclick="toggleFaqItem(${i})"><span>${item[0]}</span><span class="plus">+</span></div>
+        <div class="faq-a">${item[1]}</div>
+      </div>`).join('');
+  }
+  function toggleFaqItem(i){
+    document.getElementById('faqItem' + i).classList.toggle('open');
+  }
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('backToTopBtn').classList.toggle('show', window.scrollY > 500);
+  });
 
   // ---------- Warenkorb ----------
   let cachedTotals = null;
@@ -2089,6 +2336,20 @@
   }
 
   // ---------- Konto ----------
+  let lastMyPurchases = [];
+  function exportMyPurchasesCsv(){
+    if(lastMyPurchases.length === 0){ alert('Du hast noch keine Bilder gekauft.'); return; }
+    const header = ['Bildname','Preis','Gekauft am'];
+    const rows = lastMyPurchases.map(img => [img.name, img.free ? 'Gratis' : fmt(img.price), new Date(img.createdAt).toLocaleDateString('de-DE')]);
+    const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'meine-lumora-bilder.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function renderAccountView(){
     const loggedOut = document.getElementById('loggedOutArea'), loggedIn = document.getElementById('loggedInArea');
     if(role() === 'guest'){ loggedOut.style.display='grid'; loggedIn.style.display='none'; document.getElementById('accountHeading').textContent='Mein Konto'; return; }
@@ -2108,6 +2369,7 @@
         </div>`;
       detailsEl.innerHTML = verifyBannerHtml + `<div class="detail">E-Mail: <b>${currentUserData.email}</b> ${currentUserData.emailVerified ? '✅' : ''}</div><div class="detail">Geburtstag: <b>${currentUserData.birthday}</b></div>`;
       const r = await api('/api/purchases');
+      lastMyPurchases = r.images;
       const memberSince = new Date(currentUserData.createdAt).toLocaleDateString('de-DE');
       statRow.innerHTML = `<div class="stat-tile"><div class="num">${r.count}</div><div class="label">${t('stat_purchased')}</div></div><div class="stat-tile"><div class="num">${memberSince}</div><div class="label">${t('stat_member_since')}</div></div>`;
       document.getElementById('purchasesSection').style.display = 'block';
@@ -2159,6 +2421,14 @@
       await api('/api/flags', { method:'POST', body:{ imageId: id, reason } });
       alert('Danke, wir schauen uns das an!');
     } catch(e){ alert(e.message); }
+  }
+
+  function copyCode(code, el){
+    navigator.clipboard.writeText(code).then(() => {
+      const old = el.textContent;
+      el.textContent = '✓';
+      setTimeout(() => { el.textContent = old; }, 1200);
+    }).catch(()=>{});
   }
 
   function copyShareLink(id){
@@ -2235,10 +2505,24 @@
       await api('/api/reviews', { method:'POST', body:{ imageId, rating: selectedStarRating, comment: document.getElementById('reviewComment').value.trim() } });
       msgEl.textContent = 'Danke für deine Bewertung!';
       msgEl.className = 'redeem-msg ok';
-      await loadImages();
-      const img = images.find(x => x.id === imageId);
-      if(img) renderLightboxReviews(img);
+      await loadImages(); // aktualisiert avgRating im Hintergrund, ohne das Formular neu aufzubauen
+      await refreshReviewsListOnly(imageId);
     } catch(e){ msgEl.textContent = e.message; msgEl.className = 'redeem-msg err'; }
+  }
+
+  async function refreshReviewsListOnly(imageId){
+    const listEl = document.getElementById('reviewsList');
+    if(!listEl) return;
+    try {
+      const r = await api('/api/reviews/' + imageId);
+      if(r.reviews.length === 0){ listEl.textContent = 'Noch keine Bewertungen.'; return; }
+      listEl.innerHTML = r.reviews.map(rv => `
+        <div class="review-item">
+          <div class="stars">${'★'.repeat(rv.rating)}${'☆'.repeat(5-rv.rating)}</div>
+          <div style="color:var(--ink); margin:2px 0;">${rv.userName}</div>
+          ${rv.comment ? `<div>${rv.comment}</div>` : ''}
+        </div>`).join('');
+    } catch(e){}
   }
 
   // ---------- Upload ----------
@@ -2286,6 +2570,10 @@
       { keywords: ['favorit','herz','merken'], answer: 'Mit dem Herz-Symbol bei jedem Bild kannst du es zu deinen Favoriten hinzufügen — sichtbar unter "Mein Konto".' },
       { keywords: ['bewert','sterne','rezension'], answer: 'Nach einem Kauf kannst du ein Bild mit Sternen bewerten und eine kurze Rezension hinterlassen.' },
       { keywords: ['suche','sortier','filter'], answer: 'Oben in der Galerie kannst du Bilder nach Namen suchen und nach Preis oder Datum sortieren.' },
+      { keywords: ['sprache','language','ändern der sprache','sprache wechseln'], answer: 'Oben rechts kannst du über das Dropdown-Menü jederzeit die Sprache der Seite wechseln — wird automatisch für dich gespeichert.' },
+      { keywords: ['hell','dunkel','design','modus','theme'], answer: 'Über den Mond-/Sonnen-Knopf oben kannst du zwischen hellem und dunklem Design wechseln.' },
+      { keywords: ['teilen','link kopieren','weiterleiten'], answer: 'In der Großansicht eines Bildes findest du den Button \'Teilen\' — er kopiert einen direkten Link zu diesem Bild.' },
+      { keywords: ['melden','beschwerde','problem mit bild'], answer: 'In der Großansicht eines Bildes gibt es den Button \'Melden\', falls mit einem Bild etwas nicht stimmt.' },
     ],
     en: [
       { keywords: ['account','create','register','sign up'], answer: 'Free: Go to "My Account" → "Create account" and enter name, birthday, email and password.' },
@@ -2307,6 +2595,10 @@
       { keywords: ['favorite','heart','save'], answer: 'Use the heart icon on any image to add it to your favorites — visible under "My Account".' },
       { keywords: ['review','rating','stars'], answer: 'After a purchase you can rate an image with stars and leave a short review.' },
       { keywords: ['search','sort','filter'], answer: 'At the top of the gallery you can search images by name and sort by price or date.' },
+      { keywords: ['language','change language','switch language'], answer: 'Use the dropdown menu at the top right to change the site\'s language anytime — it\'s saved automatically.' },
+      { keywords: ['dark mode','light mode','theme'], answer: 'Use the moon/sun button at the top to switch between dark and light design.' },
+      { keywords: ['share','copy link','send image'], answer: 'In the full-size image view there\'s a \'Share\' button that copies a direct link to that image.' },
+      { keywords: ['report','flag','issue with image'], answer: 'In the full-size image view there\'s a \'Report\' button if something is wrong with an image.' },
     ],
     es: [
       { keywords: ['cuenta','crear','registrar'], answer: 'Gratis: Ve a "Mi cuenta" → "Crear cuenta" e ingresa nombre, cumpleaños, correo y contraseña.' },
@@ -2328,6 +2620,10 @@
       { keywords: ['favorito','corazón','guardar'], answer: 'Usa el ícono de corazón en cualquier imagen para añadirla a tus favoritos — visible en "Mi cuenta".' },
       { keywords: ['reseña','calificación','estrellas'], answer: 'Después de comprar puedes calificar una imagen con estrellas y dejar una breve reseña.' },
       { keywords: ['buscar','ordenar','filtro'], answer: 'Arriba en la galería puedes buscar imágenes por nombre y ordenarlas por precio o fecha.' },
+      { keywords: ['idioma','cambiar idioma'], answer: 'Usa el menu desplegable arriba a la derecha para cambiar el idioma en cualquier momento — se guarda automaticamente.' },
+      { keywords: ['modo oscuro','modo claro','tema'], answer: 'Usa el boton de luna/sol arriba para cambiar entre diseno claro y oscuro.' },
+      { keywords: ['compartir','copiar enlace'], answer: 'En la vista ampliada hay un boton \'Compartir\' que copia un enlace directo a esa imagen.' },
+      { keywords: ['reportar','denunciar','problema con imagen'], answer: 'En la vista ampliada hay un boton \'Reportar\' si algo esta mal con una imagen.' },
     ],
     fr: [
       { keywords: ['compte','créer','inscrire'], answer: 'Gratuit : Va dans "Mon compte" → "Créer un compte" et entre nom, date de naissance, e-mail et mot de passe.' },
@@ -2349,6 +2645,10 @@
       { keywords: ['favori','coeur','enregistrer'], answer: 'Utilise l\'icône cœur sur une image pour l\'ajouter à tes favoris — visible dans "Mon compte".' },
       { keywords: ['avis','note','étoiles'], answer: 'Après un achat tu peux noter une image avec des étoiles et laisser un avis.' },
       { keywords: ['recherch','trier','filtre'], answer: 'En haut de la galerie tu peux rechercher des images par nom et trier par prix ou date.' },
+      { keywords: ['langue','changer de langue'], answer: 'Utilise le menu deroulant en haut a droite pour changer la langue a tout moment — c\'est sauvegarde automatiquement.' },
+      { keywords: ['mode sombre','mode clair','theme'], answer: 'Utilise le bouton lune/soleil en haut pour basculer entre le mode clair et sombre.' },
+      { keywords: ['partager','copier le lien'], answer: 'Dans la vue agrandie il y a un bouton \'Partager\' qui copie un lien direct vers l\'image.' },
+      { keywords: ['signaler','probleme avec image'], answer: 'Dans la vue agrandie il y a un bouton \'Signaler\' si quelque chose ne va pas avec une image.' },
     ],
     it: [
       { keywords: ['account','creare','registrar'], answer: 'Gratis: Vai su "Il mio account" → "Crea account" e inserisci nome, data di nascita, email e password.' },
@@ -2370,6 +2670,10 @@
       { keywords: ['preferit','cuore','salva'], answer: 'Usa l\'icona a cuore su un\'immagine per aggiungerla ai preferiti — visibile in "Il mio account".' },
       { keywords: ['recensione','valutazione','stelle'], answer: 'Dopo un acquisto puoi valutare un\'immagine con le stelle e lasciare una recensione.' },
       { keywords: ['cerca','ordina','filtro'], answer: 'In cima alla galleria puoi cercare immagini per nome e ordinarle per prezzo o data.' },
+      { keywords: ['lingua','cambiare lingua'], answer: 'Usa il menu a tendina in alto a destra per cambiare lingua in qualsiasi momento — viene salvato automaticamente.' },
+      { keywords: ['modalita scura','modalita chiara','tema'], answer: 'Usa il pulsante luna/sole in alto per passare tra design chiaro e scuro.' },
+      { keywords: ['condividi','copia link'], answer: 'Nella vista ingrandita c\'e un pulsante \'Condividi\' che copia un link diretto all\'immagine.' },
+      { keywords: ['segnala','problema con immagine'], answer: 'Nella vista ingrandita c\'e un pulsante \'Segnala\' se qualcosa non va con un\'immagine.' },
     ],
     sl: [
       { keywords: ['račun','ustvari','registr'], answer: 'Brezplačno: Pojdi na "Moj račun" → "Ustvari račun" in vnesi ime, rojstni dan, e-pošto in geslo.' },
@@ -2391,6 +2695,10 @@
       { keywords: ['priljubljen','srce','shrani'], answer: 'Uporabi ikono srca pri sliki, da jo dodaš med priljubljene — vidno v "Moj račun".' },
       { keywords: ['ocena','zvezdice','mnenje'], answer: 'Po nakupu lahko sliko oceniš z zvezdicami in pustiš kratko mnenje.' },
       { keywords: ['iskanje','razvrsti','filter'], answer: 'Na vrhu galerije lahko iščeš slike po imenu in jih razvrstiš po ceni ali datumu.' },
+      { keywords: ['jezik','spremeni jezik'], answer: 'Uporabi spustni meni zgoraj desno, da kadar koli spremenis jezik — samodejno se shrani.' },
+      { keywords: ['temen nacin','svetel nacin','tema'], answer: 'Uporabi gumb luna/sonce zgoraj za preklop med svetlim in temnim videzom.' },
+      { keywords: ['deli','kopiraj povezavo'], answer: 'V povecanem prikazu je gumb \'Deli\', ki kopira neposredno povezavo do slike.' },
+      { keywords: ['prijavi','tezava s sliko'], answer: 'V povecanem prikazu je gumb \'Prijavi\', ce je s sliko kaj narobe.' },
     ],
     pt: [
       { keywords: ['conta','criar','registr'], answer: 'Grátis: Vá em "Minha conta" → "Criar conta" e insira nome, data de nascimento, e-mail e senha.' },
@@ -2412,6 +2720,10 @@
       { keywords: ['favorito','coração','salvar'], answer: 'Use o ícone de coração em qualquer imagem para adicioná-la aos favoritos — visível em "Minha conta".' },
       { keywords: ['avaliação','estrelas','resenha'], answer: 'Após uma compra você pode avaliar uma imagem com estrelas e deixar uma breve resenha.' },
       { keywords: ['buscar','ordenar','filtro'], answer: 'No topo da galeria você pode buscar imagens por nome e ordenar por preço ou data.' },
+      { keywords: ['idioma','mudar idioma'], answer: 'Use o menu suspenso no canto superior direito para mudar o idioma a qualquer momento — e salvo automaticamente.' },
+      { keywords: ['modo escuro','modo claro','tema'], answer: 'Use o botao lua/sol no topo para alternar entre design claro e escuro.' },
+      { keywords: ['compartilhar','copiar link'], answer: 'Na visualizacao ampliada ha um botao \'Compartilhar\' que copia um link direto para a imagem.' },
+      { keywords: ['denunciar','reportar','problema com imagem'], answer: 'Na visualizacao ampliada ha um botao \'Denunciar\' caso algo esteja errado com uma imagem.' },
     ],
     nl: [
       { keywords: ['account','maken','registrer'], answer: 'Gratis: Ga naar "Mijn account" → "Account aanmaken" en vul naam, geboortedatum, e-mail en wachtwoord in.' },
@@ -2433,6 +2745,10 @@
       { keywords: ['favoriet','hart','opslaan'], answer: 'Gebruik het hartje bij een afbeelding om toe te voegen aan favorieten — zichtbaar bij "Mijn account".' },
       { keywords: ['recensie','beoordel','sterren'], answer: 'Na aankoop kun je een afbeelding met sterren beoordelen en een korte recensie achterlaten.' },
       { keywords: ['zoek','sorteer','filter'], answer: 'Bovenaan de galerij kun je afbeeldingen zoeken op naam en sorteren op prijs of datum.' },
+      { keywords: ['taal','taal wijzigen'], answer: 'Gebruik het dropdownmenu rechtsboven om altijd de taal te wijzigen — wordt automatisch opgeslagen.' },
+      { keywords: ['donkere modus','lichte modus','thema'], answer: 'Gebruik de maan-/zonknop bovenaan om te wisselen tussen licht en donker design.' },
+      { keywords: ['delen','link kopieren'], answer: 'In de vergrote weergave is een \'Delen\'-knop die een directe link naar de afbeelding kopieert.' },
+      { keywords: ['melden','probleem met afbeelding'], answer: 'In de vergrote weergave is een \'Melden\'-knop als er iets mis is met een afbeelding.' },
     ],
     pl: [
       { keywords: ['konto','załóż','zarejestr'], answer: 'Za darmo: Idź do "Moje konto" → "Załóż konto" i wpisz imię, datę urodzenia, e-mail i hasło.' },
@@ -2454,6 +2770,10 @@
       { keywords: ['ulubion','serce','zapisz'], answer: 'Użyj ikony serca przy zdjęciu, aby dodać do ulubionych — widoczne w "Moje konto".' },
       { keywords: ['recenzja','ocena','gwiazdki'], answer: 'Po zakupie możesz ocenić zdjęcie gwiazdkami i zostawić krótką recenzję.' },
       { keywords: ['szukaj','sortuj','filtr'], answer: 'Na górze galerii możesz szukać zdjęć po nazwie i sortować wg ceny lub daty.' },
+      { keywords: ['jezyk','zmien jezyk'], answer: 'Uzyj menu rozwijanego w prawym gornym rogu, aby zmienic jezyk — zapisuje sie automatycznie.' },
+      { keywords: ['tryb ciemny','tryb jasny','motyw'], answer: 'Uzyj przycisku ksiezyc/slonce u gory, aby przelaczyc jasny i ciemny wyglad.' },
+      { keywords: ['udostepnij','kopiuj link'], answer: 'W powiekszonym widoku jest przycisk \'Udostepnij\', ktory kopiuje bezposredni link do zdjecia.' },
+      { keywords: ['zglos','problem ze zdjeciem'], answer: 'W powiekszonym widoku jest przycisk \'Zglos\', jesli cos jest nie tak ze zdjeciem.' },
     ],
     tr: [
       { keywords: ['hesap','oluştur','kayıt'], answer: 'Ücretsiz: "Hesabım" → "Hesap oluştur"a git ve ad, doğum tarihi, e-posta, şifre gir.' },
@@ -2475,6 +2795,10 @@
       { keywords: ['favori','kalp','kaydet'], answer: 'Bir resimdeki kalp simgesini kullanarak favorilere ekleyebilirsin — "Hesabım"da görünür.' },
       { keywords: ['değerlendirme','yıldız','yorum'], answer: 'Satın aldıktan sonra bir resmi yıldızlarla değerlendirip kısa yorum bırakabilirsin.' },
       { keywords: ['ara','sırala','filtre'], answer: 'Galerinin üstünde isimle arama yapabilir, fiyat veya tarihe göre sıralayabilirsin.' },
+      { keywords: ['dil','dili degistir'], answer: 'Sag ustteki acilir menuyu kullanarak dili istedigin zaman degistirebilirsin — otomatik kaydedilir.' },
+      { keywords: ['koyu mod','acik mod','tema'], answer: 'Ustteki ay/gunes dugmesini kullanarak acik ve koyu tasarim arasinda gecis yapabilirsin.' },
+      { keywords: ['paylas','baglanti kopyala'], answer: 'Buyuk gorunumde, resme dogrudan baglanti kopyalayan bir \'Paylas\' dugmesi var.' },
+      { keywords: ['sikayet et','bildir','resimle ilgili sorun'], answer: 'Buyuk gorunumde, resimle ilgili bir sorun varsa \'Sikayet et\' dugmesi var.' },
     ],
     ru: [
       { keywords: ['аккаунт','создать','регистрац'], answer: 'Бесплатно: перейдите в "Мой аккаунт" → "Создать аккаунт" и введите имя, дату рождения, email и пароль.' },
@@ -2496,6 +2820,10 @@
       { keywords: ['избранное','сердце','сохранить'], answer: 'Нажмите на сердце у фото, чтобы добавить в избранное — видно в "Мой аккаунт".' },
       { keywords: ['отзыв','оценка','звезды'], answer: 'После покупки вы можете оценить фото звёздами и оставить отзыв.' },
       { keywords: ['поиск','сортировка','фильтр'], answer: 'Вверху галереи можно искать фото по имени и сортировать по цене или дате.' },
+      { keywords: ['язык','изменить язык'], answer: 'Используй выпадающее меню вверху справа, чтобы в любой момент сменить язык — сохраняется автоматически.' },
+      { keywords: ['тёмная тема','светлая тема'], answer: 'Используй кнопку луна/солнце вверху, чтобы переключаться между светлой и тёмной темой.' },
+      { keywords: ['поделиться','скопировать ссылку'], answer: 'В увеличенном виде есть кнопка \'Поделиться\', которая копирует прямую ссылку на фото.' },
+      { keywords: ['пожаловаться','сообщить','проблема с фото'], answer: 'В увеличенном виде есть кнопка \'Пожаловаться\', если что-то не так с фото.' },
     ],
     ar: [
       { keywords: ['حساب','إنشاء','تسجيل'], answer: 'مجانًا: اذهب إلى "حسابي" ← "إنشاء حساب" وأدخل الاسم وتاريخ الميلاد والبريد وكلمة المرور.' },
@@ -2517,6 +2845,10 @@
       { keywords: ['مفضلة','قلب','حفظ'], answer: 'استخدم أيقونة القلب على أي صورة لإضافتها للمفضلة — تظهر في "حسابي".' },
       { keywords: ['تقييم','نجوم','مراجعة'], answer: 'بعد الشراء يمكنك تقييم الصورة بالنجوم وترك مراجعة قصيرة.' },
       { keywords: ['بحث','ترتيب','تصفية'], answer: 'أعلى المعرض يمكنك البحث بالاسم والترتيب حسب السعر أو التاريخ.' },
+      { keywords: ['اللغة','تغيير اللغة'], answer: 'استخدم القائمة المنسدلة أعلى اليمين لتغيير اللغة في أي وقت — يتم حفظها تلقائيًا.' },
+      { keywords: ['الوضع الداكن','الوضع الفاتح'], answer: 'استخدم زر القمر/الشمس أعلى الصفحة للتبديل بين التصميم الفاتح والداكن.' },
+      { keywords: ['مشاركة','نسخ الرابط'], answer: 'في العرض المكبر يوجد زر مشاركة ينسخ رابطًا مباشرًا للصورة.' },
+      { keywords: ['إبلاغ','مشكلة في الصورة'], answer: 'في العرض المكبر يوجد زر إبلاغ إذا كان هناك خطأ ما في الصورة.' },
     ],
     zh: [
       { keywords: ['账户','创建','注册'], answer: '免费：前往"我的账户"→"创建账户"，填写姓名、生日、邮箱和密码。' },
@@ -2538,6 +2870,10 @@
       { keywords: ['收藏','心形','保存'], answer: '点击图片上的心形图标即可加入收藏——在"我的账户"中可见。' },
       { keywords: ['评价','评分','星级'], answer: '购买后你可以为图片评星并留下简短评价。' },
       { keywords: ['搜索','排序','筛选'], answer: '在图库顶部可按名称搜索图片，并按价格或日期排序。' },
+      { keywords: ['语言','更改语言'], answer: '使用右上角的下拉菜单随时更改语言，会自动保存。' },
+      { keywords: ['深色模式','浅色模式','主题'], answer: '使用顶部的月亮/太阳按钮在浅色和深色设计之间切换。' },
+      { keywords: ['分享','复制链接'], answer: '在放大视图中有一个分享按钮，可复制该图片的直接链接。' },
+      { keywords: ['举报','图片问题'], answer: '在放大视图中有一个举报按钮，如果图片有问题可以使用。' },
     ],
     ja: [
       { keywords: ['アカウント','作成','登録'], answer: '無料：「マイアカウント」→「アカウント作成」で名前、生年月日、メール、パスワードを入力。' },
@@ -2559,6 +2895,10 @@
       { keywords: ['お気に入り','ハート','保存'], answer: '画像のハートアイコンをクリックしてお気に入りに追加——「マイアカウント」に表示されます。' },
       { keywords: ['レビュー','評価','星'], answer: '購入後、画像に星で評価し短いレビューを残せます。' },
       { keywords: ['検索','並び替え','フィルター'], answer: 'ギャラリー上部で名前検索、価格や日付で並び替えができます。' },
+      { keywords: ['言語','言語を変更'], answer: '右上のドロップダウンメニューでいつでも言語を変更できます。自動的に保存されます。' },
+      { keywords: ['ダークモード','ライトモード','テーマ'], answer: '上部の月/太陽ボタンでライトデザインとダークデザインを切り替えられます。' },
+      { keywords: ['共有','リンクをコピー'], answer: '拡大表示には、その画像への直接リンクをコピーする共有ボタンがあります。' },
+      { keywords: ['通報','画像の問題'], answer: '拡大表示には、画像に問題がある場合の通報ボタンがあります。' },
     ],
     ko: [
       { keywords: ['계정','만들기','가입'], answer: '무료: "내 계정" → "계정 만들기"에서 이름, 생년월일, 이메일, 비밀번호를 입력하세요.' },
@@ -2580,6 +2920,10 @@
       { keywords: ['즐겨찾기','하트','저장'], answer: '이미지의 하트 아이콘을 눌러 즐겨찾기에 추가하세요 — "내 계정"에서 확인 가능합니다.' },
       { keywords: ['리뷰','평점','별점'], answer: '구매 후 이미지를 별점으로 평가하고 짧은 리뷰를 남길 수 있습니다.' },
       { keywords: ['검색','정렬','필터'], answer: '갤러리 상단에서 이름으로 검색하고 가격이나 날짜로 정렬할 수 있습니다.' },
+      { keywords: ['언어','언어 변경'], answer: '오른쪽 상단의 드롭다운 메뉴를 사용해 언제든지 언어를 변경할 수 있습니다. 자동으로 저장됩니다.' },
+      { keywords: ['다크 모드','라이트 모드','테마'], answer: '상단의 달/태양 버튼으로 밝은 디자인과 어두운 디자인을 전환할 수 있습니다.' },
+      { keywords: ['공유','링크 복사'], answer: '확대 보기에는 이미지의 직접 링크를 복사하는 공유 버튼이 있습니다.' },
+      { keywords: ['신고','이미지 문제'], answer: '확대 보기에는 이미지에 문제가 있을 때 사용하는 신고 버튼이 있습니다.' },
     ],
     hi: [
       { keywords: ['खाता','बनाएं','पंजीकरण'], answer: 'मुफ़्त: "मेरा खाता" → "खाता बनाएं" पर जाएं और नाम, जन्मदिन, ईमेल और पासवर्ड डालें।' },
@@ -2601,6 +2945,10 @@
       { keywords: ['पसंदीदा','दिल','सहेजें'], answer: 'किसी तस्वीर पर दिल आइकन से उसे पसंदीदा में जोड़ें — "मेरा खाता" में दिखता है।' },
       { keywords: ['समीक्षा','रेटिंग','सितारे'], answer: 'खरीदने के बाद आप तस्वीर को सितारों से रेट कर सकते हैं और संक्षिप्त समीक्षा दे सकते हैं।' },
       { keywords: ['खोज','क्रमबद्ध','फ़िल्टर'], answer: 'गैलरी के ऊपर आप नाम से खोज सकते हैं और कीमत या तारीख से क्रमबद्ध कर सकते हैं।' },
+      { keywords: ['भाषा','भाषा बदलें'], answer: 'ऊपर दाईं ओर ड्रॉपडाउन मेनू से आप कभी भी भाषा बदल सकते हैं, यह अपने आप सेव हो जाता है।' },
+      { keywords: ['डार्क मोड','लाइट मोड','थीम'], answer: 'ऊपर चाँद/सूरज बटन से आप हल्के और गहरे डिज़ाइन के बीच बदल सकते हैं।' },
+      { keywords: ['शेयर करें','लिंक कॉपी करें'], answer: 'बड़े दृश्य में एक शेयर करें बटन है जो तस्वीर का सीधा लिंक कॉपी करता है।' },
+      { keywords: ['रिपोर्ट करें','तस्वीर में समस्या'], answer: 'बड़े दृश्य में एक रिपोर्ट करें बटन है अगर तस्वीर में कुछ गलत है।' },
     ],
   };
 
@@ -2650,14 +2998,20 @@
     applyLanguage(currentLang);
     await loadMe();
     await loadImages();
-    await loadPromosIntoForm();
+    const currentPromos = await loadPromosIntoForm();
     const raffleStatus = await api('/api/raffle/settings');
     updateRaffleCardVisibility(raffleStatus.settings.enabled);
+    updatePromoBanner(raffleStatus.settings.enabled, currentPromos);
+    loadTrustStrip();
+    renderSpotlight();
+    loadTestimonials();
+    renderFaqAccordion();
     await checkCheckoutReturn();
     const hashMatch = window.location.hash.match(/#img=([a-f0-9]+)/);
     if(hashMatch && images.some(img => img.id === hashMatch[1])){ openLightbox(hashMatch[1]); }
   })();
 </script>
+<button class="back-to-top" id="backToTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <button class="chat-bubble" onclick="toggleChat()" title="Fragen zur Website?">💬</button>
 <div class="chat-window" id="chatWindow">
   <div class="chat-header"><b>Lumora-Hilfe 🤖</b><span onclick="toggleChat()">✕</span></div>
